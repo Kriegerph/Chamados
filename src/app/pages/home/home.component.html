@@ -1,0 +1,36 @@
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-title">Controle de Chamados</div>
+  </div>
+  <nav class="tabs">
+    <button class="tab" routerLink="/abertos" routerLinkActive="active">
+      Abertos
+    </button>
+    <button class="tab" routerLink="/clientes" routerLinkActive="active">
+      Clientes
+    </button>
+    <button class="tab" routerLink="/concluidos" routerLinkActive="active">
+      Concluídos
+    </button>
+    <button class="tab" routerLink="/dashboard" routerLinkActive="active">
+      Dashboard
+    </button>
+  </nav>
+  <div class="user-actions" *ngIf="(user$ | async) as user">
+    <span class="user-email">{{ user.email || "Usuário" }}</span>
+    <button class="btn" (click)="sair()">Sair</button>
+  </div>
+</header>
+
+<main class="container">
+  <router-outlet></router-outlet>
+</main>
+
+<div
+  class="toast"
+  *ngIf="(toast$ | async) as toast"
+  [class.success]="toast.type === 'success'"
+  [class.error]="toast.type === 'error'"
+>
+  {{ toast.message }}
+</div>

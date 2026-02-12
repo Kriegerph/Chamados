@@ -1,0 +1,22 @@
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ranking-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ranking-filters label {
+  font-size: 12px;
+}
+
+.empty {
+  padding: 12px 0;
+  color: var(--muted);
+}

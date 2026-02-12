@@ -1,0 +1,87 @@
+<div class="grid-2">
+  <div class="card">
+    <h2>Cadastrar cliente</h2>
+    <form class="form" (ngSubmit)="cadastrar()">
+      <label>
+        Nome
+        <input name="nome" type="text" [(ngModel)]="nome" required />
+      </label>
+      <label>
+        Telefone
+        <input name="telefone" type="text" [(ngModel)]="telefone" placeholder="Opcional" />
+      </label>
+      <label>
+        Email
+        <input name="email" type="email" [(ngModel)]="email" placeholder="Opcional" />
+      </label>
+      <label>
+        Observação
+        <textarea name="observacao" rows="3" [(ngModel)]="observacao" placeholder="Opcional"></textarea>
+      </label>
+      <button class="btn primary" type="submit">Salvar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Clientes</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Contato</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="!carregando && clientes.length === 0">
+            <td colspan="3">Nenhum cliente cadastrado.</td>
+          </tr>
+          <tr *ngFor="let item of clientes">
+            <td>{{ item.nome }}</td>
+            <td>
+              <div>{{ item.telefone || "-" }}</div>
+              <div>{{ item.email || "-" }}</div>
+            </td>
+            <td>
+              <button class="btn secondary" type="button" (click)="abrirEdicao(item)">
+                Editar
+              </button>
+              <button class="btn danger" type="button" (click)="excluir(item)">
+                Excluir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal" *ngIf="editando">
+  <div class="modal-content">
+    <h3>Editar cliente</h3>
+    <form class="form" (ngSubmit)="salvarEdicao()">
+      <label>
+        Nome
+        <input name="editNome" type="text" [(ngModel)]="editNome" required />
+      </label>
+      <label>
+        Telefone
+        <input name="editTelefone" type="text" [(ngModel)]="editTelefone" />
+      </label>
+      <label>
+        Email
+        <input name="editEmail" type="email" [(ngModel)]="editEmail" />
+      </label>
+      <label>
+        Observação
+        <textarea name="editObservacao" rows="3" [(ngModel)]="editObservacao"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
+        <button class="btn primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>

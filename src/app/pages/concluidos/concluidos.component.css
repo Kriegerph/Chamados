@@ -1,0 +1,11 @@
+.empty {
+  padding: 12px 0;
+  color: var(--muted);
+}
+
+.concluido-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}

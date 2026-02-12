@@ -1,0 +1,23 @@
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  display: grid;
+  gap: 12px;
+}
+
+.auth-error {
+  font-size: 13px;
+  color: #c13c3c;
+}
+
+.auth-links {
+  font-size: 13px;
+}

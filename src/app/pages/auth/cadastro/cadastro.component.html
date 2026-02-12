@@ -1,0 +1,32 @@
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h2>Criar conta</h2>
+    <form class="form" (ngSubmit)="cadastrar()">
+      <label>
+        Email
+        <input type="email" name="email" [(ngModel)]="email" [disabled]="carregando" required />
+      </label>
+      <label>
+        Senha
+        <input type="password" name="senha" [(ngModel)]="senha" [disabled]="carregando" required />
+      </label>
+      <label>
+        Confirmar senha
+        <input
+          type="password"
+          name="confirmar"
+          [(ngModel)]="confirmar"
+          [disabled]="carregando"
+          required
+        />
+      </label>
+      <button class="btn primary" type="submit" [disabled]="carregando">
+        {{ carregando ? "Cadastrando..." : "Cadastrar" }}
+      </button>
+    </form>
+    <div class="auth-error" *ngIf="erro">{{ erro }}</div>
+    <div class="auth-links">
+      <a routerLink="/login">Já tenho conta</a>
+    </div>
+  </div>
+</div>
