@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable, NgZone } from "@angular/core";
 import {
   User,
   createUserWithEmailAndPassword,
@@ -8,26 +8,62 @@ import {
   signOut as firebaseSignOut
 } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { Observable } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { FirebaseService } from "./firebase.service";
+
+export type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "error";
+
+export interface AuthState {
+  status: AuthStatus;
+  user: User | null;
+  error: string | null;
+}
 
 @Injectable({
   providedIn: "root"
 })
 export class AuthService {
   private readonly auth: ReturnType<typeof getAuth>;
-  readonly authState$: Observable<User | null>;
+  private readonly authStateSubject = new BehaviorSubject<AuthState>({
+    status: "loading",
+    user: null,
+    error: null
+  });
 
-  constructor(private readonly firebase: FirebaseService) {
+  readonly authViewState$ = this.authStateSubject.asObservable();
+  readonly authState$ = this.authViewState$.pipe(map((state) => state.user));
+
+  constructor(
+    private readonly firebase: FirebaseService,
+    private readonly zone: NgZone
+  ) {
     this.auth = getAuth(this.firebase.app);
-    this.authState$ = new Observable<User | null>((subscriber) => {
-      const unsubscribe = onAuthStateChanged(
-        this.auth,
-        (user) => subscriber.next(user),
-        (error) => subscriber.error(error)
-      );
-      return () => unsubscribe();
-    });
+    onAuthStateChanged(
+      this.auth,
+      (user) => {
+        this.zone.run(() => {
+          this.authStateSubject.next({
+            status: user ? "authenticated" : "unauthenticated",
+            user,
+            error: null
+          });
+          console.debug("[Auth] authState resolvido", {
+            status: user ? "authenticated" : "unauthenticated",
+            uid: user?.uid ?? null
+          });
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          this.authStateSubject.next({
+            status: "error",
+            user: null,
+            error: this.toErrorMessage(error)
+          });
+          console.error("[Auth] erro no authState", error);
+        });
+      }
+    );
   }
 
   async signUp(email: string, senha: string): Promise<string> {
@@ -57,6 +93,13 @@ export class AuthService {
   }
 
   getUid(): string | null {
-    return this.auth.currentUser?.uid ?? null;
+    return this.authStateSubject.value.user?.uid ?? this.auth.currentUser?.uid ?? null;
+  }
+
+  private toErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return "Falha ao carregar autenticacao.";
   }
 }

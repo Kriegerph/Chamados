@@ -1,130 +1,148 @@
-<div class="grid-2">
-  <div class="card">
-    <h2>Cadastrar chamado</h2>
-    <form class="form" (ngSubmit)="salvar()">
-      <label>
-        Cadastrar
-        <select name="modoCadastro" [(ngModel)]="modoCadastro" (change)="onModoChange()">
-          <option value="novo">Chamado novo</option>
-          <option value="antigo">Chamado antigo</option>
-        </select>
-      </label>
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="grid-2">
+    <div class="card">
+      <h2>Cadastrar chamado</h2>
+      <form class="form" (ngSubmit)="salvar()">
+        <label>
+          Cadastrar
+          <select name="modoCadastro" [(ngModel)]="modoCadastro" (change)="onModoChange()">
+            <option value="novo">Chamado novo</option>
+            <option value="antigo">Chamado antigo</option>
+          </select>
+        </label>
 
-      <label>
-        Motivo
-        <input name="motivo" type="text" [(ngModel)]="motivo" placeholder="Motivo do chamado" />
-      </label>
+        <label>
+          Motivo
+          <input name="motivo" type="text" [(ngModel)]="motivo" placeholder="Motivo do chamado" />
+        </label>
 
-      <label>
-        Cliente
-        <select name="clienteId" [(ngModel)]="clienteId" (change)="onClienteChange()">
-          <option value="">Selecione um cliente</option>
-          <option *ngFor="let cliente of clientes" [value]="cliente.id">
-            {{ cliente.nome }}
-          </option>
-          <option value="__novo__">+ Novo cliente</option>
-        </select>
-      </label>
+        <label>
+          Cliente
+          <select name="clienteId" [(ngModel)]="clienteId" (change)="onClienteChange()">
+            <option value="">Selecione um cliente</option>
+            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
+              {{ cliente.nome }}
+            </option>
+            <option value="__novo__">+ Novo cliente</option>
+          </select>
+        </label>
 
-      <label>
-        Data
-        <input name="data" type="date" [(ngModel)]="data" />
-      </label>
+        <label>
+          Data
+          <input name="data" type="date" [(ngModel)]="data" />
+        </label>
 
-      <label *ngIf="modoCadastro === 'antigo'">
-        Como foi resolvido
-        <textarea name="resolucao" rows="3" [(ngModel)]="resolucao" placeholder="Descreva a resolução"></textarea>
-      </label>
+        <label *ngIf="modoCadastro === 'antigo'">
+          Como foi resolvido
+          <textarea name="resolucao" rows="3" [(ngModel)]="resolucao" placeholder="Descreva a resolucao"></textarea>
+        </label>
 
-      <button class="btn primary" type="submit">Salvar</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Chamados abertos</h2>
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Cliente</th>
-            <th>Motivo</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngIf="!carregando && abertos.length === 0">
-            <td colspan="4">Nenhum chamado aberto.</td>
-          </tr>
-          <tr *ngFor="let item of abertos">
-            <td>{{ item.data }}</td>
-            <td>{{ getClienteLabel(item) }}</td>
-            <td>{{ item.motivo }}</td>
-            <td>
-              <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
-                Editar
-              </button>
-              <button class="btn danger" type="button" (click)="excluirChamado(item)">
-                Excluir
-              </button>
-              <button class="btn primary" type="button" (click)="abrirModalFinalizar(item.id!)">
-                Finalizar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="modal" *ngIf="modalAberto">
-  <div class="modal-content">
-    <h3>Finalizar chamado</h3>
-    <p>Informe como foi resolvido:</p>
-    <textarea
-      rows="4"
-      [(ngModel)]="resolucaoFinalizar"
-      name="resolucaoFinalizar"
-      placeholder="Descreva a resolução"
-    ></textarea>
-    <div class="modal-actions">
-      <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
-      <button class="btn primary" type="button" (click)="confirmarFinalizacao()">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" *ngIf="editando">
-  <div class="modal-content">
-    <h3>Editar chamado</h3>
-    <form class="form" (ngSubmit)="salvarEdicao()">
-      <label>
-        Motivo
-        <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
-      </label>
-      <label>
-        Cliente
-        <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
-        <select name="editClienteId" [(ngModel)]="editClienteId">
-          <option value="">Selecione um cliente</option>
-          <option *ngFor="let cliente of clientes" [value]="cliente.id">
-            {{ cliente.nome }}
-          </option>
-        </select>
-      </label>
-      <label>
-        Data
-        <input name="editData" type="date" [(ngModel)]="editData" />
-      </label>
-      <label *ngIf="editStatus === 'concluido'">
-        Resolução
-        <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
-      </label>
-      <div class="modal-actions">
-        <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
         <button class="btn primary" type="submit">Salvar</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Chamados abertos</h2>
+      <div class="table-wrap">
+        <table class="table abertos-table">
+          <colgroup>
+            <col class="col-data" />
+            <col class="col-cliente" />
+            <col class="col-motivo" />
+            <col class="col-acoes" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="col-data">Data</th>
+              <th class="col-cliente">Cliente</th>
+              <th class="col-motivo">Motivo</th>
+              <th class="col-acoes">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="vm.carregando">
+              <td colspan="4">Carregando...</td>
+            </tr>
+            <tr *ngIf="!vm.carregando && !!vm.erro">
+              <td colspan="4">{{ vm.erro }}</td>
+            </tr>
+            <tr *ngIf="!vm.carregando && !vm.erro && vm.abertos.length === 0">
+              <td colspan="4">Nenhum chamado aberto.</td>
+            </tr>
+            <tr *ngFor="let item of vm.abertos">
+              <td class="col-data">{{ item.data }}</td>
+              <td class="col-cliente">{{ item.clienteLabel }}</td>
+              <td class="col-motivo">
+                <div class="motivo-texto">{{ item.motivo || "-" }}</div>
+              </td>
+              <td class="col-acoes">
+                <div class="acoes-botoes">
+                  <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
+                    Editar
+                  </button>
+                  <button class="btn danger" type="button" (click)="excluirChamado(item)">
+                    Excluir
+                  </button>
+                  <button class="btn primary" type="button" (click)="abrirModalFinalizar(item.id!)">
+                    Finalizar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </form>
+    </div>
   </div>
-</div>
+
+  <div class="modal" *ngIf="modalAberto">
+    <div class="modal-content">
+      <h3>Finalizar chamado</h3>
+      <p>Informe como foi resolvido:</p>
+      <textarea
+        rows="4"
+        [(ngModel)]="resolucaoFinalizar"
+        name="resolucaoFinalizar"
+        placeholder="Descreva a resolucao"
+      ></textarea>
+      <div class="modal-actions">
+        <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
+        <button class="btn primary" type="button" (click)="confirmarFinalizacao()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" *ngIf="editando">
+    <div class="modal-content">
+      <h3>Editar chamado</h3>
+      <form class="form" (ngSubmit)="salvarEdicao()">
+        <label>
+          Motivo
+          <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
+        </label>
+        <label>
+          Cliente
+          <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
+          <select name="editClienteId" [(ngModel)]="editClienteId">
+            <option value="">Selecione um cliente</option>
+            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
+              {{ cliente.nome }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Data
+          <input name="editData" type="date" [(ngModel)]="editData" />
+        </label>
+        <label *ngIf="editStatus === 'concluido'">
+          Resolução
+          <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ng-container>

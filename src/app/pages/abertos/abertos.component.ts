@@ -1,14 +1,26 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Timestamp } from "firebase/firestore";
-import { Subscription } from "rxjs";
-import { Cliente } from "../../models/cliente.model";
+import { combineLatest, map, Observable } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
-import { ClientesService } from "../../services/clientes.service";
+import { Cliente } from "../../models/cliente.model";
+import { DataState } from "../../models/data-state.model";
 import { ChamadosService } from "../../services/chamados.service";
+import { ClientesService } from "../../services/clientes.service";
 import { ToastService } from "../../services/toast.service";
+
+type AbertoItemView = Chamado & {
+  clienteLabel: string;
+};
+
+type AbertosViewModel = {
+  carregando: boolean;
+  erro: string | null;
+  abertos: AbertoItemView[];
+  clientes: Cliente[];
+};
 
 @Component({
   selector: "app-abertos",
@@ -17,17 +29,12 @@ import { ToastService } from "../../services/toast.service";
   templateUrl: "./abertos.component.html",
   styleUrl: "./abertos.component.css"
 })
-export class AbertosComponent implements OnInit, OnDestroy {
+export class AbertosComponent {
   modoCadastro: "novo" | "antigo" = "novo";
   motivo = "";
   clienteId = "";
   data = "";
   resolucao = "";
-
-  abertos: Chamado[] = [];
-  carregando = true;
-  clientes: Cliente[] = [];
-  private clientesMap = new Map<string, Cliente>();
 
   modalAberto = false;
   finalizarId: string | null = null;
@@ -42,45 +49,21 @@ export class AbertosComponent implements OnInit, OnDestroy {
   editResolucao = "";
   editStatus: "aberto" | "concluido" = "aberto";
 
-  private sub = new Subscription();
+  readonly vm$: Observable<AbertosViewModel>;
 
   constructor(
     private readonly chamadosService: ChamadosService,
     private readonly clientesService: ClientesService,
     private readonly toast: ToastService,
     private readonly router: Router
-  ) {}
-
-  ngOnInit() {
+  ) {
     this.data = this.getToday();
-    this.sub.add(
-      this.chamadosService.listenTodos().subscribe({
-        next: (items) => {
-          this.abertos = this.sortByDataDesc(
-            items.filter((item) => item.status === "aberto")
-          );
-          this.carregando = false;
-        },
-        error: (err) => {
-          this.carregando = false;
-          this.toast.show(`Erro ao carregar abertos: ${err.message}`, "error");
-        }
-      })
+    this.vm$ = combineLatest([
+      this.chamadosService.todosState$,
+      this.clientesService.clientesState$
+    ]).pipe(
+      map(([chamadosState, clientesState]) => this.buildViewModel(chamadosState, clientesState))
     );
-    this.sub.add(
-      this.clientesService.clientes$.subscribe({
-        next: (items) => {
-          this.clientes = this.sortClientes(items);
-          this.clientesMap = new Map(
-            this.clientes.filter((c) => !!c.id).map((c) => [c.id as string, c])
-          );
-        }
-      })
-    );
-  }
-
-  ngOnDestroy() {
-    this.sub.unsubscribe();
   }
 
   onModoChange() {
@@ -160,12 +143,12 @@ export class AbertosComponent implements OnInit, OnDestroy {
     }
   }
 
-  abrirModalEditar(item: Chamado) {
+  abrirModalEditar(item: Chamado & { clienteLabel?: string }) {
     this.editando = true;
     this.editId = item.id ?? null;
     this.editMotivo = item.motivo || "";
     this.editClienteId = item.clienteId || "";
-    this.editClienteNomeOriginal = this.getClienteLabel(item);
+    this.editClienteNomeOriginal = item.clienteLabel || this.getClienteLabel(item);
     this.editData = item.data || "";
     this.editResolucao = item.resolucao || "";
     this.editStatus = item.status;
@@ -227,7 +210,7 @@ export class AbertosComponent implements OnInit, OnDestroy {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluído.", "success");
+      this.toast.show("Chamado excluido.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
@@ -238,6 +221,29 @@ export class AbertosComponent implements OnInit, OnDestroy {
       this.clienteId = "";
       this.router.navigate(["/clientes"]);
     }
+  }
+
+  private buildViewModel(
+    chamadosState: DataState<Chamado[]>,
+    clientesState: DataState<Cliente[]>
+  ): AbertosViewModel {
+    const clientes = this.sortClientes(clientesState.data);
+    const clientesMap = new Map(
+      clientes.filter((item) => !!item.id).map((item) => [item.id as string, item])
+    );
+    const abertos = this.sortByDataDesc(
+      chamadosState.data.filter((item) => item.status === "aberto")
+    ).map((item) => ({
+      ...item,
+      clienteLabel: this.getClienteLabelFromMap(item, clientesMap)
+    }));
+
+    return {
+      carregando: chamadosState.status === "loading" || clientesState.status === "loading",
+      erro: chamadosState.error || clientesState.error,
+      abertos,
+      clientes
+    };
   }
 
   private getToday(): string {
@@ -264,17 +270,27 @@ export class AbertosComponent implements OnInit, OnDestroy {
   }
 
   getClienteLabel(item: Chamado): string {
+    const clientesMap = new Map(
+      this.clientesService
+        .getClientesSnapshot()
+        .filter((cliente) => !!cliente.id)
+        .map((cliente) => [cliente.id as string, cliente])
+    );
+    return this.getClienteLabelFromMap(item, clientesMap);
+  }
+
+  private getClienteLabelFromMap(item: Chamado, clientesMap: Map<string, Cliente>): string {
     if (item.clienteNome) return item.clienteNome;
     if (item.clienteId) {
-      const nome = this.getClienteNomeById(item.clienteId);
+      const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente não informado";
+    return item.cliente || "Cliente nao informado";
   }
 
   private getClienteNomeById(id: string): string {
     if (!id) return "";
-    return this.clientesMap.get(id)?.nome ?? "";
+    return this.clientesService.getClientesSnapshot().find((item) => item.id === id)?.nome ?? "";
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {

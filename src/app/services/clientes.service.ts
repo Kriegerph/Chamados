@@ -10,8 +10,9 @@ import {
   serverTimestamp,
   updateDoc
 } from "firebase/firestore";
-import { BehaviorSubject } from "rxjs";
-import { AuthService } from "./auth.service";
+import { BehaviorSubject, map } from "rxjs";
+import { DataState } from "../models/data-state.model";
+import { AuthService, AuthState } from "./auth.service";
 import { FirebaseService } from "./firebase.service";
 import { Cliente } from "../models/cliente.model";
 
@@ -19,8 +20,13 @@ import { Cliente } from "../models/cliente.model";
   providedIn: "root"
 })
 export class ClientesService {
-  private readonly clientesSubject = new BehaviorSubject<Cliente[]>([]);
-  readonly clientes$ = this.clientesSubject.asObservable();
+  private readonly clientesStateSubject = new BehaviorSubject<DataState<Cliente[]>>({
+    status: "loading",
+    data: [],
+    error: null
+  });
+  readonly clientesState$ = this.clientesStateSubject.asObservable();
+  readonly clientes$ = this.clientesState$.pipe(map((state) => state.data));
   private unsubscribeClientes?: () => void;
   private currentUid: string | null = null;
 
@@ -29,11 +35,16 @@ export class ClientesService {
     private readonly auth: AuthService,
     private readonly zone: NgZone
   ) {
-    this.auth.authState$.subscribe({
-      next: (user) => this.handleAuthChange(user),
+    this.auth.authViewState$.subscribe({
+      next: (authState) => this.handleAuthChange(authState),
       error: (err) => {
         console.error("Erro no authState", err);
         this.stopListener();
+        this.emitState({
+          status: "error",
+          data: [],
+          error: this.toErrorMessage(err)
+        });
       }
     });
   }
@@ -84,15 +95,50 @@ export class ClientesService {
     await deleteDoc(ref);
   }
 
-  private handleAuthChange(user: { uid: string } | null) {
-    const uid = user?.uid ?? null;
-    if (uid === this.currentUid) return;
-    this.stopListener();
-    if (!uid) {
-      this.zone.run(() => this.clientesSubject.next([]));
+  getClientesSnapshot(): Cliente[] {
+    return this.clientesStateSubject.value.data;
+  }
+
+  private handleAuthChange(authState: AuthState) {
+    if (authState.status === "loading") {
+      this.emitState({
+        status: "loading",
+        data: this.clientesStateSubject.value.data,
+        error: null
+      });
       return;
     }
+
+    if (authState.status === "error") {
+      this.stopListener();
+      this.emitState({
+        status: "error",
+        data: [],
+        error: authState.error || "Falha ao resolver autenticacao."
+      });
+      return;
+    }
+
+    const uid = authState.user?.uid ?? null;
+    if (!uid) {
+      this.stopListener();
+      this.emitState({
+        status: "ready",
+        data: [],
+        error: null
+      });
+      return;
+    }
+
+    if (uid === this.currentUid) return;
+
+    this.stopListener();
     this.currentUid = uid;
+    this.emitState({
+      status: "loading",
+      data: [],
+      error: null
+    });
     this.startListener(uid);
   }
 
@@ -104,11 +150,19 @@ export class ClientesService {
           id: docSnap.id,
           ...(docSnap.data() as Cliente)
         }));
-        this.zone.run(() => this.clientesSubject.next(items));
+        this.emitState({
+          status: "ready",
+          data: items,
+          error: null
+        });
       },
       (error) => {
         console.error("Erro ao escutar clientes", error);
-        this.zone.run(() => this.clientesSubject.next([]));
+        this.emitState({
+          status: "error",
+          data: [],
+          error: this.toErrorMessage(error)
+        });
       }
     );
   }
@@ -119,5 +173,16 @@ export class ClientesService {
       this.unsubscribeClientes = undefined;
     }
     this.currentUid = null;
+  }
+
+  private emitState(state: DataState<Cliente[]>) {
+    this.zone.run(() => this.clientesStateSubject.next(state));
+  }
+
+  private toErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return "Erro ao carregar clientes.";
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from "@angular/router";
-import { map, take } from "rxjs";
+import { filter, map, take } from "rxjs";
 import { AuthService } from "../services/auth.service";
 
 @Injectable({
@@ -18,10 +18,11 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   }
 
   private check(url: string) {
-    return this.auth.authState$.pipe(
+    return this.auth.authViewState$.pipe(
+      filter((state) => state.status !== "loading"),
       take(1),
-      map((user) =>
-        user
+      map((state) =>
+        state.user
           ? true
           : this.router.createUrlTree(["/login"], {
               queryParams: { returnUrl: url }

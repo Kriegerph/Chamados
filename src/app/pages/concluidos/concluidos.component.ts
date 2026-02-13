@@ -1,18 +1,37 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Timestamp } from "firebase/firestore";
-import { Subscription } from "rxjs";
-import { Cliente } from "../../models/cliente.model";
+import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
-import { ClientesService } from "../../services/clientes.service";
+import { Cliente } from "../../models/cliente.model";
+import { DataState } from "../../models/data-state.model";
 import { ChamadosService } from "../../services/chamados.service";
+import { ClientesService } from "../../services/clientes.service";
 import { ToastService } from "../../services/toast.service";
 
 interface GrupoConcluidos {
   data: string;
-  items: Chamado[];
+  items: ConcluidoItemView[];
 }
+
+type ConcluidoItemView = Chamado & {
+  clienteLabel: string;
+};
+
+type ConcluidosFiltros = {
+  busca: string;
+  de: string;
+  ate: string;
+};
+
+type ConcluidosViewModel = {
+  carregando: boolean;
+  erro: string | null;
+  clientes: Cliente[];
+  grupos: GrupoConcluidos[];
+  totalConcluidos: number;
+};
 
 @Component({
   selector: "app-concluidos",
@@ -21,13 +40,10 @@ interface GrupoConcluidos {
   templateUrl: "./concluidos.component.html",
   styleUrl: "./concluidos.component.css"
 })
-export class ConcluidosComponent implements OnInit, OnDestroy {
-  concluidos: Chamado[] = [];
-  grupos: GrupoConcluidos[] = [];
+export class ConcluidosComponent {
   busca = "";
   filtroDe = "";
   filtroAte = "";
-  carregando = true;
 
   editando = false;
   editId: string | null = null;
@@ -37,80 +53,46 @@ export class ConcluidosComponent implements OnInit, OnDestroy {
   editData = "";
   editResolucao = "";
 
-  clientes: Cliente[] = [];
-  private clientesMap = new Map<string, Cliente>();
+  private readonly filtrosSubject = new BehaviorSubject<ConcluidosFiltros>({
+    busca: "",
+    de: "",
+    ate: ""
+  });
 
-  private sub = new Subscription();
+  readonly vm$: Observable<ConcluidosViewModel>;
 
   constructor(
     private readonly chamadosService: ChamadosService,
     private readonly clientesService: ClientesService,
     private readonly toast: ToastService
-  ) {}
-
-  ngOnInit() {
-    this.sub.add(
-      this.chamadosService.listenTodos().subscribe({
-        next: (items) => {
-          this.concluidos = this.sortByDataDesc(
-            items.filter((item) => item.status === "concluido")
-          );
-          this.carregando = false;
-          this.aplicarFiltros();
-        },
-        error: (err) => {
-          this.carregando = false;
-          this.toast.show(`Erro ao carregar concluídos: ${err.message}`, "error");
-        }
-      })
-    );
-    this.sub.add(
-      this.clientesService.clientes$.subscribe({
-        next: (items) => {
-          this.clientes = this.sortClientes(items);
-          this.clientesMap = new Map(
-            this.clientes.filter((c) => !!c.id).map((c) => [c.id as string, c])
-          );
-          this.aplicarFiltros();
-        }
-      })
+  ) {
+    this.vm$ = combineLatest([
+      this.chamadosService.todosState$,
+      this.clientesService.clientesState$,
+      this.filtrosSubject
+    ]).pipe(
+      map(([chamadosState, clientesState, filtros]) =>
+        this.buildViewModel(chamadosState, clientesState, filtros)
+      ),
+      tap((viewModel) =>
+        console.debug(`[Concluidos] concluidos$ emitiu ${viewModel.totalConcluidos} itens`)
+      )
     );
   }
 
-  ngOnDestroy() {
-    this.sub.unsubscribe();
-  }
-
-  aplicarFiltros() {
-    const busca = this.busca.trim().toLowerCase();
-    const de = this.filtroDe;
-    const ate = this.filtroAte;
-
-    const filtrados = this.concluidos.filter((item) => {
-      const clienteLabel = this.getClienteLabel(item);
-      const alvo = `${clienteLabel} ${item.motivo || ""}`.toLowerCase();
-      if (busca && !alvo.includes(busca)) return false;
-      if (de && item.data < de) return false;
-      if (ate && item.data > ate) return false;
-      return true;
+  onFiltrosChange() {
+    this.filtrosSubject.next({
+      busca: this.busca,
+      de: this.filtroDe,
+      ate: this.filtroAte
     });
-
-    const map = new Map<string, Chamado[]>();
-    filtrados.forEach((item) => {
-      const data = item.data || "Sem data";
-      if (!map.has(data)) map.set(data, []);
-      map.get(data)!.push(item);
-    });
-
-    const ordenado = Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-    this.grupos = ordenado.map(([data, items]) => ({ data, items }));
   }
 
   limparFiltros() {
     this.busca = "";
     this.filtroDe = "";
     this.filtroAte = "";
-    this.aplicarFiltros();
+    this.onFiltrosChange();
   }
 
   formatHora(item: Chamado): string {
@@ -121,12 +103,12 @@ export class ConcluidosComponent implements OnInit, OnDestroy {
     return "-";
   }
 
-  abrirModalEditar(item: Chamado) {
+  abrirModalEditar(item: ConcluidoItemView) {
     this.editando = true;
     this.editId = item.id ?? null;
     this.editMotivo = item.motivo || "";
     this.editClienteId = item.clienteId || "";
-    this.editClienteNomeOriginal = this.getClienteLabel(item);
+    this.editClienteNomeOriginal = item.clienteLabel;
     this.editData = item.data || "";
     this.editResolucao = item.resolucao || "";
   }
@@ -156,7 +138,7 @@ export class ConcluidosComponent implements OnInit, OnDestroy {
       return;
     }
     if (!resolucao) {
-      this.toast.show("Informe a resolução.", "error");
+      this.toast.show("Informe a resolucao.", "error");
       return;
     }
 
@@ -185,10 +167,65 @@ export class ConcluidosComponent implements OnInit, OnDestroy {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluído.", "success");
+      this.toast.show("Chamado excluido.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
+  }
+
+  private buildViewModel(
+    chamadosState: DataState<Chamado[]>,
+    clientesState: DataState<Cliente[]>,
+    filtros: ConcluidosFiltros
+  ): ConcluidosViewModel {
+    const clientes = this.sortClientes(clientesState.data);
+    const clientesMap = new Map(
+      clientes.filter((item) => !!item.id).map((item) => [item.id as string, item])
+    );
+    const concluidos = this.sortByDataDesc(
+      chamadosState.data.filter((item) => item.status === "concluido")
+    ).map((item) => ({
+      ...item,
+      clienteLabel: this.getClienteLabelFromMap(item, clientesMap)
+    }));
+
+    const grupos = this.agruparPorData(concluidos, filtros);
+
+    return {
+      carregando: chamadosState.status === "loading" || clientesState.status === "loading",
+      erro: chamadosState.error || clientesState.error,
+      clientes,
+      grupos,
+      totalConcluidos: concluidos.length
+    };
+  }
+
+  private agruparPorData(
+    items: ConcluidoItemView[],
+    filtros: ConcluidosFiltros
+  ): GrupoConcluidos[] {
+    const busca = filtros.busca.trim().toLowerCase();
+    const de = filtros.de;
+    const ate = filtros.ate;
+
+    const filtrados = items.filter((item) => {
+      const alvo = `${item.clienteLabel} ${item.motivo || ""}`.toLowerCase();
+      if (busca && !alvo.includes(busca)) return false;
+      if (de && item.data < de) return false;
+      if (ate && item.data > ate) return false;
+      return true;
+    });
+
+    const agrupados = new Map<string, ConcluidoItemView[]>();
+    filtrados.forEach((item) => {
+      const data = item.data || "Sem data";
+      const atual = agrupados.get(data) || [];
+      agrupados.set(data, [...atual, item]);
+    });
+
+    return Array.from(agrupados.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([data, groupedItems]) => ({ data, items: groupedItems }));
   }
 
   private sortByDataDesc(items: Chamado[]): Chamado[] {
@@ -208,18 +245,18 @@ export class ConcluidosComponent implements OnInit, OnDestroy {
     return 0;
   }
 
-  getClienteLabel(item: Chamado): string {
+  private getClienteLabelFromMap(item: Chamado, clientesMap: Map<string, Cliente>): string {
     if (item.clienteNome) return item.clienteNome;
     if (item.clienteId) {
-      const nome = this.getClienteNomeById(item.clienteId);
+      const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente não informado";
+    return item.cliente || "Cliente nao informado";
   }
 
   private getClienteNomeById(id: string): string {
     if (!id) return "";
-    return this.clientesMap.get(id)?.nome ?? "";
+    return this.clientesService.getClientesSnapshot().find((item) => item.id === id)?.nome ?? "";
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {

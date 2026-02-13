@@ -3,6 +3,52 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.dashboard-tools-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-tools-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.year-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.year-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.year-select {
+  min-width: 98px;
+}
+
+.year-total {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+  line-height: 1;
 }
 
 .ranking-filters {
@@ -19,4 +65,23 @@
 .empty {
   padding: 12px 0;
   color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .dashboard-tools {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-tools-left {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-tools-right {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
 }

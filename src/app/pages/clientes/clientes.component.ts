@@ -1,10 +1,16 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Subscription } from "rxjs";
+import { map, Observable } from "rxjs";
 import { Cliente } from "../../models/cliente.model";
 import { ClientesService } from "../../services/clientes.service";
 import { ToastService } from "../../services/toast.service";
+
+type ClientesViewModel = {
+  carregando: boolean;
+  erro: string | null;
+  clientes: Cliente[];
+};
 
 @Component({
   selector: "app-clientes",
@@ -13,14 +19,11 @@ import { ToastService } from "../../services/toast.service";
   templateUrl: "./clientes.component.html",
   styleUrl: "./clientes.component.css"
 })
-export class ClientesComponent implements OnInit, OnDestroy {
+export class ClientesComponent {
   nome = "";
   telefone = "";
   email = "";
   observacao = "";
-
-  clientes: Cliente[] = [];
-  carregando = true;
 
   editando = false;
   editId: string | null = null;
@@ -29,28 +32,19 @@ export class ClientesComponent implements OnInit, OnDestroy {
   editEmail = "";
   editObservacao = "";
 
-  private sub?: Subscription;
+  readonly vm$: Observable<ClientesViewModel>;
 
   constructor(
     private readonly clientesService: ClientesService,
     private readonly toast: ToastService
-  ) {}
-
-  ngOnInit() {
-    this.sub = this.clientesService.clientes$.subscribe({
-      next: (items) => {
-        this.clientes = this.sortByNome(items);
-        this.carregando = false;
-      },
-      error: (err) => {
-        this.carregando = false;
-        this.toast.show(`Erro ao carregar clientes: ${err.message}`, "error");
-      }
-    });
-  }
-
-  ngOnDestroy() {
-    this.sub?.unsubscribe();
+  ) {
+    this.vm$ = this.clientesService.clientesState$.pipe(
+      map((state): ClientesViewModel => ({
+        carregando: state.status === "loading",
+        erro: state.error,
+        clientes: this.sortByNome(state.data)
+      }))
+    );
   }
 
   async cadastrar() {
@@ -121,7 +115,7 @@ export class ClientesComponent implements OnInit, OnDestroy {
     if (!ok) return;
     try {
       await this.clientesService.deleteCliente(item.id);
-      this.toast.show("Cliente excluído.", "success");
+      this.toast.show("Cliente excluido.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }

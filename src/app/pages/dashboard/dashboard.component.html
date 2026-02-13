@@ -1,95 +1,117 @@
-﻿<div class="grid-4">
-  <div class="card mini">
-    <div class="card-title">Chamados do dia</div>
-    <div class="card-value">{{ stats.totalDia }}</div>
-    <div class="card-sub">
-      {{ stats.concluidosHoje }} concluídos / {{ stats.abertosHoje }} abertos
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="grid-4">
+    <div class="card mini">
+      <div class="card-title">Chamados do dia</div>
+      <div class="card-value">{{ vm.stats.totalDia }}</div>
+      <div class="card-sub">
+        {{ vm.stats.concluidosHoje }} concluidos / {{ vm.stats.abertosHoje }} abertos
+      </div>
+    </div>
+    <div class="card mini">
+      <div class="card-title">Total do mes</div>
+      <div class="card-value">{{ vm.stats.totalMes }}</div>
+    </div>
+    <div class="card mini">
+      <div class="card-title">Total do ano</div>
+      <div class="card-value">{{ vm.stats.totalAno }}</div>
+    </div>
+    <div class="card mini">
+      <div class="card-title">Total geral</div>
+      <div class="card-value">{{ vm.stats.totalGeral }}</div>
     </div>
   </div>
-  <div class="card mini">
-    <div class="card-title">Total do mês</div>
-    <div class="card-value">{{ stats.totalMes }}</div>
-  </div>
-  <div class="card mini">
-    <div class="card-title">Total do ano</div>
-    <div class="card-value">{{ stats.totalAno }}</div>
-  </div>
-  <div class="card mini">
-    <div class="card-title">Total geral</div>
-    <div class="card-value">{{ stats.totalGeral }}</div>
-  </div>
-</div>
 
-<div class="card">
-  <div class="dashboard-header">
-    <h2>Totais por mês (ano atual)</h2>
-    <button class="btn" type="button" (click)="carregar()">Atualizar</button>
+  <div class="card">
+    <div class="dashboard-header">
+      <h2>Totais por mes ({{ vm.anoSelecionado }})</h2>
+      <div class="dashboard-tools">
+        <div class="dashboard-tools-left">
+          <div class="year-field">
+            <span class="year-label">Ano</span>
+            <select class="year-select" [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
+              <option *ngFor="let ano of anosDisponiveis" [ngValue]="ano">
+                {{ ano }}
+              </option>
+            </select>
+          </div>
+          <div class="year-total">Total: {{ vm.totalAnoSelecionado }}</div>
+        </div>
+        <div class="dashboard-tools-right">
+          <button class="btn" type="button" (click)="atualizar()">Atualizar</button>
+        </div>
+      </div>
+    </div>
+    <div class="empty" *ngIf="vm.carregando">Carregando...</div>
+    <div class="empty" *ngIf="!vm.carregando && !!vm.erro">{{ vm.erro }}</div>
+    <div class="empty" *ngIf="!vm.carregando && !vm.erro && vm.semChamadosNoAnoSelecionado">
+      Sem chamados neste ano.
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Quantidade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mes of meses; let i = index">
+            <td>{{ mes }}</td>
+            <td>{{ vm.totaisPorMesAnoSelecionado[i] || 0 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Mês</th>
-          <th>Quantidade</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let mes of meses; let i = index">
-          <td>{{ mes }}</td>
-          <td>{{ stats.totaisPorMes[i] || 0 }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
-<div class="card" style="margin-top: 15px;">
-  <div class="dashboard-header">
-    <h2>Top clientes por número de chamados</h2>
-    <div class="ranking-filters">
-      <label>
-        Período
-        <select [(ngModel)]="rankingPeriodo" (change)="carregar()">
-          <option value="hoje">Hoje</option>
-          <option value="7dias">Últimos 7 dias</option>
-          <option value="mes">Mês atual</option>
-          <option value="ano">Ano atual</option>
-          <option value="todos">Todos</option>
-        </select>
-      </label>
-      <label>
-        Status
-        <select [(ngModel)]="rankingStatus" (change)="carregar()">
-          <option value="todos">Todos</option>
-          <option value="concluidos">Apenas concluídos</option>
-        </select>
-      </label>
+  <div class="card" style="margin-top: 15px;">
+    <div class="dashboard-header">
+      <h2>Top clientes por numero de chamados</h2>
+      <div class="ranking-filters">
+        <label>
+          Periodo
+          <select [(ngModel)]="rankingPeriodo" (change)="atualizar()">
+            <option value="hoje">Hoje</option>
+            <option value="7dias">Ultimos 7 dias</option>
+            <option value="mes">Mes atual</option>
+            <option value="ano">Ano atual</option>
+            <option value="todos">Todos</option>
+          </select>
+        </label>
+        <label>
+          Status
+          <select [(ngModel)]="rankingStatus" (change)="atualizar()">
+            <option value="todos">Todos</option>
+            <option value="concluidos">Apenas concluidos</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table" *ngIf="vm.ranking.length > 0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Abertos</th>
+            <th>Concluidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of vm.ranking">
+            <td>{{ item.nome }}</td>
+            <td>{{ item.total }}</td>
+            <td>{{ item.abertos }}</td>
+            <td>{{ item.concluidos }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty" *ngIf="vm.clientesTotal === 0">
+        Nenhum cliente cadastrado. Cadastre clientes para vincular chamados e ver o ranking.
+      </div>
+      <div class="empty" *ngIf="vm.clientesTotal > 0 && vm.ranking.length === 0">
+        Nenhum chamado encontrado para o filtro selecionado.
+      </div>
     </div>
   </div>
-  <div class="table-wrap">
-    <table class="table" *ngIf="ranking.length > 0">
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Total</th>
-          <th>Abertos</th>
-          <th>Concluídos</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of ranking">
-          <td>{{ item.nome }}</td>
-          <td>{{ item.total }}</td>
-          <td>{{ item.abertos }}</td>
-          <td>{{ item.concluidos }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="empty" *ngIf="clientesTotal === 0">
-      Nenhum cliente cadastrado. Cadastre clientes para vincular chamados e ver o ranking.
-    </div>
-    <div class="empty" *ngIf="clientesTotal > 0 && ranking.length === 0">
-      Nenhum chamado encontrado para o filtro selecionado.
-    </div>
-  </div>
-</div>
+</ng-container>

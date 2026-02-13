@@ -1,83 +1,87 @@
-﻿<div class="card">
-  <div class="concluidos-header">
-    <h2>Chamados concluídos</h2>
-    <div class="filters">
-      <input
-        type="search"
-        placeholder="Buscar por cliente ou motivo"
-        name="busca"
-        [(ngModel)]="busca"
-        (input)="aplicarFiltros()"
-      />
-      <input type="date" name="filtroDe" [(ngModel)]="filtroDe" (change)="aplicarFiltros()" />
-      <input type="date" name="filtroAte" [(ngModel)]="filtroAte" (change)="aplicarFiltros()" />
-      <button class="btn" type="button" (click)="limparFiltros()">Limpar</button>
-    </div>
-  </div>
-
-  <div class="concluidos-list">
-    <div *ngIf="!carregando && grupos.length === 0" class="empty">
-      Nenhum chamado concluído para os filtros atuais.
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="card">
+    <div class="concluidos-header">
+      <h2>Chamados concluídos</h2>
+      <div class="filters">
+        <input
+          type="search"
+          placeholder="Buscar por cliente ou motivo"
+          name="busca"
+          [(ngModel)]="busca"
+          (input)="onFiltrosChange()"
+        />
+        <input type="date" name="filtroDe" [(ngModel)]="filtroDe" (change)="onFiltrosChange()" />
+        <input type="date" name="filtroAte" [(ngModel)]="filtroAte" (change)="onFiltrosChange()" />
+        <button class="btn" type="button" (click)="limparFiltros()">Limpar</button>
+      </div>
     </div>
 
-    <div *ngFor="let grupo of grupos" class="concluido-group">
-      <h3>{{ grupo.data }}</h3>
-      <div *ngFor="let item of grupo.items" class="concluido-item">
-        <div>
-          <strong>{{ getClienteLabel(item) }}</strong>
-          <span> - {{ item.motivo || 'Motivo não informado' }}</span>
-        </div>
-        <div class="meta">
-          <span>Tipo: {{ item.tipoCadastro || 'novo' }}</span>
-          <span>Hora: {{ formatHora(item) }}</span>
-        </div>
-        <details>
-          <summary>Resolução</summary>
-          <p>{{ item.resolucao || 'Sem resolução informada.' }}</p>
-        </details>
-        <div class="concluido-actions">
-          <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
-            Editar
-          </button>
-          <button class="btn danger" type="button" (click)="excluirChamado(item)">
-            Excluir
-          </button>
+    <div class="concluidos-list">
+      <div *ngIf="vm.carregando" class="empty">Carregando...</div>
+      <div *ngIf="!vm.carregando && !!vm.erro" class="empty">{{ vm.erro }}</div>
+      <div *ngIf="!vm.carregando && !vm.erro && vm.grupos.length === 0" class="empty">
+        Nenhum chamado concluído.
+      </div>
+
+      <div *ngFor="let grupo of vm.grupos" class="concluido-group">
+        <h3>{{ grupo.data }}</h3>
+        <div *ngFor="let item of grupo.items" class="concluido-item">
+          <div class="concluido-head">
+            <strong>{{ item.clienteLabel }}</strong>
+            <div class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</div>
+          </div>
+          <div class="meta">
+            <span>Tipo: {{ item.tipoCadastro || "novo" }}</span>
+            <span>Hora: {{ formatHora(item) }}</span>
+          </div>
+          <details>
+            <summary>Resolução</summary>
+            <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
+          </details>
+          <div class="concluido-actions">
+            <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
+              Editar
+            </button>
+            <button class="btn danger" type="button" (click)="excluirChamado(item)">
+              Excluir
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="modal" *ngIf="editando">
-  <div class="modal-content">
-    <h3>Editar chamado</h3>
-    <form class="form" (ngSubmit)="salvarEdicao()">
-      <label>
-        Motivo
-        <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
-      </label>
-      <label>
-        Cliente
-        <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
-        <select name="editClienteId" [(ngModel)]="editClienteId">
-          <option value="">Selecione um cliente</option>
-          <option *ngFor="let cliente of clientes" [value]="cliente.id">
-            {{ cliente.nome }}
-          </option>
-        </select>
-      </label>
-      <label>
-        Data
-        <input name="editData" type="date" [(ngModel)]="editData" />
-      </label>
-      <label>
-        Resolução
-        <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
-      </label>
-      <div class="modal-actions">
-        <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
-        <button class="btn primary" type="submit">Salvar</button>
-      </div>
-    </form>
+  <div class="modal" *ngIf="editando">
+    <div class="modal-content">
+      <h3>Editar chamado</h3>
+      <form class="form" (ngSubmit)="salvarEdicao()">
+        <label>
+          Motivo
+          <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
+        </label>
+        <label>
+          Cliente
+          <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
+          <select name="editClienteId" [(ngModel)]="editClienteId">
+            <option value="">Selecione um cliente</option>
+            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
+              {{ cliente.nome }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Data
+          <input name="editData" type="date" [(ngModel)]="editData" />
+        </label>
+        <label>
+          Resolução
+          <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
+</ng-container>

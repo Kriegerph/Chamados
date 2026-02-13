@@ -10,8 +10,9 @@ import {
   serverTimestamp,
   updateDoc
 } from "firebase/firestore";
-import { BehaviorSubject, Observable } from "rxjs";
-import { AuthService } from "./auth.service";
+import { BehaviorSubject, map } from "rxjs";
+import { DataState } from "../models/data-state.model";
+import { AuthService, AuthState } from "./auth.service";
 import { FirebaseService } from "./firebase.service";
 import { Chamado } from "../models/chamado.model";
 
@@ -19,8 +20,13 @@ import { Chamado } from "../models/chamado.model";
   providedIn: "root"
 })
 export class ChamadosService {
-  private readonly todosSubject = new BehaviorSubject<Chamado[]>([]);
-  readonly todos$ = this.todosSubject.asObservable();
+  private readonly todosStateSubject = new BehaviorSubject<DataState<Chamado[]>>({
+    status: "loading",
+    data: [],
+    error: null
+  });
+  readonly todosState$ = this.todosStateSubject.asObservable();
+  readonly todos$ = this.todosState$.pipe(map((state) => state.data));
   private unsubscribeTodos?: () => void;
   private currentUid: string | null = null;
 
@@ -29,11 +35,16 @@ export class ChamadosService {
     private readonly auth: AuthService,
     private readonly zone: NgZone
   ) {
-    this.auth.authState$.subscribe({
-      next: (user) => this.handleAuthChange(user),
+    this.auth.authViewState$.subscribe({
+      next: (authState) => this.handleAuthChange(authState),
       error: (err) => {
         console.error("Erro no authState", err);
         this.stopListener();
+        this.emitState({
+          status: "error",
+          data: [],
+          error: this.toErrorMessage(err)
+        });
       }
     });
   }
@@ -95,10 +106,6 @@ export class ChamadosService {
     await addDoc(this.getChamadosCol(uid), payload);
   }
 
-  listenTodos(): Observable<Chamado[]> {
-    return this.todos$;
-  }
-
   async finalizarChamado(id: string, resolucao: string) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
@@ -121,15 +128,46 @@ export class ChamadosService {
     await deleteDoc(ref);
   }
 
-  private handleAuthChange(user: { uid: string } | null) {
-    const uid = user?.uid ?? null;
-    if (uid === this.currentUid) return;
-    this.stopListener();
-    if (!uid) {
-      this.zone.run(() => this.todosSubject.next([]));
+  private handleAuthChange(authState: AuthState) {
+    if (authState.status === "loading") {
+      this.emitState({
+        status: "loading",
+        data: this.todosStateSubject.value.data,
+        error: null
+      });
       return;
     }
+
+    if (authState.status === "error") {
+      this.stopListener();
+      this.emitState({
+        status: "error",
+        data: [],
+        error: authState.error || "Falha ao resolver autenticacao."
+      });
+      return;
+    }
+
+    const uid = authState.user?.uid ?? null;
+    if (!uid) {
+      this.stopListener();
+      this.emitState({
+        status: "ready",
+        data: [],
+        error: null
+      });
+      return;
+    }
+
+    if (uid === this.currentUid) return;
+
+    this.stopListener();
     this.currentUid = uid;
+    this.emitState({
+      status: "loading",
+      data: [],
+      error: null
+    });
     this.startListener(uid);
   }
 
@@ -141,11 +179,20 @@ export class ChamadosService {
           id: docSnap.id,
           ...(docSnap.data() as Chamado)
         }));
-        this.zone.run(() => this.todosSubject.next(items));
+        this.emitState({
+          status: "ready",
+          data: items,
+          error: null
+        });
+        console.debug(`[Chamados] listener recebeu ${items.length} itens`);
       },
       (error) => {
         console.error("Erro ao escutar chamados", error);
-        this.zone.run(() => this.todosSubject.next([]));
+        this.emitState({
+          status: "error",
+          data: [],
+          error: this.toErrorMessage(error)
+        });
       }
     );
   }
@@ -156,5 +203,16 @@ export class ChamadosService {
       this.unsubscribeTodos = undefined;
     }
     this.currentUid = null;
+  }
+
+  private emitState(state: DataState<Chamado[]>) {
+    this.zone.run(() => this.todosStateSubject.next(state));
+  }
+
+  private toErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return "Erro ao carregar chamados.";
   }
 }

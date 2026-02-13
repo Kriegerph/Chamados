@@ -3,9 +3,42 @@
   color: var(--muted);
 }
 
+.concluido-head {
+  display: grid;
+  gap: 4px;
+}
+
+.concluido-head strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.motivo-texto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height: 1.35;
+  max-height: calc(1.35em * 3);
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .concluido-actions {
   display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  align-content: flex-start;
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 6px;
+}
+
+.concluido-actions .btn {
+  white-space: nowrap;
 }
