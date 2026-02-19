@@ -1,18 +1,76 @@
 <ng-container *ngIf="vm$ | async as vm">
   <div class="card">
     <div class="concluidos-header">
-      <h2>Chamados concluídos</h2>
-      <div class="filters">
-        <input
-          type="search"
-          placeholder="Buscar por cliente ou motivo"
-          name="busca"
-          [(ngModel)]="busca"
-          (input)="onFiltrosChange()"
-        />
-        <input type="date" name="filtroDe" [(ngModel)]="filtroDe" (change)="onFiltrosChange()" />
-        <input type="date" name="filtroAte" [(ngModel)]="filtroAte" (change)="onFiltrosChange()" />
-        <button class="btn" type="button" (click)="limparFiltros()">Limpar</button>
+      <h2>Chamados concluidos</h2>
+      <div class="filters-bar">
+        <form class="filters-toolbar" (ngSubmit)="aplicarFiltros()">
+          <label class="filter-field filter-field--small" for="filtroAno">
+            <span class="filter-label">Ano</span>
+            <select
+              id="filtroAno"
+              name="filtroAno"
+              [(ngModel)]="filtrosDraft.ano"
+              (change)="onAnoDraftChange()"
+            >
+              <option value="">Todos os anos</option>
+              <option *ngFor="let ano of anosDisponiveis" [value]="ano">
+                {{ ano }}
+              </option>
+            </select>
+          </label>
+
+          <label class="filter-field filter-field--small" for="filtroMes">
+            <span class="filter-label">Mes</span>
+            <select
+              id="filtroMes"
+              name="filtroMes"
+              [(ngModel)]="filtrosDraft.mes"
+              [disabled]="!filtrosDraft.ano"
+            >
+              <option value="">{{ filtrosDraft.ano ? "Todos os meses" : "Selecione o ano" }}</option>
+              <option *ngFor="let mes of mesesDisponiveisDraft" [value]="mes.valor">
+                {{ mes.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="filter-field filter-field--data" for="filtroData">
+            <span class="filter-label">Data especifica</span>
+            <input
+              id="filtroData"
+              type="date"
+              name="filtroData"
+              [(ngModel)]="filtrosDraft.data"
+              placeholder="Selecione uma data"
+            />
+          </label>
+
+          <label class="filter-field filter-field--cliente" for="filtroCliente">
+            <span class="filter-label">Cliente</span>
+            <select id="filtroCliente" name="filtroCliente" [(ngModel)]="filtrosDraft.clienteId">
+              <option value="">Todos os clientes</option>
+              <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
+                {{ cliente.nome }}
+              </option>
+            </select>
+          </label>
+
+          <label class="filter-field filter-field--texto" for="filtroTexto">
+            <span class="filter-label">Texto</span>
+            <input
+              id="filtroTexto"
+              type="search"
+              name="filtroTexto"
+              [(ngModel)]="filtrosDraft.texto"
+              placeholder="Motivo, resolucao ou descricao"
+            />
+          </label>
+
+          <div class="filter-actions">
+            <button class="btn primary" type="submit">Aplicar</button>
+            <button class="btn secondary" type="button" (click)="limparFiltros()">Limpar</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -20,31 +78,48 @@
       <div *ngIf="vm.carregando" class="empty">Carregando...</div>
       <div *ngIf="!vm.carregando && !!vm.erro" class="empty">{{ vm.erro }}</div>
       <div *ngIf="!vm.carregando && !vm.erro && vm.grupos.length === 0" class="empty">
-        Nenhum chamado concluído.
+        Nenhum chamado concluido.
       </div>
 
       <div *ngFor="let grupo of vm.grupos" class="concluido-group">
         <h3>{{ grupo.data }}</h3>
         <div *ngFor="let item of grupo.items" class="concluido-item">
-          <div class="concluido-head">
-            <strong>{{ item.clienteLabel }}</strong>
-            <div class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</div>
+          <div class="item-header">
+            <strong class="cliente-nome">{{ item.clienteLabel }}</strong>
+            <div class="item-badges">
+              <span
+                class="meta-badge badge-tipo"
+                [class.antigo]="item.tipoCadastro === 'antigo'"
+                [class.novo]="item.tipoCadastro !== 'antigo'"
+              >
+                {{ item.tipoCadastro === "antigo" ? "Antigo" : "Novo" }}
+              </span>
+              <span class="meta-badge badge-hora">{{ formatHora(item) }}</span>
+            </div>
           </div>
-          <div class="meta">
-            <span>Tipo: {{ item.tipoCadastro || "novo" }}</span>
-            <span>Hora: {{ formatHora(item) }}</span>
+
+          <div class="item-body">
+            <div class="item-label item-label--motivo">Motivo</div>
+            <p class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</p>
           </div>
-          <details>
-            <summary>Resolução</summary>
-            <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
-          </details>
-          <div class="concluido-actions">
-            <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
-              Editar
-            </button>
-            <button class="btn danger" type="button" (click)="excluirChamado(item)">
-              Excluir
-            </button>
+
+          <div class="item-resolucao">
+            <div class="item-label item-label--resolucao">Resolu&ccedil;&atilde;o</div>
+            <div class="resolucao-box">
+              <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
+            </div>
+          </div>
+
+          <div class="item-footer">
+            <div class="item-meta-left">Data: {{ item.data || "-" }}</div>
+            <div class="concluido-actions">
+              <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
+                Editar
+              </button>
+              <button class="btn danger" type="button" (click)="excluirChamado(item)">
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -74,7 +149,7 @@
           <input name="editData" type="date" [(ngModel)]="editData" />
         </label>
         <label>
-          Resolução
+          Resolucao
           <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
         </label>
         <div class="modal-actions">
