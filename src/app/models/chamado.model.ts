@@ -24,5 +24,7 @@ export interface DashboardStats {
   totalDia: number;
   abertosHoje: number;
   concluidosHoje: number;
+  abertosAtuais: number;
+  concluidosAtuais: number;
   totaisPorMes: number[];
 }

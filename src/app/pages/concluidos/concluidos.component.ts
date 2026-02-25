@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Timestamp } from "firebase/firestore";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
@@ -39,6 +39,7 @@ type ConcluidosViewModel = {
   grupos: GrupoConcluidos[];
   totalConcluidos: number;
   totalFiltrados: number;
+  totalExibidos: number;
 };
 
 const FILTROS_INICIAIS: ConcluidosFiltros = {
@@ -69,11 +70,14 @@ const MESES_ABREV = [
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./concluidos.component.html",
-  styleUrl: "./concluidos.component.css"
+  styleUrl: "./concluidos.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConcluidosComponent {
   filtrosDraft: ConcluidosFiltros = this.cloneFiltros(FILTROS_INICIAIS);
   anosDisponiveis: string[] = [];
+  limiteExibicao = 10;
+  readonly limitesExibicao = [10, 20, 50, 100];
 
   editando = false;
   editId: string | null = null;
@@ -88,6 +92,7 @@ export class ConcluidosComponent {
   private readonly filtrosAplicadosSubject = new BehaviorSubject<ConcluidosFiltros>(
     this.cloneFiltros(FILTROS_INICIAIS)
   );
+  private readonly limiteExibicaoSubject = new BehaviorSubject<number>(this.limiteExibicao);
 
   readonly vm$: Observable<ConcluidosViewModel>;
 
@@ -99,14 +104,15 @@ export class ConcluidosComponent {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
-      this.filtrosAplicadosSubject
+      this.filtrosAplicadosSubject,
+      this.limiteExibicaoSubject
     ]).pipe(
-      map(([chamadosState, clientesState, filtros]) =>
-        this.buildViewModel(chamadosState, clientesState, filtros)
+      map(([chamadosState, clientesState, filtros, limiteExibicao]) =>
+        this.buildViewModel(chamadosState, clientesState, filtros, limiteExibicao)
       ),
       tap((viewModel) =>
         console.debug(
-          `[Concluidos] concluidos$ emitiu ${viewModel.totalFiltrados}/${viewModel.totalConcluidos} itens`
+          `[Concluidos] exibindo ${viewModel.totalExibidos}/${viewModel.totalFiltrados} de ${viewModel.totalConcluidos}`
         )
       )
     );
@@ -130,6 +136,10 @@ export class ConcluidosComponent {
     this.filtrosDraft = this.cloneFiltros(FILTROS_INICIAIS);
     this.filtrosAplicados = this.cloneFiltros(FILTROS_INICIAIS);
     this.filtrosAplicadosSubject.next(this.cloneFiltros(this.filtrosAplicados));
+  }
+
+  onLimiteExibicaoChange() {
+    this.limiteExibicaoSubject.next(this.limiteExibicao);
   }
 
   formatHora(item: Chamado): string {
@@ -213,7 +223,8 @@ export class ConcluidosComponent {
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
     clientesState: DataState<Cliente[]>,
-    filtros: ConcluidosFiltros
+    filtros: ConcluidosFiltros,
+    limiteExibicao: number
   ): ConcluidosViewModel {
     const clientes = this.sortClientes(clientesState.data);
     const clientesMap = new Map(
@@ -228,7 +239,8 @@ export class ConcluidosComponent {
 
     this.atualizarOpcoesData(concluidos);
     const filtrados = this.filtrarConcluidos(concluidos, filtros, clientesMap);
-    const grupos = this.agruparPorData(filtrados);
+    const filtradosLimitados = filtrados.slice(0, limiteExibicao);
+    const grupos = this.agruparPorData(filtradosLimitados);
 
     return {
       carregando: chamadosState.status === "loading" || clientesState.status === "loading",
@@ -236,7 +248,8 @@ export class ConcluidosComponent {
       clientes,
       grupos,
       totalConcluidos: concluidos.length,
-      totalFiltrados: filtrados.length
+      totalFiltrados: filtrados.length,
+      totalExibidos: filtradosLimitados.length
     };
   }
 

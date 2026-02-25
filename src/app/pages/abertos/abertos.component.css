@@ -4,7 +4,7 @@
 }
 
 .abertos-table .col-data {
-  width: 116px;
+  width: 120px;
 }
 
 .abertos-table .col-cliente {
@@ -12,12 +12,7 @@
 }
 
 .abertos-table .col-acoes {
-  width: 280px;
-  min-width: 280px;
-}
-
-.abertos-table td {
-  vertical-align: top;
+  width: 286px;
 }
 
 .abertos-table th.col-acoes,
@@ -25,43 +20,22 @@
   text-align: right;
 }
 
-.abertos-table td.col-motivo {
-  min-width: 0;
-}
-
 .motivo-texto {
-  min-width: 0;
+  line-height: 1.4;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  line-height: 1.35;
-  max-height: calc(1.35em * 3);
-  white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-.acoes-botoes {
-  display: flex;
+.action-buttons {
   justify-content: flex-end;
-  align-items: flex-start;
-  align-content: flex-start;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 40px;
 }
 
-.abertos-table .acoes-botoes .btn {
-  white-space: nowrap;
-  margin-left: 0;
-}
-
-.abertos-table .acoes-botoes .btn + .btn {
-  margin-left: 0;
-}
-
-.modal textarea {
-  width: 100%;
+@media (max-width: 640px) {
+  .action-buttons {
+    justify-content: flex-start;
+  }
 }

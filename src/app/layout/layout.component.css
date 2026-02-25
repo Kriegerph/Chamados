@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--surface-page);
+}
+
+.app-main {
+  min-height: 100vh;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition-base);
+}
+
+.app-content {
+  flex: 1;
+  padding: 24px;
+}
+
+.page-enter {
+  min-height: calc(100vh - var(--header-height) - 48px);
+  animation: page-fade-in var(--transition-slow);
+}
+
+.sidebar-closed .app-main {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 30, 45, 0.36);
+  z-index: 24;
+}
+
+@media (max-width: 960px) {
+  .app-main,
+  .sidebar-closed .app-main {
+    margin-left: 0;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+
+  .page-enter {
+    min-height: calc(100vh - var(--header-height) - 32px);
+  }
+}

@@ -1,117 +1,175 @@
-<ng-container *ngIf="vm$ | async as vm">
-  <div class="grid-4">
-    <div class="card mini">
-      <div class="card-title">Chamados do dia</div>
-      <div class="card-value">{{ vm.stats.totalDia }}</div>
-      <div class="card-sub">
-        {{ vm.stats.concluidosHoje }} concluidos / {{ vm.stats.abertosHoje }} abertos
-      </div>
+<section class="page-section dashboard-layout" *ngIf="vm$ | async as vm">
+  <header class="page-header">
+    <div>
+      <h2 class="page-title">Dashboard Executivo</h2>
+      <p class="page-subtitle">Indicadores de chamados e distribuicao operacional.</p>
     </div>
-    <div class="card mini">
-      <div class="card-title">Total do mes</div>
-      <div class="card-value">{{ vm.stats.totalMes }}</div>
+
+    <div class="chart-controls">
+      <label>
+        Ano
+        <select [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
+          <option [ngValue]="ANO_TODOS">Todos</option>
+          <option *ngFor="let ano of vm.anosDisponiveis" [ngValue]="ano">
+            {{ ano }}
+          </option>
+        </select>
+      </label>
     </div>
-    <div class="card mini">
-      <div class="card-title">Total do ano</div>
-      <div class="card-value">{{ vm.stats.totalAno }}</div>
+  </header>
+
+  <div class="dashboard-skeleton-grid" *ngIf="vm.carregando">
+    <div class="grid-4">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
     </div>
-    <div class="card mini">
-      <div class="card-title">Total geral</div>
-      <div class="card-value">{{ vm.stats.totalGeral }}</div>
+    <div class="dashboard-grid">
+      <div class="skeleton" style="min-height: 320px;"></div>
+      <div class="skeleton" style="min-height: 320px;"></div>
     </div>
+    <div class="skeleton" style="min-height: 340px;"></div>
   </div>
 
-  <div class="card">
-    <div class="dashboard-header">
-      <h2>Totais por mes ({{ vm.anoSelecionado }})</h2>
-      <div class="dashboard-tools">
-        <div class="dashboard-tools-left">
-          <div class="year-field">
-            <span class="year-label">Ano</span>
-            <select class="year-select" [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
-              <option *ngFor="let ano of anosDisponiveis" [ngValue]="ano">
-                {{ ano }}
-              </option>
-            </select>
+  <ng-container *ngIf="!vm.carregando">
+    <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+    <ng-container *ngIf="!vm.erro">
+      <div class="dashboard-metrics">
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5h2v14h-2zM5 11h14v2H5z" />
+            </svg>
           </div>
-          <div class="year-total">Total: {{ vm.totalAnoSelecionado }}</div>
-        </div>
-        <div class="dashboard-tools-right">
-          <button class="btn" type="button" (click)="atualizar()">Atualizar</button>
-        </div>
-      </div>
-    </div>
-    <div class="empty" *ngIf="vm.carregando">Carregando...</div>
-    <div class="empty" *ngIf="!vm.carregando && !!vm.erro">{{ vm.erro }}</div>
-    <div class="empty" *ngIf="!vm.carregando && !vm.erro && vm.semChamadosNoAnoSelecionado">
-      Sem chamados neste ano.
-    </div>
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Mes</th>
-            <th>Quantidade</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let mes of meses; let i = index">
-            <td>{{ mes }}</td>
-            <td>{{ vm.totaisPorMesAnoSelecionado[i] || 0 }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ vm.cards.principalLabel }}</span>
+            <strong class="stat-value">{{ vm.cards.principalValor }}</strong>
+            <span class="stat-note">{{ vm.cards.principalNota }}</span>
+          </div>
+        </article>
 
-  <div class="card" style="margin-top: 15px;">
-    <div class="dashboard-header">
-      <h2>Top clientes por numero de chamados</h2>
-      <div class="ranking-filters">
-        <label>
-          Periodo
-          <select [(ngModel)]="rankingPeriodo" (change)="atualizar()">
-            <option value="hoje">Hoje</option>
-            <option value="7dias">Ultimos 7 dias</option>
-            <option value="mes">Mes atual</option>
-            <option value="ano">Ano atual</option>
-            <option value="todos">Todos</option>
-          </select>
-        </label>
-        <label>
-          Status
-          <select [(ngModel)]="rankingStatus" (change)="atualizar()">
-            <option value="todos">Todos</option>
-            <option value="concluidos">Apenas concluidos</option>
-          </select>
-        </label>
+        <article class="card stat-card warning">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3zm13 8H4v10h16z" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ vm.cards.mesLabel }}</span>
+            <strong class="stat-value">{{ vm.cards.mesValor }}</strong>
+            <span class="stat-note">{{ vm.cards.mesNota }}</span>
+          </div>
+        </article>
+
+        <article class="card stat-card neutral">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2 1 7l11 5 9-4.09V17h2V7zM3 10v7l9 4 9-4v-7l-9 4z" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ vm.cards.totalAnoLabel }}</span>
+            <strong class="stat-value">{{ vm.cards.totalAnoValor }}</strong>
+            <span class="stat-note">{{ vm.cards.totalAnoNota }}</span>
+          </div>
+        </article>
+
+        <article class="card stat-card success">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m4.59 7.58-5.66 5.66a1 1 0 0 1-1.41 0l-2.12-2.12 1.41-1.41 1.42 1.42 4.95-4.95z" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Abertos atualmente</span>
+            <strong class="stat-value">{{ vm.cards.abertosValor }}</strong>
+            <span class="stat-note">{{ vm.cards.abertosNota }}</span>
+          </div>
+        </article>
       </div>
-    </div>
-    <div class="table-wrap">
-      <table class="table" *ngIf="vm.ranking.length > 0">
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Total</th>
-            <th>Abertos</th>
-            <th>Concluidos</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of vm.ranking">
-            <td>{{ item.nome }}</td>
-            <td>{{ item.total }}</td>
-            <td>{{ item.abertos }}</td>
-            <td>{{ item.concluidos }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="empty" *ngIf="vm.clientesTotal === 0">
-        Nenhum cliente cadastrado. Cadastre clientes para vincular chamados e ver o ranking.
+
+      <div class="dashboard-grid">
+        <article class="card chart-card">
+          <div class="card-title-row">
+            <div>
+              <h3 class="chart-title">Totais por mes ({{ vm.anoMensalSelecionado }})</h3>
+              <p class="card-subtitle">Total do periodo: {{ vm.totalPeriodoGraficoMensal }}</p>
+            </div>
+
+            <div class="chart-controls chart-controls-inline">
+              <label>
+                Ano
+                <select [(ngModel)]="anoMensalSelecionado" (change)="onAnoMensalChange()">
+                  <option *ngFor="let ano of vm.anosMensalDisponiveis" [ngValue]="ano">
+                    {{ ano }}
+                  </option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <canvas #monthlyChart></canvas>
+        </article>
+
+        <article class="card chart-card">
+          <div class="card-title-row">
+            <div>
+              <h3 class="chart-title">Top 5 Clientes</h3>
+              <p class="card-subtitle">Ranking por periodo em {{ vm.anoSelecionadoLabel | lowercase }}</p>
+            </div>
+
+            <div class="chart-controls chart-controls-inline">
+              <label>
+                Periodo
+                <select [(ngModel)]="topClientesPeriodo" (change)="onTopClientesPeriodoChange()">
+                  <option *ngFor="let periodo of periodosTopClientes" [ngValue]="periodo.value">
+                    {{ periodo.label }}
+                  </option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <canvas #clientsChart></canvas>
+          <div class="empty-state" *ngIf="vm.topClientes.length === 0">
+            Nenhum chamado encontrado para o periodo selecionado.
+          </div>
+        </article>
       </div>
-      <div class="empty" *ngIf="vm.clientesTotal > 0 && vm.ranking.length === 0">
-        Nenhum chamado encontrado para o filtro selecionado.
-      </div>
-    </div>
-  </div>
-</ng-container>
+
+      <article class="card chart-card dashboard-full-width">
+        <div class="card-title-row card-title-row-wrap">
+          <div>
+            <h3 class="chart-title">Chamados por dia ({{ vm.graficoDiario.mesLabel }}/{{ vm.graficoDiario.ano }})</h3>
+            <p class="card-subtitle">Total do mes: {{ vm.graficoDiario.totalMes }}</p>
+          </div>
+
+          <div class="chart-controls chart-controls-inline">
+            <label>
+              Ano
+              <select [(ngModel)]="anoDiarioSelecionado" (change)="onGraficoDiarioFiltroChange()">
+                <option *ngFor="let ano of vm.anosDisponiveis" [ngValue]="ano">
+                  {{ ano }}
+                </option>
+              </select>
+            </label>
+            <label>
+              Mes
+              <select [(ngModel)]="mesDiarioSelecionado" (change)="onGraficoDiarioFiltroChange()">
+                <option *ngFor="let mes of meses; let i = index" [ngValue]="i + 1">
+                  {{ mes }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <canvas #dailyChart></canvas>
+        <div class="empty-state daily-empty" *ngIf="vm.graficoDiario.semChamados">
+          Sem chamados neste mes.
+        </div>
+      </article>
+    </ng-container>
+  </ng-container>
+</section>

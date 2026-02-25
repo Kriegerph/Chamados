@@ -1,3 +1,84 @@
-.table td div {
+.clientes-layout {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  height: 75vh;
+  min-height: 520px;
+}
+
+.clientes-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.clientes-form-col {
+  max-width: 460px;
+}
+
+.clientes-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.clientes-form-actions {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.clientes-list-col .card-title-row {
+  flex: 0 0 auto;
+}
+
+.clientes-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #e1e8f4;
+  border-radius: 12px;
+  background: #fcfdff;
+  box-shadow: inset 0 10px 16px -14px rgba(24, 42, 68, 0.25);
+}
+
+.clientes-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.cliente-contato div {
   line-height: 1.4;
+}
+
+.clientes-list-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.clientes-list-scroll::-webkit-scrollbar-thumb {
+  background: #cfdaec;
+  border-radius: 999px;
+  border: 2px solid #f8fbff;
+}
+
+.clientes-list-scroll::-webkit-scrollbar-track {
+  background: #f3f7fd;
+}
+
+@media (max-width: 1024px) {
+  .clientes-layout {
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .clientes-form-col {
+    max-width: none;
+  }
+
+  .clientes-list-scroll {
+    max-height: 58vh;
+  }
 }

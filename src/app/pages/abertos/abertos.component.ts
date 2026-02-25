@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Timestamp } from "firebase/firestore";
@@ -27,7 +27,8 @@ type AbertosViewModel = {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./abertos.component.html",
-  styleUrl: "./abertos.component.css"
+  styleUrl: "./abertos.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AbertosComponent {
   modoCadastro: "novo" | "antigo" = "novo";

@@ -1,85 +1,95 @@
-<ng-container *ngIf="vm$ | async as vm">
-  <div class="card">
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <header class="page-header">
+    <div>
+      <h2 class="page-title">Chamados Concluidos</h2>
+      <p class="page-subtitle">Filtre e acompanhe historico de chamados finalizados.</p>
+    </div>
+    <label class="field concluidos-limitador">
+      <span class="field-label">Exibir</span>
+      <select name="limiteExibicao" [(ngModel)]="limiteExibicao" (change)="onLimiteExibicaoChange()">
+        <option *ngFor="let limite of limitesExibicao" [ngValue]="limite">{{ limite }}</option>
+      </select>
+    </label>
+  </header>
+
+  <div class="skeleton" style="min-height: 120px;" *ngIf="vm.carregando"></div>
+
+  <article class="card" *ngIf="!vm.carregando">
     <div class="concluidos-header">
-      <h2>Chamados concluidos</h2>
-      <div class="filters-bar">
-        <form class="filters-toolbar" (ngSubmit)="aplicarFiltros()">
-          <label class="filter-field filter-field--small" for="filtroAno">
-            <span class="filter-label">Ano</span>
-            <select
-              id="filtroAno"
-              name="filtroAno"
-              [(ngModel)]="filtrosDraft.ano"
-              (change)="onAnoDraftChange()"
-            >
-              <option value="">Todos os anos</option>
-              <option *ngFor="let ano of anosDisponiveis" [value]="ano">
-                {{ ano }}
-              </option>
-            </select>
-          </label>
+      <h3 class="card-title">Filtros</h3>
+      <form class="filters-toolbar" (ngSubmit)="aplicarFiltros()">
+        <label class="filter-field filter-field--small filter-field--ano" for="filtroAno">
+          <span class="field-label">Ano</span>
+          <select
+            id="filtroAno"
+            name="filtroAno"
+            [(ngModel)]="filtrosDraft.ano"
+            (change)="onAnoDraftChange()"
+          >
+            <option value="">Todos os anos</option>
+            <option *ngFor="let ano of anosDisponiveis" [value]="ano">
+              {{ ano }}
+            </option>
+          </select>
+        </label>
 
-          <label class="filter-field filter-field--small" for="filtroMes">
-            <span class="filter-label">Mes</span>
-            <select
-              id="filtroMes"
-              name="filtroMes"
-              [(ngModel)]="filtrosDraft.mes"
-              [disabled]="!filtrosDraft.ano"
-            >
-              <option value="">{{ filtrosDraft.ano ? "Todos os meses" : "Selecione o ano" }}</option>
-              <option *ngFor="let mes of mesesDisponiveisDraft" [value]="mes.valor">
-                {{ mes.label }}
-              </option>
-            </select>
-          </label>
+        <label class="filter-field filter-field--small filter-field--mes" for="filtroMes">
+          <span class="field-label">Mes</span>
+          <select
+            id="filtroMes"
+            name="filtroMes"
+            [(ngModel)]="filtrosDraft.mes"
+            [disabled]="!filtrosDraft.ano"
+          >
+            <option value="">{{ filtrosDraft.ano ? "Todos os meses" : "Selecione o ano" }}</option>
+            <option *ngFor="let mes of mesesDisponiveisDraft" [value]="mes.valor">
+              {{ mes.label }}
+            </option>
+          </select>
+        </label>
 
-          <label class="filter-field filter-field--data" for="filtroData">
-            <span class="filter-label">Data especifica</span>
-            <input
-              id="filtroData"
-              type="date"
-              name="filtroData"
-              [(ngModel)]="filtrosDraft.data"
-              placeholder="Selecione uma data"
-            />
-          </label>
+        <label class="filter-field filter-field--data" for="filtroData">
+          <span class="field-label">Data especifica</span>
+          <input
+            id="filtroData"
+            type="date"
+            name="filtroData"
+            [(ngModel)]="filtrosDraft.data"
+            placeholder="Selecione uma data"
+          />
+        </label>
 
-          <label class="filter-field filter-field--cliente" for="filtroCliente">
-            <span class="filter-label">Cliente</span>
-            <select id="filtroCliente" name="filtroCliente" [(ngModel)]="filtrosDraft.clienteId">
-              <option value="">Todos os clientes</option>
-              <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
-                {{ cliente.nome }}
-              </option>
-            </select>
-          </label>
+        <label class="filter-field filter-field--cliente" for="filtroCliente">
+          <span class="field-label">Cliente</span>
+          <select id="filtroCliente" name="filtroCliente" [(ngModel)]="filtrosDraft.clienteId">
+            <option value="">Todos os clientes</option>
+            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
+              {{ cliente.nome }}
+            </option>
+          </select>
+        </label>
 
-          <label class="filter-field filter-field--texto" for="filtroTexto">
-            <span class="filter-label">Texto</span>
-            <input
-              id="filtroTexto"
-              type="search"
-              name="filtroTexto"
-              [(ngModel)]="filtrosDraft.texto"
-              placeholder="Motivo, resolucao ou descricao"
-            />
-          </label>
+        <label class="filter-field filter-field--texto" for="filtroTexto">
+          <span class="field-label">Texto</span>
+          <input
+            id="filtroTexto"
+            type="search"
+            name="filtroTexto"
+            [(ngModel)]="filtrosDraft.texto"
+            placeholder="Motivo, resolucao ou descricao"
+          />
+        </label>
 
-          <div class="filter-actions">
-            <button class="btn primary" type="submit">Aplicar</button>
-            <button class="btn secondary" type="button" (click)="limparFiltros()">Limpar</button>
-          </div>
-        </form>
-      </div>
+        <div class="filter-actions">
+          <button class="btn primary" type="submit">Aplicar</button>
+          <button class="btn secondary" type="button" (click)="limparFiltros()">Limpar</button>
+        </div>
+      </form>
     </div>
 
     <div class="concluidos-list">
-      <div *ngIf="vm.carregando" class="empty">Carregando...</div>
-      <div *ngIf="!vm.carregando && !!vm.erro" class="empty">{{ vm.erro }}</div>
-      <div *ngIf="!vm.carregando && !vm.erro && vm.grupos.length === 0" class="empty">
-        Nenhum chamado concluido.
-      </div>
+      <div *ngIf="!!vm.erro" class="empty-state">{{ vm.erro }}</div>
+      <div *ngIf="!vm.erro && vm.grupos.length === 0" class="empty-state">Nenhum chamado concluido.</div>
 
       <div *ngFor="let grupo of vm.grupos" class="concluido-group">
         <h3>{{ grupo.data }}</h3>
@@ -99,12 +109,12 @@
           </div>
 
           <div class="item-body">
-            <div class="item-label item-label--motivo">Motivo</div>
+            <div class="item-label">Motivo</div>
             <p class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</p>
           </div>
 
           <div class="item-resolucao">
-            <div class="item-label item-label--resolucao">Resolu&ccedil;&atilde;o</div>
+            <div class="item-label">Resolucao</div>
             <div class="resolucao-box">
               <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
             </div>
@@ -124,18 +134,18 @@
         </div>
       </div>
     </div>
-  </div>
+  </article>
 
   <div class="modal" *ngIf="editando">
     <div class="modal-content">
       <h3>Editar chamado</h3>
       <form class="form" (ngSubmit)="salvarEdicao()">
         <label>
-          Motivo
+          <span>Motivo</span>
           <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
         </label>
         <label>
-          Cliente
+          <span>Cliente</span>
           <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
           <select name="editClienteId" [(ngModel)]="editClienteId">
             <option value="">Selecione um cliente</option>
@@ -145,11 +155,11 @@
           </select>
         </label>
         <label>
-          Data
+          <span>Data</span>
           <input name="editData" type="date" [(ngModel)]="editData" />
         </label>
         <label>
-          Resolucao
+          <span>Resolucao</span>
           <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
         </label>
         <div class="modal-actions">
@@ -159,4 +169,4 @@
       </form>
     </div>
   </div>
-</ng-container>
+</section>

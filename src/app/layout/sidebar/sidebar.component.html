@@ -1,0 +1,75 @@
+<aside
+  class="sidebar"
+  [class.open]="open"
+  [class.closed]="!open"
+  [class.mobile-mode]="mobileMode"
+>
+  <div class="sidebar-head">
+    <a class="brand" routerLink="/dashboard" (click)="onNavigate()" [title]="!open ? 'Dashboard' : ''">
+      <img class="brand-logo" src="/brand/logo.png" alt="Logo" />
+      <div class="brand-text" *ngIf="open">
+        <strong>Sistema Chamados</strong>
+        <span>Painel operacional</span>
+      </div>
+    </a>
+
+    <button
+      class="sidebar-icon-btn"
+      type="button"
+      (click)="onToggleClick()"
+      [attr.aria-label]="open ? 'Recolher menu' : 'Expandir menu'"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path *ngIf="open" d="M15 6 9 12l6 6" />
+        <path *ngIf="!open" d="m9 6 6 6-6 6" />
+      </svg>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ng-container *ngFor="let item of menuItems">
+      <button class="nav-item nav-item-disabled" *ngIf="item.disabled" type="button" [disabled]="true">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path [attr.d]="getIconPath(item.icon)"></path>
+          </svg>
+        </span>
+        <span class="nav-label" *ngIf="open">{{ item.label }}</span>
+        <span class="nav-badge" *ngIf="open">Em breve</span>
+      </button>
+
+      <a
+        class="nav-item"
+        *ngIf="!item.disabled"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        [title]="!open ? item.label : ''"
+        (click)="onNavigate()"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path [attr.d]="getIconPath(item.icon)"></path>
+          </svg>
+        </span>
+        <span class="nav-label" *ngIf="open">{{ item.label }}</span>
+      </a>
+    </ng-container>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button
+      class="nav-item nav-item-logout"
+      type="button"
+      [title]="!open ? 'Sair' : ''"
+      (click)="onLogoutClick()"
+    >
+      <span class="nav-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path [attr.d]="getIconPath('logout')"></path>
+        </svg>
+      </span>
+      <span class="nav-label" *ngIf="open">Sair</span>
+    </button>
+  </div>
+</aside>

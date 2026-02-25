@@ -1,64 +1,94 @@
-<ng-container *ngIf="vm$ | async as vm">
-  <div class="grid-2">
-    <div class="card">
-      <h2>Cadastrar cliente</h2>
-      <form class="form" (ngSubmit)="cadastrar()">
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <header class="page-header">
+    <div>
+      <h2 class="page-title">Clientes</h2>
+      <p class="page-subtitle">Gerencie cadastro de clientes vinculados aos chamados.</p>
+    </div>
+    <span class="status-chip">Total: {{ vm.clientes.length }}</span>
+  </header>
+
+  <div class="grid-2" *ngIf="vm.carregando">
+    <div class="skeleton" style="min-height: 310px;"></div>
+    <div class="skeleton" style="min-height: 310px;"></div>
+  </div>
+
+  <div class="clientes-layout" *ngIf="!vm.carregando">
+    <article class="card clientes-col clientes-form-col">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Novo cliente</h3>
+          <p class="card-subtitle">Dados basicos para identificacao e contato.</p>
+        </div>
+      </div>
+
+      <form class="form clientes-form" (ngSubmit)="cadastrar()">
         <label>
-          Nome
+          <span>Nome</span>
           <input name="nome" type="text" [(ngModel)]="nome" required />
         </label>
         <label>
-          Telefone
+          <span>Telefone</span>
           <input name="telefone" type="text" [(ngModel)]="telefone" placeholder="Opcional" />
         </label>
         <label>
-          Observação
+          <span>Email</span>
+          <input name="email" type="email" [(ngModel)]="email" placeholder="Opcional" />
+        </label>
+        <label>
+          <span>Observacao</span>
           <textarea name="observacao" rows="3" [(ngModel)]="observacao" placeholder="Opcional"></textarea>
         </label>
-        <button class="btn primary" type="submit">Salvar</button>
-      </form>
-    </div>
 
-    <div class="card">
-      <h2>Clientes</h2>
-      <div class="table-wrap">
-        <table class="table">
+        <div class="clientes-form-actions">
+          <button class="btn primary" type="submit">Salvar cliente</button>
+        </div>
+      </form>
+    </article>
+
+    <article class="card clientes-col clientes-list-col">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Lista de clientes</h3>
+          <p class="card-subtitle">Edite ou remova cadastros existentes.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+      <div class="clientes-list-scroll" *ngIf="!vm.erro">
+        <table class="table clientes-table">
           <thead>
             <tr>
               <th>Nome</th>
               <th>Contato</th>
-              <th>Ações</th>
+              <th>Acoes</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngIf="vm.carregando">
-              <td colspan="3">Carregando...</td>
-            </tr>
-            <tr *ngIf="!vm.carregando && !!vm.erro">
-              <td colspan="3">{{ vm.erro }}</td>
-            </tr>
-            <tr *ngIf="!vm.carregando && !vm.erro && vm.clientes.length === 0">
+            <tr *ngIf="vm.clientes.length === 0">
               <td colspan="3">Nenhum cliente cadastrado.</td>
             </tr>
             <tr *ngFor="let item of vm.clientes">
               <td>{{ item.nome }}</td>
-              <td>
+              <td class="cliente-contato">
                 <div>{{ item.telefone || "-" }}</div>
                 <div>{{ item.email || "-" }}</div>
               </td>
               <td>
-                <button class="btn secondary" type="button" (click)="abrirEdicao(item)">
-                  Editar
-                </button>
-                <button class="btn danger" type="button" (click)="excluir(item)">
-                  Excluir
-                </button>
+                <div class="btn-group">
+                  <button class="btn secondary" type="button" (click)="abrirEdicao(item)">
+                    Editar
+                  </button>
+                  <button class="btn danger" type="button" (click)="excluir(item)">
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
+    </article>
   </div>
 
   <div class="modal" *ngIf="editando">
@@ -66,19 +96,19 @@
       <h3>Editar cliente</h3>
       <form class="form" (ngSubmit)="salvarEdicao()">
         <label>
-          Nome
+          <span>Nome</span>
           <input name="editNome" type="text" [(ngModel)]="editNome" required />
         </label>
         <label>
-          Telefone
+          <span>Telefone</span>
           <input name="editTelefone" type="text" [(ngModel)]="editTelefone" />
         </label>
         <label>
-          Email
+          <span>Email</span>
           <input name="editEmail" type="email" [(ngModel)]="editEmail" />
         </label>
         <label>
-          Observação
+          <span>Observacao</span>
           <textarea name="editObservacao" rows="3" [(ngModel)]="editObservacao"></textarea>
         </label>
         <div class="modal-actions">
@@ -88,4 +118,4 @@
       </form>
     </div>
   </div>
-</ng-container>
+</section>

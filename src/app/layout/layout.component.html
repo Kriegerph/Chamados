@@ -1,0 +1,38 @@
+<div
+  class="app-shell"
+  [class.sidebar-open]="sidebarOpen"
+  [class.sidebar-closed]="!sidebarOpen"
+  [class.mobile-mode]="mobileMode"
+>
+  <app-sidebar
+    [open]="sidebarOpen"
+    [mobileMode]="mobileMode"
+    (routeSelected)="onRouteSelected()"
+    (requestToggle)="toggleSidebar()"
+    (requestLogout)="sair()"
+  ></app-sidebar>
+
+  <div class="sidebar-overlay" *ngIf="mobileMode && sidebarOpen" aria-hidden="true"></div>
+
+  <div class="app-main">
+    <app-header
+      [title]="(pageTitle$ | async) || 'Painel'"
+      [userEmail]="(user$ | async)?.email || 'Usuario'"
+    ></app-header>
+
+    <main class="app-content">
+      <div class="page-enter">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div
+  class="toast"
+  *ngIf="(toast$ | async) as toast"
+  [class.success]="toast.type === 'success'"
+  [class.error]="toast.type === 'error'"
+>
+  {{ toast.message }}
+</div>

@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { map, Observable } from "rxjs";
 import { Cliente } from "../../models/cliente.model";
@@ -17,7 +17,8 @@ type ClientesViewModel = {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./clientes.component.html",
-  styleUrl: "./clientes.component.css"
+  styleUrl: "./clientes.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClientesComponent {
   nome = "";

@@ -1,0 +1,99 @@
+.dashboard-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 280px !important;
+}
+
+.chart-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chart-controls select {
+  width: auto;
+  min-width: 90px;
+  height: 34px;
+  padding: 0 28px 0 10px;
+}
+
+.chart-controls-inline label {
+  font-size: 12px;
+}
+
+.chart-controls-inline select {
+  min-width: 120px;
+}
+
+.card-title-row-wrap {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.daily-empty {
+  margin-top: 10px;
+}
+
+.dashboard-full-width canvas {
+  height: 310px !important;
+}
+
+.dashboard-skeleton-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-skeleton-grid .skeleton {
+  min-height: 120px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-metrics {
+    grid-template-columns: 1fr;
+  }
+}
