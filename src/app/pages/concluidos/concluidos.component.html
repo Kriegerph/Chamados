@@ -1,13 +1,13 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
   <header class="page-header">
     <div>
-      <h2 class="page-title">Chamados Concluidos</h2>
-      <p class="page-subtitle">Filtre e acompanhe historico de chamados finalizados.</p>
+      <h2 class="page-title">Chamados Concluídos</h2>
+      <p class="page-subtitle">Filtre e acompanhe o histórico de chamados finalizados.</p>
     </div>
     <label class="field concluidos-limitador">
       <span class="field-label">Exibir</span>
-      <select name="limiteExibicao" [(ngModel)]="limiteExibicao" (change)="onLimiteExibicaoChange()">
-        <option *ngFor="let limite of limitesExibicao" [ngValue]="limite">{{ limite }}</option>
+      <select name="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
       </select>
     </label>
   </header>
@@ -24,6 +24,7 @@
             id="filtroAno"
             name="filtroAno"
             [(ngModel)]="filtrosDraft.ano"
+            (ngModelChange)="onFiltroDraftChange()"
             (change)="onAnoDraftChange()"
           >
             <option value="">Todos os anos</option>
@@ -34,11 +35,12 @@
         </label>
 
         <label class="filter-field filter-field--small filter-field--mes" for="filtroMes">
-          <span class="field-label">Mes</span>
+          <span class="field-label">Mês</span>
           <select
             id="filtroMes"
             name="filtroMes"
             [(ngModel)]="filtrosDraft.mes"
+            (ngModelChange)="onFiltroDraftChange()"
             [disabled]="!filtrosDraft.ano"
           >
             <option value="">{{ filtrosDraft.ano ? "Todos os meses" : "Selecione o ano" }}</option>
@@ -49,19 +51,25 @@
         </label>
 
         <label class="filter-field filter-field--data" for="filtroData">
-          <span class="field-label">Data especifica</span>
+          <span class="field-label">Data específica</span>
           <input
             id="filtroData"
             type="date"
             name="filtroData"
             [(ngModel)]="filtrosDraft.data"
+            (ngModelChange)="onFiltroDraftChange()"
             placeholder="Selecione uma data"
           />
         </label>
 
         <label class="filter-field filter-field--cliente" for="filtroCliente">
           <span class="field-label">Cliente</span>
-          <select id="filtroCliente" name="filtroCliente" [(ngModel)]="filtrosDraft.clienteId">
+          <select
+            id="filtroCliente"
+            name="filtroCliente"
+            [(ngModel)]="filtrosDraft.clienteId"
+            (ngModelChange)="onFiltroDraftChange()"
+          >
             <option value="">Todos os clientes</option>
             <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
               {{ cliente.nome }}
@@ -76,7 +84,8 @@
             type="search"
             name="filtroTexto"
             [(ngModel)]="filtrosDraft.texto"
-            placeholder="Motivo, resolucao ou descricao"
+            (ngModelChange)="onFiltroDraftChange()"
+            placeholder="Motivo, resolução ou descrição"
           />
         </label>
 
@@ -89,7 +98,9 @@
 
     <div class="concluidos-list">
       <div *ngIf="!!vm.erro" class="empty-state">{{ vm.erro }}</div>
-      <div *ngIf="!vm.erro && vm.grupos.length === 0" class="empty-state">Nenhum chamado concluido.</div>
+      <div *ngIf="!vm.erro && vm.grupos.length === 0" class="empty-state">
+        Nenhum chamado concluído.
+      </div>
 
       <div *ngFor="let grupo of vm.grupos" class="concluido-group">
         <h3>{{ grupo.data }}</h3>
@@ -110,13 +121,13 @@
 
           <div class="item-body">
             <div class="item-label">Motivo</div>
-            <p class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</p>
+            <p class="motivo-texto">{{ item.motivo || "Motivo não informado" }}</p>
           </div>
 
           <div class="item-resolucao">
-            <div class="item-label">Resolucao</div>
+            <div class="item-label">Descrição da resolução</div>
             <div class="resolucao-box">
-              <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
+              <p>{{ item.resolucao || "Sem resolução informada." }}</p>
             </div>
           </div>
 
@@ -133,6 +144,62 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="concluidos-pagination-wrap" *ngIf="!vm.erro && vm.totalItems > 0">
+      <div class="concluidos-pagination-meta">
+        Exibindo {{ vm.inicioIntervalo }}-{{ vm.fimIntervalo }} de {{ vm.totalItems }} concluídos
+      </div>
+
+      <nav class="concluidos-pagination" aria-label="Paginação de chamados concluídos">
+        <button
+          class="btn pagination-btn"
+          type="button"
+          (click)="irParaPrimeiraPagina(vm.totalPages)"
+          [disabled]="vm.currentPage <= 1"
+        >
+          Primeiro
+        </button>
+        <button
+          class="btn pagination-btn"
+          type="button"
+          (click)="irParaPaginaAnterior(vm.totalPages)"
+          [disabled]="vm.currentPage <= 1"
+        >
+          Anterior
+        </button>
+
+        <ng-container *ngFor="let page of vm.pageButtons; trackBy: trackByPageButton">
+          <span class="pagination-ellipsis" *ngIf="page === '...'">...</span>
+          <button
+            *ngIf="page !== '...'"
+            class="btn pagination-btn pagination-btn-number"
+            type="button"
+            [class.active]="page === vm.currentPage"
+            [disabled]="page === vm.currentPage"
+            (click)="irParaPagina(page, vm.totalPages)"
+          >
+            {{ page }}
+          </button>
+        </ng-container>
+
+        <button
+          class="btn pagination-btn"
+          type="button"
+          (click)="irParaProximaPagina(vm.totalPages)"
+          [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
+        >
+          Próximo
+        </button>
+        <button
+          class="btn pagination-btn"
+          type="button"
+          (click)="irParaUltimaPagina(vm.totalPages)"
+          [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
+        >
+          Último
+        </button>
+      </nav>
     </div>
   </article>
 
@@ -159,7 +226,7 @@
           <input name="editData" type="date" [(ngModel)]="editData" />
         </label>
         <label>
-          <span>Resolucao</span>
+          <span>Descrição da resolução</span>
           <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
         </label>
         <div class="modal-actions">

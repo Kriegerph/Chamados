@@ -83,8 +83,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   readonly ANO_TODOS = ANO_TODOS;
   readonly periodosTopClientes: Array<{ value: TopClientesPeriodo; label: string }> = [
     { value: "todos", label: "Todos" },
-    { value: "ultimoMes", label: "Ultimo mes" },
-    { value: "ultimos7Dias", label: "Ultimos 7 dias" },
+    { value: "ultimoMes", label: "Último mês" },
+    { value: "ultimos7Dias", label: "Últimos 7 dias" },
     { value: "hoje", label: "Hoje" }
   ];
 
@@ -225,9 +225,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const today = this.getToday();
     const [anoAtual, mesAtual, diaAtual] = today.split("-").map(Number);
     const mesAtualLabel = this.meses[mesAtual - 1];
+    const anoBaseCardMes = anoSelecionado === ANO_TODOS ? anoAtual : anoSelecionado;
+    const chamadosMesReferencia = items.filter((item) => {
+      const data = item.data || "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return false;
+      const [ano, mes] = data.split("-").map(Number);
+      return ano === anoBaseCardMes && mes === mesAtual;
+    });
 
     let totalAnoSelecionado = 0;
-    let totalMesAtualAnoSelecionado = 0;
     let totalHojeAnoSelecionado = 0;
     let abertosHojeAnoSelecionado = 0;
     let concluidosHojeAnoSelecionado = 0;
@@ -245,7 +251,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (anoSelecionado !== ANO_TODOS && ano !== anoSelecionado) return;
 
       totalAnoSelecionado += 1;
-      if (mes === mesAtual) totalMesAtualAnoSelecionado += 1;
       if (mes === mesAtual && dia === diaAtual) {
         totalHojeAnoSelecionado += 1;
         if (item.status === "aberto") abertosHojeAnoSelecionado += 1;
@@ -259,22 +264,25 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const principalLabel = anoEhAtual ? "Chamados hoje" : "Chamados no ano";
     const principalValor = anoEhAtual ? totalHojeAnoSelecionado : totalAnoSelecionado;
     const principalNota = anoEhAtual
-      ? `${abertosHojeAnoSelecionado} abertos / ${concluidosHojeAnoSelecionado} concluidos`
+      ? `${abertosHojeAnoSelecionado} abertos / ${concluidosHojeAnoSelecionado} concluídos`
       : `Ano ${sufixoAno}`;
 
     return {
       principalLabel,
       principalValor,
       principalNota,
-      mesLabel: `Chamados em ${mesAtualLabel} (${sufixoAno})`,
-      mesValor: totalMesAtualAnoSelecionado,
-      mesNota: "Mes de referencia no ano selecionado",
+      mesLabel: `Chamados em ${mesAtualLabel}`,
+      mesValor: chamadosMesReferencia.length,
+      mesNota:
+        anoSelecionado === ANO_TODOS
+          ? "Mês de referência no ano atual"
+          : "Mês de referência no ano selecionado",
       totalAnoLabel: anoSelecionado === ANO_TODOS ? "Total geral" : "Total do ano selecionado",
       totalAnoValor: totalAnoSelecionado,
       totalAnoNota:
         anoSelecionado === ANO_TODOS ? "Acumulado de todos os anos" : `Acumulado de ${anoSelecionado}`,
       abertosValor: abertosAtuais,
-      abertosNota: `Concluidos atualmente: ${concluidosAtuais}`
+      abertosNota: `Concluídos atualmente: ${concluidosAtuais}`
     };
   }
 
@@ -486,7 +494,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         labels: this.meses,
         datasets: [
           {
-            label: "Chamados por mes",
+            label: "Chamados por mês",
             data,
             borderRadius: 6,
             backgroundColor: "#4a81ea",

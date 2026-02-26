@@ -104,3 +104,4 @@ export class CadastroComponent {
     console.warn("Cadastro falhou", { code, message });
   }
 }
+

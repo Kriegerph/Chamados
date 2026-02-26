@@ -100,6 +100,6 @@ export class AuthService {
     if (error instanceof Error && error.message) {
       return error.message;
     }
-    return "Falha ao carregar autenticacao.";
+    return "Falha ao carregar autenticação.";
   }
 }

@@ -28,9 +28,9 @@ export class SidebarComponent {
   readonly menuItems: NavItem[] = [
     { label: "Dashboard", route: "/dashboard", icon: "dashboard" },
     { label: "Chamados Abertos", route: "/abertos", icon: "folder-open", exact: true },
-    { label: "Chamados Concluidos", route: "/concluidos", icon: "check-square" },
+    { label: "Chamados Concluídos", route: "/concluidos", icon: "check-square" },
     { label: "Clientes", route: "/clientes", icon: "users" },
-    { label: "Relatorios", route: "", icon: "bar-chart", disabled: true }
+    { label: "Relatórios", route: "", icon: "bar-chart", disabled: true }
   ];
 
   onNavigate() {

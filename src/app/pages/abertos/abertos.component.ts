@@ -211,7 +211,7 @@ export class AbertosComponent {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluido.", "success");
+      this.toast.show("Chamado excluído.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
@@ -286,7 +286,7 @@ export class AbertosComponent {
       const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente nao informado";
+    return item.cliente || "Cliente não informado";
   }
 
   private getClienteNomeById(id: string): string {

@@ -114,7 +114,7 @@ export class ClientesService {
       this.emitState({
         status: "error",
         data: [],
-        error: authState.error || "Falha ao resolver autenticacao."
+        error: authState.error || "Falha ao resolver autenticação."
       });
       return;
     }

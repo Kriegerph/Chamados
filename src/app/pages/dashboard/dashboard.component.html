@@ -2,7 +2,7 @@
   <header class="page-header">
     <div>
       <h2 class="page-title">Dashboard Executivo</h2>
-      <p class="page-subtitle">Indicadores de chamados e distribuicao operacional.</p>
+      <p class="page-subtitle">Indicadores de chamados e distribuição operacional.</p>
     </div>
 
     <div class="chart-controls">
@@ -94,8 +94,8 @@
         <article class="card chart-card">
           <div class="card-title-row">
             <div>
-              <h3 class="chart-title">Totais por mes ({{ vm.anoMensalSelecionado }})</h3>
-              <p class="card-subtitle">Total do periodo: {{ vm.totalPeriodoGraficoMensal }}</p>
+              <h3 class="chart-title">Totais por mês ({{ vm.anoMensalSelecionado }})</h3>
+              <p class="card-subtitle">Total do período: {{ vm.totalPeriodoGraficoMensal }}</p>
             </div>
 
             <div class="chart-controls chart-controls-inline">
@@ -116,12 +116,12 @@
           <div class="card-title-row">
             <div>
               <h3 class="chart-title">Top 5 Clientes</h3>
-              <p class="card-subtitle">Ranking por periodo em {{ vm.anoSelecionadoLabel | lowercase }}</p>
+              <p class="card-subtitle">Ranking por período em {{ vm.anoSelecionadoLabel | lowercase }}</p>
             </div>
 
             <div class="chart-controls chart-controls-inline">
               <label>
-                Periodo
+                Período
                 <select [(ngModel)]="topClientesPeriodo" (change)="onTopClientesPeriodoChange()">
                   <option *ngFor="let periodo of periodosTopClientes" [ngValue]="periodo.value">
                     {{ periodo.label }}
@@ -133,7 +133,7 @@
 
           <canvas #clientsChart></canvas>
           <div class="empty-state" *ngIf="vm.topClientes.length === 0">
-            Nenhum chamado encontrado para o periodo selecionado.
+            Nenhum chamado encontrado para o período selecionado.
           </div>
         </article>
       </div>
@@ -142,7 +142,7 @@
         <div class="card-title-row card-title-row-wrap">
           <div>
             <h3 class="chart-title">Chamados por dia ({{ vm.graficoDiario.mesLabel }}/{{ vm.graficoDiario.ano }})</h3>
-            <p class="card-subtitle">Total do mes: {{ vm.graficoDiario.totalMes }}</p>
+            <p class="card-subtitle">Total do mês: {{ vm.graficoDiario.totalMes }}</p>
           </div>
 
           <div class="chart-controls chart-controls-inline">
@@ -155,7 +155,7 @@
               </select>
             </label>
             <label>
-              Mes
+              Mês
               <select [(ngModel)]="mesDiarioSelecionado" (change)="onGraficoDiarioFiltroChange()">
                 <option *ngFor="let mes of meses; let i = index" [ngValue]="i + 1">
                   {{ mes }}
@@ -167,7 +167,7 @@
 
         <canvas #dailyChart></canvas>
         <div class="empty-state daily-empty" *ngIf="vm.graficoDiario.semChamados">
-          Sem chamados neste mes.
+          Sem chamados neste mês.
         </div>
       </article>
     </ng-container>

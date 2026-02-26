@@ -32,7 +32,7 @@ export class LayoutComponent {
   private readonly titleByRoute: Record<string, string> = {
     dashboard: "Dashboard",
     abertos: "Chamados Abertos",
-    concluidos: "Chamados Concluidos",
+    concluidos: "Chamados Concluídos",
     clientes: "Clientes"
   };
 

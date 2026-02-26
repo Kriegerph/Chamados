@@ -116,7 +116,7 @@ export class ClientesComponent {
     if (!ok) return;
     try {
       await this.clientesService.deleteCliente(item.id);
-      this.toast.show("Cliente excluido.", "success");
+      this.toast.show("Cliente excluído.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }

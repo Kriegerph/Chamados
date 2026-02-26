@@ -32,14 +32,22 @@ type MesFiltroOption = {
   label: string;
 };
 
+type PaginationButton = number | "...";
+
 type ConcluidosViewModel = {
   carregando: boolean;
   erro: string | null;
   clientes: Cliente[];
   grupos: GrupoConcluidos[];
   totalConcluidos: number;
-  totalFiltrados: number;
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  pageButtons: PaginationButton[];
   totalExibidos: number;
+  inicioIntervalo: number;
+  fimIntervalo: number;
 };
 
 const FILTROS_INICIAIS: ConcluidosFiltros = {
@@ -76,8 +84,8 @@ const MESES_ABREV = [
 export class ConcluidosComponent {
   filtrosDraft: ConcluidosFiltros = this.cloneFiltros(FILTROS_INICIAIS);
   anosDisponiveis: string[] = [];
-  limiteExibicao = 10;
-  readonly limitesExibicao = [10, 20, 50, 100];
+  pageSize = 10;
+  readonly pageSizeOptions = [10, 20, 50, 100];
 
   editando = false;
   editId: string | null = null;
@@ -92,7 +100,8 @@ export class ConcluidosComponent {
   private readonly filtrosAplicadosSubject = new BehaviorSubject<ConcluidosFiltros>(
     this.cloneFiltros(FILTROS_INICIAIS)
   );
-  private readonly limiteExibicaoSubject = new BehaviorSubject<number>(this.limiteExibicao);
+  private readonly pageSizeSubject = new BehaviorSubject<number>(this.pageSize);
+  private readonly currentPageSubject = new BehaviorSubject<number>(1);
 
   readonly vm$: Observable<ConcluidosViewModel>;
 
@@ -105,16 +114,20 @@ export class ConcluidosComponent {
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
       this.filtrosAplicadosSubject,
-      this.limiteExibicaoSubject
+      this.pageSizeSubject,
+      this.currentPageSubject
     ]).pipe(
-      map(([chamadosState, clientesState, filtros, limiteExibicao]) =>
-        this.buildViewModel(chamadosState, clientesState, filtros, limiteExibicao)
+      map(([chamadosState, clientesState, filtros, pageSize, currentPage]) =>
+        this.buildViewModel(chamadosState, clientesState, filtros, pageSize, currentPage)
       ),
-      tap((viewModel) =>
+      tap((viewModel) => {
+        if (viewModel.currentPage !== this.currentPageSubject.value) {
+          this.currentPageSubject.next(viewModel.currentPage);
+        }
         console.debug(
-          `[Concluidos] exibindo ${viewModel.totalExibidos}/${viewModel.totalFiltrados} de ${viewModel.totalConcluidos}`
-        )
-      )
+          `[Concluídos] exibindo ${viewModel.totalExibidos}/${viewModel.totalItems} de ${viewModel.totalConcluidos} (página ${viewModel.currentPage}/${viewModel.totalPages || 1})`
+        );
+      })
     );
   }
 
@@ -125,21 +138,61 @@ export class ConcluidosComponent {
 
   onAnoDraftChange() {
     this.filtrosDraft.mes = "";
+    this.onFiltroDraftChange();
+  }
+
+  onFiltroDraftChange() {
+    if (this.currentPageSubject.value === 1) return;
+    this.currentPageSubject.next(1);
   }
 
   aplicarFiltros() {
     this.filtrosAplicados = this.cloneFiltros(this.filtrosDraft);
+    this.currentPageSubject.next(1);
     this.filtrosAplicadosSubject.next(this.cloneFiltros(this.filtrosAplicados));
   }
 
   limparFiltros() {
     this.filtrosDraft = this.cloneFiltros(FILTROS_INICIAIS);
     this.filtrosAplicados = this.cloneFiltros(FILTROS_INICIAIS);
+    this.currentPageSubject.next(1);
     this.filtrosAplicadosSubject.next(this.cloneFiltros(this.filtrosAplicados));
   }
 
-  onLimiteExibicaoChange() {
-    this.limiteExibicaoSubject.next(this.limiteExibicao);
+  onPageSizeChange() {
+    this.currentPageSubject.next(1);
+    this.pageSizeSubject.next(this.pageSize);
+  }
+
+  irParaPrimeiraPagina(totalPages: number) {
+    if (totalPages <= 0) return;
+    this.irParaPagina(1, totalPages);
+  }
+
+  irParaPaginaAnterior(totalPages: number) {
+    if (totalPages <= 0) return;
+    this.irParaPagina(this.currentPageSubject.value - 1, totalPages);
+  }
+
+  irParaPagina(page: number, totalPages: number) {
+    if (totalPages <= 0) return;
+    const paginaClamped = Math.min(Math.max(page, 1), totalPages);
+    if (paginaClamped === this.currentPageSubject.value) return;
+    this.currentPageSubject.next(paginaClamped);
+  }
+
+  irParaProximaPagina(totalPages: number) {
+    if (totalPages <= 0) return;
+    this.irParaPagina(this.currentPageSubject.value + 1, totalPages);
+  }
+
+  irParaUltimaPagina(totalPages: number) {
+    if (totalPages <= 0) return;
+    this.irParaPagina(totalPages, totalPages);
+  }
+
+  trackByPageButton(index: number, item: PaginationButton): string {
+    return `${item}-${index}`;
   }
 
   formatHora(item: Chamado): string {
@@ -185,7 +238,7 @@ export class ConcluidosComponent {
       return;
     }
     if (!resolucao) {
-      this.toast.show("Informe a resolucao.", "error");
+      this.toast.show("Informe a resolução.", "error");
       return;
     }
 
@@ -214,7 +267,7 @@ export class ConcluidosComponent {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluido.", "success");
+      this.toast.show("Chamado excluído.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
@@ -224,7 +277,8 @@ export class ConcluidosComponent {
     chamadosState: DataState<Chamado[]>,
     clientesState: DataState<Cliente[]>,
     filtros: ConcluidosFiltros,
-    limiteExibicao: number
+    pageSize: number,
+    currentPage: number
   ): ConcluidosViewModel {
     const clientes = this.sortClientes(clientesState.data);
     const clientesMap = new Map(
@@ -239,8 +293,13 @@ export class ConcluidosComponent {
 
     this.atualizarOpcoesData(concluidos);
     const filtrados = this.filtrarConcluidos(concluidos, filtros, clientesMap);
-    const filtradosLimitados = filtrados.slice(0, limiteExibicao);
-    const grupos = this.agruparPorData(filtradosLimitados);
+    const totalItems = filtrados.length;
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 0;
+    const paginaAtual = totalPages > 0 ? Math.min(Math.max(currentPage, 1), totalPages) : 1;
+    const start = totalItems > 0 ? (paginaAtual - 1) * pageSize : 0;
+    const fim = totalItems > 0 ? Math.min(start + pageSize, totalItems) : 0;
+    const itensPaginados = filtrados.slice(start, fim);
+    const grupos = this.agruparPorData(itensPaginados);
 
     return {
       carregando: chamadosState.status === "loading" || clientesState.status === "loading",
@@ -248,9 +307,37 @@ export class ConcluidosComponent {
       clientes,
       grupos,
       totalConcluidos: concluidos.length,
-      totalFiltrados: filtrados.length,
-      totalExibidos: filtradosLimitados.length
+      totalItems,
+      totalPages,
+      currentPage: paginaAtual,
+      pageSize,
+      pageButtons: this.buildPageButtons(totalPages, paginaAtual),
+      totalExibidos: itensPaginados.length,
+      inicioIntervalo: totalItems > 0 ? start + 1 : 0,
+      fimIntervalo: fim
     };
+  }
+
+  private buildPageButtons(totalPages: number, currentPage: number): PaginationButton[] {
+    if (totalPages <= 0) return [];
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
+    if (currentPage >= totalPages - 3) {
+      return [
+        1,
+        "...",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages
+      ];
+    }
+    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
   }
 
   private filtrarConcluidos(
@@ -392,7 +479,7 @@ export class ConcluidosComponent {
       const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente nao informado";
+    return item.cliente || "Cliente não informado";
   }
 
   private getClienteNomeById(id: string): string {

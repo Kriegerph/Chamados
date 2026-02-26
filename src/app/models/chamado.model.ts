@@ -1,4 +1,4 @@
-﻿import { Timestamp } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 
 export type StatusChamado = "aberto" | "concluido";
 export type TipoCadastro = "novo" | "antigo";

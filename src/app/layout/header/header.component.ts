@@ -8,7 +8,7 @@ import { Component, Input } from "@angular/core";
 })
 export class HeaderComponent {
   @Input() title = "Painel";
-  @Input() userEmail = "Usuario";
+  @Input() userEmail = "Usuário";
 
   get userInitial(): string {
     const email = this.userEmail || "U";
