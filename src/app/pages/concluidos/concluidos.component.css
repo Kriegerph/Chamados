@@ -152,6 +152,17 @@
   overflow-wrap: anywhere;
 }
 
+.item-client {
+  min-width: 0;
+}
+
+.cliente-secundario {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
 .item-badges {
   display: flex;
   flex-wrap: wrap;
@@ -214,9 +225,25 @@
   flex-wrap: wrap;
 }
 
-.item-meta-left {
+.item-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, auto));
+  gap: 8px 18px;
+}
+
+.item-meta-entry {
+  display: grid;
+  gap: 2px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.item-meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #61708b;
 }
 
 .concluido-actions {
@@ -248,6 +275,10 @@
   }
 
   .item-header {
+    grid-template-columns: 1fr;
+  }
+
+  .item-meta {
     grid-template-columns: 1fr;
   }
 

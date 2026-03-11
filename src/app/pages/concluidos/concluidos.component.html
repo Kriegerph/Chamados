@@ -1,8 +1,8 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
   <header class="page-header">
     <div>
-      <h2 class="page-title">Chamados Concluídos</h2>
-      <p class="page-subtitle">Filtre e acompanhe o histórico de chamados finalizados.</p>
+      <h2 class="page-title">Chamados Concluidos</h2>
+      <p class="page-subtitle">Filtre e acompanhe o historico de chamados finalizados.</p>
     </div>
     <label class="field concluidos-limitador">
       <span class="field-label">Exibir</span>
@@ -35,7 +35,7 @@
         </label>
 
         <label class="filter-field filter-field--small filter-field--mes" for="filtroMes">
-          <span class="field-label">Mês</span>
+          <span class="field-label">Mes</span>
           <select
             id="filtroMes"
             name="filtroMes"
@@ -51,7 +51,7 @@
         </label>
 
         <label class="filter-field filter-field--data" for="filtroData">
-          <span class="field-label">Data específica</span>
+          <span class="field-label">Data especifica</span>
           <input
             id="filtroData"
             type="date"
@@ -85,7 +85,7 @@
             name="filtroTexto"
             [(ngModel)]="filtrosDraft.texto"
             (ngModelChange)="onFiltroDraftChange()"
-            placeholder="Motivo, resolução ou descrição"
+            placeholder="Motivo, resolucao ou descricao"
           />
         </label>
 
@@ -99,14 +99,19 @@
     <div class="concluidos-list">
       <div *ngIf="!!vm.erro" class="empty-state">{{ vm.erro }}</div>
       <div *ngIf="!vm.erro && vm.grupos.length === 0" class="empty-state">
-        Nenhum chamado concluído.
+        Nenhum chamado concluido.
       </div>
 
       <div *ngFor="let grupo of vm.grupos" class="concluido-group">
         <h3>{{ grupo.data }}</h3>
         <div *ngFor="let item of grupo.items" class="concluido-item">
           <div class="item-header">
-            <strong class="cliente-nome">{{ item.clienteLabel }}</strong>
+            <div class="item-client">
+              <strong class="cliente-nome">{{ item.clienteLabel }}</strong>
+              <div class="cliente-secundario" *ngIf="!!item.funcionarioLabel">
+                {{ item.funcionarioLabel }}
+              </div>
+            </div>
             <div class="item-badges">
               <span
                 class="meta-badge badge-tipo"
@@ -121,18 +126,27 @@
 
           <div class="item-body">
             <div class="item-label">Motivo</div>
-            <p class="motivo-texto">{{ item.motivo || "Motivo não informado" }}</p>
+            <p class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</p>
           </div>
 
           <div class="item-resolucao">
-            <div class="item-label">Descrição da resolução</div>
+            <div class="item-label">Descricao da resolucao</div>
             <div class="resolucao-box">
-              <p>{{ item.resolucao || "Sem resolução informada." }}</p>
+              <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
             </div>
           </div>
 
           <div class="item-footer">
-            <div class="item-meta-left">Data: {{ item.data || "-" }}</div>
+            <div class="item-meta">
+              <div class="item-meta-entry">
+                <span class="item-meta-label">Data</span>
+                <span>{{ item.data || "-" }}</span>
+              </div>
+              <div class="item-meta-entry">
+                <span class="item-meta-label">Tempo de Atendimento</span>
+                <span>{{ formatTempoAtendimento(item) }}</span>
+              </div>
+            </div>
             <div class="concluido-actions">
               <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
                 Editar
@@ -148,10 +162,10 @@
 
     <div class="concluidos-pagination-wrap" *ngIf="!vm.erro && vm.totalItems > 0">
       <div class="concluidos-pagination-meta">
-        Exibindo {{ vm.inicioIntervalo }}-{{ vm.fimIntervalo }} de {{ vm.totalItems }} concluídos
+        Exibindo {{ vm.inicioIntervalo }}-{{ vm.fimIntervalo }} de {{ vm.totalItems }} concluidos
       </div>
 
-      <nav class="concluidos-pagination" aria-label="Paginação de chamados concluídos">
+      <nav class="concluidos-pagination" aria-label="Paginacao de chamados concluidos">
         <button
           class="btn pagination-btn"
           type="button"
@@ -189,7 +203,7 @@
           (click)="irParaProximaPagina(vm.totalPages)"
           [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
         >
-          Próximo
+          Proximo
         </button>
         <button
           class="btn pagination-btn"
@@ -197,7 +211,7 @@
           (click)="irParaUltimaPagina(vm.totalPages)"
           [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
         >
-          Último
+          Ultimo
         </button>
       </nav>
     </div>
@@ -211,22 +225,53 @@
           <span>Motivo</span>
           <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
         </label>
+
         <label>
-          <span>Cliente</span>
-          <div class="helper-text">Atual: {{ editClienteNomeOriginal || "Sem cliente" }}</div>
-          <select name="editClienteId" [(ngModel)]="editClienteId">
-            <option value="">Selecione um cliente</option>
-            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
-              {{ cliente.nome }}
+          <span>Empresa</span>
+          <div class="helper-text">Atual: {{ editEmpresaNomeOriginal || "Sem empresa vinculada" }}</div>
+          <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
+            Cliente historico: {{ editClienteNomeOriginal }}
+          </div>
+          <select
+            name="editEmpresaId"
+            [(ngModel)]="editEmpresaId"
+            (ngModelChange)="onEditEmpresaChange($event)"
+          >
+            <option value="">Selecione uma empresa</option>
+            <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+              {{ empresa.nomeEmpresa }}
             </option>
           </select>
         </label>
+        <label>
+          <span>Funcionario</span>
+          <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionario vinculado" }}</div>
+          <select
+            name="editFuncionarioId"
+            [(ngModel)]="editFuncionarioId"
+            [disabled]="!editEmpresaId || editCarregandoFuncionarios"
+          >
+            <option value="">
+              {{
+                !editEmpresaId
+                  ? "Selecione a empresa primeiro"
+                  : editCarregandoFuncionarios
+                    ? "Carregando funcionarios..."
+                    : "Selecione um funcionario"
+              }}
+            </option>
+            <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
+              {{ getFuncionarioOptionLabel(funcionario) }}
+            </option>
+          </select>
+        </label>
+
         <label>
           <span>Data</span>
           <input name="editData" type="date" [(ngModel)]="editData" />
         </label>
         <label>
-          <span>Descrição da resolução</span>
+          <span>Descricao da resolucao</span>
           <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
         </label>
         <div class="modal-actions">

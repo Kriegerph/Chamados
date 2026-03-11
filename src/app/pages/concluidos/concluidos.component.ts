@@ -1,13 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Timestamp } from "firebase/firestore";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
 import { Cliente } from "../../models/cliente.model";
 import { DataState } from "../../models/data-state.model";
+import { Empresa, Funcionario } from "../../models/empresa.model";
 import { ChamadosService } from "../../services/chamados.service";
 import { ClientesService } from "../../services/clientes.service";
+import { EmpresasService } from "../../services/empresas.service";
 import { ToastService } from "../../services/toast.service";
 
 interface GrupoConcluidos {
@@ -17,6 +19,7 @@ interface GrupoConcluidos {
 
 type ConcluidoItemView = Chamado & {
   clienteLabel: string;
+  funcionarioLabel: string;
 };
 
 type ConcluidosFiltros = {
@@ -38,6 +41,7 @@ type ConcluidosViewModel = {
   carregando: boolean;
   erro: string | null;
   clientes: Cliente[];
+  empresas: Empresa[];
   grupos: GrupoConcluidos[];
   totalConcluidos: number;
   totalItems: number;
@@ -90,10 +94,16 @@ export class ConcluidosComponent {
   editando = false;
   editId: string | null = null;
   editMotivo = "";
-  editClienteId = "";
   editClienteNomeOriginal = "";
+  editEmpresaId = "";
+  editEmpresaNomeOriginal = "";
+  editFuncionarioId = "";
+  editFuncionarioNomeOriginal = "";
   editData = "";
   editResolucao = "";
+  editUsaEmpresa = false;
+  editFuncionarios: Funcionario[] = [];
+  editCarregandoFuncionarios = false;
 
   private filtrosAplicados: ConcluidosFiltros = this.cloneFiltros(FILTROS_INICIAIS);
   private mesesDisponiveisPorAno = new Map<string, MesFiltroOption[]>();
@@ -108,25 +118,33 @@ export class ConcluidosComponent {
   constructor(
     private readonly chamadosService: ChamadosService,
     private readonly clientesService: ClientesService,
-    private readonly toast: ToastService
+    private readonly empresasService: EmpresasService,
+    private readonly toast: ToastService,
+    private readonly zone: NgZone,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
+      this.empresasService.empresasState$,
       this.filtrosAplicadosSubject,
       this.pageSizeSubject,
       this.currentPageSubject
     ]).pipe(
-      map(([chamadosState, clientesState, filtros, pageSize, currentPage]) =>
-        this.buildViewModel(chamadosState, clientesState, filtros, pageSize, currentPage)
+      map(([chamadosState, clientesState, empresasState, filtros, pageSize, currentPage]) =>
+        this.buildViewModel(
+          chamadosState,
+          clientesState,
+          empresasState,
+          filtros,
+          pageSize,
+          currentPage
+        )
       ),
       tap((viewModel) => {
         if (viewModel.currentPage !== this.currentPageSubject.value) {
           this.currentPageSubject.next(viewModel.currentPage);
         }
-        console.debug(
-          `[Concluídos] exibindo ${viewModel.totalExibidos}/${viewModel.totalItems} de ${viewModel.totalConcluidos} (página ${viewModel.currentPage}/${viewModel.totalPages || 1})`
-        );
       })
     );
   }
@@ -203,42 +221,96 @@ export class ConcluidosComponent {
     return "-";
   }
 
-  abrirModalEditar(item: ConcluidoItemView) {
+  formatTempoAtendimento(item: Chamado): string {
+    const minutos = item.tempoAtendimentoMinutos;
+    if (typeof minutos !== "number" || Number.isNaN(minutos)) {
+      return "Tempo nao registrado";
+    }
+
+    const totalMinutos = Math.max(0, Math.floor(minutos));
+    if (totalMinutos < 60) {
+      return `${totalMinutos} min`;
+    }
+
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    return `${horas}h ${minutosRestantes.toString().padStart(2, "0")}m`;
+  }
+
+  async abrirModalEditar(item: ConcluidoItemView) {
     this.editando = true;
     this.editId = item.id ?? null;
     this.editMotivo = item.motivo || "";
-    this.editClienteId = item.clienteId || "";
-    this.editClienteNomeOriginal = item.clienteLabel;
     this.editData = item.data || "";
     this.editResolucao = item.resolucao || "";
+    this.editUsaEmpresa = this.isChamadoEmpresa(item);
+    this.editClienteNomeOriginal = this.editUsaEmpresa ? "" : item.clienteLabel;
+    this.editEmpresaId = "";
+    this.editEmpresaNomeOriginal = "";
+    this.editFuncionarioId = "";
+    this.editFuncionarioNomeOriginal = "";
+    this.editFuncionarios = [];
+
+    this.editEmpresaId = item.empresaId || this.getEmpresaIdByNome(item.empresa || "");
+    this.editEmpresaNomeOriginal = item.empresa || "";
+    this.editFuncionarioId = item.funcionarioId || "";
+    this.editFuncionarioNomeOriginal = item.funcionario || "";
+    if (this.editEmpresaId) {
+      await this.carregarFuncionariosEdicao(this.editEmpresaId);
+      if (!this.editFuncionarioId && this.editFuncionarioNomeOriginal) {
+        this.runInZone(() => {
+          this.editFuncionarioId =
+            this.editFuncionarios.find(
+              (funcionario) => funcionario.nomeFuncionario === this.editFuncionarioNomeOriginal
+            )?.id || "";
+        });
+      }
+    }
   }
 
   cancelarEdicao() {
     this.editando = false;
     this.editId = null;
     this.editMotivo = "";
-    this.editClienteId = "";
     this.editClienteNomeOriginal = "";
+    this.editEmpresaId = "";
+    this.editEmpresaNomeOriginal = "";
+    this.editFuncionarioId = "";
+    this.editFuncionarioNomeOriginal = "";
     this.editData = "";
     this.editResolucao = "";
+    this.editUsaEmpresa = false;
+    this.editFuncionarios = [];
+  }
+
+  async onEditEmpresaChange(empresaId: string) {
+    this.iniciarCarregamentoFuncionariosEdicao(empresaId);
+
+    if (!empresaId) {
+      this.finalizarCarregamentoFuncionariosEdicao([]);
+      return;
+    }
+
+    await this.carregarFuncionariosEdicao(empresaId);
   }
 
   async salvarEdicao() {
     if (!this.editId) return;
     const motivo = this.editMotivo.trim();
-    const clienteId = this.editClienteId;
-    const clienteNome = clienteId
-      ? this.getClienteNomeById(clienteId)
-      : this.editClienteNomeOriginal;
     const data = this.editData;
     const resolucao = this.editResolucao.trim();
+    const empresa = this.getEmpresaNomeById(this.editEmpresaId) || this.editEmpresaNomeOriginal;
+    const funcionario =
+      this.getFuncionarioNomeById(this.editFuncionarioId, this.editFuncionarios) ||
+      this.editFuncionarioNomeOriginal;
 
-    if (!motivo || !clienteNome || !data) {
-      this.toast.show("Preencha motivo, cliente e data.", "error");
+    if (!motivo || !data || !resolucao) {
+      this.toast.show("Preencha motivo, data e resolucao.", "error");
       return;
     }
-    if (!resolucao) {
-      this.toast.show("Informe a resolução.", "error");
+
+    if (!this.editEmpresaId || !empresa || !this.editFuncionarioId || !funcionario) {
+      this.toast.show("Preencha empresa e funcionario.", "error");
       return;
     }
 
@@ -246,16 +318,21 @@ export class ConcluidosComponent {
       const payload: Partial<Chamado> = {
         motivo,
         data,
-        clienteNome,
-        cliente: clienteNome,
-        resolucao
+        resolucao,
+        empresa,
+        empresaId: this.editEmpresaId,
+        funcionario,
+        funcionarioId: this.editFuncionarioId
       };
-      if (clienteId) {
-        payload.clienteId = clienteId;
+      if (this.editUsaEmpresa) {
+        payload.cliente = empresa;
+        payload.clienteNome = empresa;
       }
       await this.chamadosService.updateChamado(this.editId, payload);
-      this.toast.show("Chamado atualizado.", "success");
-      this.cancelarEdicao();
+      this.runInZone(() => {
+        this.toast.show("Chamado atualizado.", "success");
+        this.cancelarEdicao();
+      });
     } catch (err: any) {
       this.toast.show(`Erro ao atualizar: ${err.message}`, "error");
     }
@@ -267,7 +344,7 @@ export class ConcluidosComponent {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluído.", "success");
+      this.toast.show("Chamado excluido.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
@@ -276,6 +353,7 @@ export class ConcluidosComponent {
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
     clientesState: DataState<Cliente[]>,
+    empresasState: DataState<Empresa[]>,
     filtros: ConcluidosFiltros,
     pageSize: number,
     currentPage: number
@@ -284,11 +362,16 @@ export class ConcluidosComponent {
     const clientesMap = new Map(
       clientes.filter((item) => !!item.id).map((item) => [item.id as string, item])
     );
+    const empresas = this.sortEmpresas(empresasState.data);
+    const empresasMap = new Map(
+      empresas.filter((item) => !!item.id).map((item) => [item.id as string, item])
+    );
     const concluidos = this.sortByDataDesc(
       chamadosState.data.filter((item) => item.status === "concluido")
     ).map((item) => ({
       ...item,
-      clienteLabel: this.getClienteLabelFromMap(item, clientesMap)
+      clienteLabel: this.getClienteLabelFromMap(item, clientesMap, empresasMap),
+      funcionarioLabel: item.funcionario || ""
     }));
 
     this.atualizarOpcoesData(concluidos);
@@ -302,9 +385,13 @@ export class ConcluidosComponent {
     const grupos = this.agruparPorData(itensPaginados);
 
     return {
-      carregando: chamadosState.status === "loading" || clientesState.status === "loading",
-      erro: chamadosState.error || clientesState.error,
+      carregando:
+        chamadosState.status === "loading" ||
+        clientesState.status === "loading" ||
+        empresasState.status === "loading",
+      erro: chamadosState.error || clientesState.error || empresasState.error,
       clientes,
+      empresas,
       grupos,
       totalConcluidos: concluidos.length,
       totalItems,
@@ -371,9 +458,8 @@ export class ConcluidosComponent {
       }
 
       if (textoBusca) {
-        const descricaoExtra = this.getDescricaoCampo(item);
         const alvo = this.normalizarTexto(
-          `${item.motivo || ""} ${item.resolucao || ""} ${descricaoExtra} ${item.clienteLabel || ""}`
+          `${item.motivo || ""} ${item.resolucao || ""} ${item.clienteLabel || ""} ${item.funcionarioLabel || ""}`
         );
         if (!alvo.includes(textoBusca)) return false;
       }
@@ -443,11 +529,6 @@ export class ConcluidosComponent {
     return typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data);
   }
 
-  private getDescricaoCampo(item: ConcluidoItemView): string {
-    const value = (item as unknown as { descricao?: unknown }).descricao;
-    return typeof value === "string" ? value : "";
-  }
-
   private normalizarTexto(value: string): string {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   }
@@ -473,21 +554,103 @@ export class ConcluidosComponent {
     return 0;
   }
 
-  private getClienteLabelFromMap(item: Chamado, clientesMap: Map<string, Cliente>): string {
+  private getClienteLabelFromMap(
+    item: Chamado,
+    clientesMap: Map<string, Cliente>,
+    empresasMap: Map<string, Empresa>
+  ): string {
+    if (item.empresa) return item.empresa;
+    if (item.empresaId) {
+      const nomeEmpresa = empresasMap.get(item.empresaId)?.nomeEmpresa;
+      if (nomeEmpresa) return nomeEmpresa;
+    }
     if (item.clienteNome) return item.clienteNome;
     if (item.clienteId) {
       const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente não informado";
+    return item.cliente || "Cliente nao informado";
   }
 
-  private getClienteNomeById(id: string): string {
+  private isChamadoEmpresa(item: Chamado): boolean {
+    return !!(item.empresaId || item.empresa || item.funcionarioId || item.funcionario);
+  }
+
+  private async carregarFuncionariosEdicao(empresaId: string) {
+    try {
+      const funcionarios = await this.empresasService.listFuncionarios(empresaId);
+      this.finalizarCarregamentoFuncionariosEdicao(
+        this.sortFuncionarios(funcionarios.filter((item) => item.ativo !== false))
+      );
+    } catch (err: any) {
+      this.runInZone(() => {
+        this.toast.show(`Erro ao carregar funcionarios: ${err.message}`, "error");
+        this.finalizarCarregamentoFuncionariosEdicao([]);
+      });
+    }
+  }
+
+  private getEmpresaNomeById(id: string): string {
     if (!id) return "";
-    return this.clientesService.getClientesSnapshot().find((item) => item.id === id)?.nome ?? "";
+    return this.empresasService.getEmpresasSnapshot().find((item) => item.id === id)?.nomeEmpresa ?? "";
+  }
+
+  private getEmpresaIdByNome(nomeEmpresa: string): string {
+    return (
+      this.empresasService.getEmpresasSnapshot().find((item) => item.nomeEmpresa === nomeEmpresa)?.id ??
+      ""
+    );
+  }
+
+  private getFuncionarioNomeById(id: string, funcionarios: Funcionario[]): string {
+    if (!id) return "";
+    return funcionarios.find((item) => item.id === id)?.nomeFuncionario ?? "";
+  }
+
+  getFuncionarioOptionLabel(funcionario: Funcionario): string {
+    return funcionario.nomeFuncionario || "";
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {
     return [...items].sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+  }
+
+  private sortEmpresas(items: Empresa[]): Empresa[] {
+    return [...items].sort((a, b) =>
+      (a.nomeEmpresa || "").localeCompare(b.nomeEmpresa || "")
+    );
+  }
+
+  private sortFuncionarios(items: Funcionario[]): Funcionario[] {
+    return [...items].sort((a, b) =>
+      (a.nomeFuncionario || "").localeCompare(b.nomeFuncionario || "")
+    );
+  }
+
+  private iniciarCarregamentoFuncionariosEdicao(empresaId: string) {
+    this.runInZone(() => {
+      this.editEmpresaId = empresaId;
+      this.editFuncionarioId = "";
+      this.editFuncionarios = [];
+      this.editCarregandoFuncionarios = !!empresaId;
+      this.forcarAtualizacaoFormulario();
+    });
+  }
+
+  private finalizarCarregamentoFuncionariosEdicao(funcionarios: Funcionario[]) {
+    this.runInZone(() => {
+      this.editFuncionarios = [...funcionarios];
+      this.editCarregandoFuncionarios = false;
+      this.forcarAtualizacaoFormulario();
+    });
+  }
+
+  private forcarAtualizacaoFormulario() {
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  private runInZone<T>(callback: () => T): T {
+    return NgZone.isInAngularZone() ? callback() : this.zone.run(callback);
   }
 }

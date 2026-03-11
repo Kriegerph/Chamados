@@ -1,0 +1,249 @@
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <header class="page-header">
+    <div>
+      <h2 class="page-title">Relatorios</h2>
+      <p class="page-subtitle">
+        Gere relatorios exportaveis em Excel com filtros aplicados diretamente no frontend.
+      </p>
+    </div>
+    <span class="status-chip">Linhas: {{ vm.dataset.rows.length }}</span>
+  </header>
+
+  <div class="grid-3" *ngIf="vm.carregando">
+    <div class="skeleton" style="min-height: 260px;"></div>
+    <div class="skeleton" style="min-height: 260px;"></div>
+    <div class="skeleton" style="min-height: 260px;"></div>
+  </div>
+
+  <div class="relatorios-layout" *ngIf="!vm.carregando">
+    <article class="card relatorios-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Filtros gerais</h3>
+          <p class="card-subtitle">Selecione os dados que serao considerados na exportacao.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+      <form class="form relatorios-form" *ngIf="!vm.erro">
+        <div class="empresas-selector">
+          <div class="empresas-selector-header">
+            <div>
+              <span class="field-label">Empresas</span>
+              <div class="helper-text">Empresas marcadas entram no relatorio.</div>
+            </div>
+
+            <div class="btn-group empresas-selector-actions">
+              <button
+                class="btn secondary empresas-selector-btn"
+                type="button"
+                (click)="selecionarTodasEmpresas(vm.empresas)"
+                [disabled]="vm.empresas.length === 0 || todasEmpresasSelecionadas(vm.empresas)"
+              >
+                Selecionar todos
+              </button>
+              <button
+                class="btn secondary empresas-selector-btn"
+                type="button"
+                (click)="desmarcarTodasEmpresas()"
+                [disabled]="filtros.empresaIds.length === 0"
+              >
+                Desmarcar todos
+              </button>
+            </div>
+          </div>
+
+          <div class="empresas-selector-list" *ngIf="vm.empresas.length > 0; else semEmpresas">
+            <label
+              class="empresa-selector-item"
+              *ngFor="let empresa of vm.empresas; trackBy: trackByEmpresa"
+            >
+              <input
+                type="checkbox"
+                [checked]="isEmpresaSelecionada(empresa.id)"
+                (change)="onEmpresaCheckboxChange(empresa.id, $event)"
+              />
+              <span>{{ empresa.nomeEmpresa }}</span>
+            </label>
+          </div>
+        </div>
+
+        <ng-template #semEmpresas>
+          <div class="empty-state">Nenhuma empresa cadastrada.</div>
+        </ng-template>
+
+        <div class="relatorios-date-grid">
+          <label>
+            <span>Data inicial</span>
+            <input
+              name="dataInicial"
+              type="date"
+              [(ngModel)]="filtros.dataInicial"
+              (ngModelChange)="onFiltroChange()"
+            />
+          </label>
+
+          <label>
+            <span>Data final</span>
+            <input
+              name="dataFinal"
+              type="date"
+              [(ngModel)]="filtros.dataFinal"
+              (ngModelChange)="onFiltroChange()"
+            />
+          </label>
+        </div>
+
+        <label>
+          <span>Status do chamado</span>
+          <select
+            name="status"
+            [(ngModel)]="filtros.status"
+            (ngModelChange)="onFiltroChange()"
+          >
+            <option value="ambos">Abertos e concluidos</option>
+            <option value="aberto">Abertos</option>
+            <option value="concluido">Concluidos</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Considerar tempo de atendimento</span>
+          <select
+            name="tempo"
+            [(ngModel)]="filtros.tempo"
+            (ngModelChange)="onFiltroChange()"
+          >
+            <option value="todos">Todos</option>
+            <option value="com-tempo">Apenas chamados com tempo registrado</option>
+          </select>
+        </label>
+
+        <div class="relatorios-actions">
+          <button class="btn secondary" type="button" (click)="limparFiltros()">
+            Limpar filtros
+          </button>
+        </div>
+      </form>
+    </article>
+
+    <article class="card relatorios-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Tipo de relatorio</h3>
+          <p class="card-subtitle">Escolha como os dados devem ser organizados no Excel.</p>
+        </div>
+      </div>
+
+      <div class="relatorio-tipos">
+        <label
+          class="tipo-card"
+          *ngFor="let item of tipoRelatorioOptions; trackBy: trackByTipoRelatorio"
+          [class.active]="tipoRelatorio === item.valor"
+        >
+          <input
+            type="radio"
+            name="tipoRelatorio"
+            [value]="item.valor"
+            [(ngModel)]="tipoRelatorio"
+            (ngModelChange)="onTipoRelatorioChange()"
+          />
+          <span class="tipo-card-title">{{ item.titulo }}</span>
+          <span class="tipo-card-description">{{ item.descricao }}</span>
+        </label>
+      </div>
+    </article>
+
+    <article class="card relatorios-card relatorios-export-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Exportacao</h3>
+          <p class="card-subtitle">Os filtros sao aplicados antes de gerar o arquivo Excel.</p>
+        </div>
+      </div>
+
+        <div class="grid-2 relatorios-stats">
+          <div class="stat-mini">
+            <span class="stat-mini-label">Chamados filtrados</span>
+            <strong>{{ vm.totalChamadosFiltrados }}</strong>
+          </div>
+          <div class="stat-mini">
+            <span class="stat-mini-label">Empresas no resultado</span>
+            <strong>{{ vm.totalEmpresasFiltradas }}</strong>
+          </div>
+        <div class="stat-mini">
+          <span class="stat-mini-label">Chamados com tempo</span>
+          <strong>{{ vm.totalChamadosComTempo }}</strong>
+        </div>
+        <div class="stat-mini">
+          <span class="stat-mini-label">Tempo total</span>
+          <strong>{{ vm.tempoTotalLabel }}</strong>
+        </div>
+      </div>
+
+      <div class="export-summary">
+        <div class="export-summary-label">Relatorio selecionado</div>
+        <div class="export-summary-value">{{ getTipoRelatorioTitulo() }}</div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.mensagemResultado">
+        {{ vm.mensagemResultado }}
+      </div>
+
+      <button
+        class="btn primary export-btn"
+        type="button"
+        (click)="exportarParaExcel()"
+        [disabled]="!!vm.erro || !!vm.mensagemResultado"
+      >
+        Exportar para Excel
+      </button>
+
+      <div class="helper-text">Arquivo: relatorio-chamados-YYYY-MM-DD.xlsx</div>
+    </article>
+  </div>
+
+  <article class="card" *ngIf="!vm.carregando && !vm.erro">
+    <div class="card-title-row">
+      <div>
+        <h3 class="card-title">Previa do relatorio</h3>
+        <p class="card-subtitle">
+          Exibindo {{ getPreviewRows(vm.dataset.rows).length }} de {{ vm.dataset.rows.length }} linhas.
+        </p>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!!vm.mensagemResultado">
+      {{ vm.mensagemResultado }}
+    </div>
+
+    <div class="table-wrap" *ngIf="!vm.mensagemResultado">
+      <table class="table relatorios-table">
+        <thead>
+          <tr>
+            <th
+              *ngFor="let column of vm.dataset.columns; trackBy: trackByColumn"
+              [class.align-right]="column.align === 'right'"
+            >
+              {{ column.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="vm.dataset.rows.length === 0">
+            <td [attr.colspan]="vm.dataset.columns.length">Nenhum dado corresponde aos filtros selecionados.</td>
+          </tr>
+          <tr *ngFor="let row of getPreviewRows(vm.dataset.rows)">
+            <td
+              *ngFor="let column of vm.dataset.columns; trackBy: trackByColumn"
+              [class.align-right]="column.align === 'right'"
+            >
+              {{ getCellValue(row, column) || "-" }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

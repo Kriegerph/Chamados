@@ -1,0 +1,239 @@
+.relatorios-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.relatorios-card {
+  min-width: 0;
+}
+
+.relatorios-form {
+  gap: 14px;
+}
+
+.empresas-selector {
+  display: grid;
+  gap: 10px;
+}
+
+.empresas-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.empresas-selector-actions {
+  justify-content: flex-end;
+}
+
+.empresas-selector-btn {
+  height: 34px;
+  padding: 0 12px;
+}
+
+.empresas-selector-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #d7e0ee;
+  border-radius: 12px;
+  background: #fbfcff;
+  padding: 8px 0;
+  box-shadow: inset 0 8px 14px -18px rgba(25, 43, 74, 0.55);
+}
+
+.empresa-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #e8eef8;
+  cursor: pointer;
+}
+
+.empresa-selector-item:last-child {
+  border-bottom: 0;
+}
+
+.empresa-selector-item:hover {
+  background: #f5f9ff;
+}
+
+.empresa-selector-item input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.empresa-selector-item span {
+  font-size: 13.5px;
+  color: #213453;
+}
+
+.empresas-selector-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.empresas-selector-list::-webkit-scrollbar-thumb {
+  background: #cfdaec;
+  border-radius: 999px;
+  border: 2px solid #f8fbff;
+}
+
+.empresas-selector-list::-webkit-scrollbar-track {
+  background: #f3f7fd;
+}
+
+.relatorios-date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.relatorios-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.relatorio-tipos {
+  display: grid;
+  gap: 12px;
+}
+
+.tipo-card {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 14px 14px 14px 42px;
+  border: 1px solid #d7e0ee;
+  border-radius: 13px;
+  background: #fbfcff;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.tipo-card:hover {
+  border-color: #bfd1eb;
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.tipo-card.active {
+  border-color: #93b4e9;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+  box-shadow: 0 10px 20px rgba(27, 68, 133, 0.08);
+}
+
+.tipo-card input {
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.tipo-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c2d4d;
+}
+
+.tipo-card-description {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.relatorios-export-card {
+  display: grid;
+  gap: 14px;
+}
+
+.relatorios-stats {
+  gap: 10px;
+}
+
+.stat-mini {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #dbe4f2;
+  border-radius: 12px;
+  background: #f9fbff;
+}
+
+.stat-mini strong {
+  font-size: 18px;
+  color: #17305b;
+}
+
+.stat-mini-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #667895;
+}
+
+.export-summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px;
+  border: 1px dashed #ced9ea;
+  border-radius: 12px;
+  background: #f6f9ff;
+}
+
+.export-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #647690;
+}
+
+.export-summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d3155;
+}
+
+.export-btn {
+  width: 100%;
+}
+
+.relatorios-table th.align-right,
+.relatorios-table td.align-right {
+  text-align: right;
+}
+
+@media (max-width: 1200px) {
+  .relatorios-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .relatorios-export-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 780px) {
+  .relatorios-layout,
+  .relatorios-date-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .empresas-selector-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .empresas-selector-actions {
+    justify-content: flex-start;
+  }
+}

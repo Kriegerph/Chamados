@@ -30,6 +30,19 @@
   overflow-wrap: anywhere;
 }
 
+.chamado-principal {
+  font-weight: 700;
+  color: #1d3155;
+  word-break: break-word;
+}
+
+.chamado-secundario {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
 .action-buttons {
   justify-content: flex-end;
 }

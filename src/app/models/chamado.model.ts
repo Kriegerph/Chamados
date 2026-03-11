@@ -9,11 +9,18 @@ export interface Chamado {
   cliente?: string;
   clienteId?: string;
   clienteNome?: string;
+  empresa?: string;
+  empresaId?: string;
+  funcionario?: string;
+  funcionarioId?: string;
   data: string;
   status: StatusChamado;
   resolucao: string;
   criadoEm?: Timestamp | null;
   concluidoEm?: Timestamp | null;
+  dataInicioAtendimento?: Timestamp | null;
+  dataFimAtendimento?: Timestamp | null;
+  tempoAtendimentoMinutos?: number | null;
   tipoCadastro: TipoCadastro;
 }
 

@@ -28,9 +28,9 @@ export class SidebarComponent {
   readonly menuItems: NavItem[] = [
     { label: "Dashboard", route: "/dashboard", icon: "dashboard" },
     { label: "Chamados Abertos", route: "/abertos", icon: "folder-open", exact: true },
-    { label: "Chamados Concluídos", route: "/concluidos", icon: "check-square" },
-    { label: "Clientes", route: "/clientes", icon: "users" },
-    { label: "Relatórios", route: "", icon: "bar-chart", disabled: true }
+    { label: "Chamados Concluidos", route: "/concluidos", icon: "check-square" },
+    { label: "Empresas", route: "/empresas", icon: "building" },
+    { label: "Relatorios", route: "/relatorios", icon: "bar-chart" }
   ];
 
   onNavigate() {
@@ -55,6 +55,8 @@ export class SidebarComponent {
         return "M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 13-4-4 1.4-1.4L11 13.2l4.6-4.6L17 10z";
       case "users":
         return "M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-8 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3m0 2c-2.7 0-8 1.3-8 4v2h10v-2c0-1 .4-2 1.2-2.8A11 11 0 0 0 8 13m8 0c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4";
+      case "building":
+        return "M4 21h16V7l-4-4H4zm3-2v-2h2v2zm0-4v-2h2v2zm0-4V9h2v2zm4 8v-2h2v2zm0-4v-2h2v2zm0-4V9h2v2zm4 8V9h2v10z";
       case "bar-chart":
         return "M5 9h3v11H5zm5-4h3v15h-3zm5 7h3v8h-3zm5-9h3v17h-3z";
       case "logout":

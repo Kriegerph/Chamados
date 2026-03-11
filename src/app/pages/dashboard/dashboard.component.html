@@ -115,15 +115,15 @@
         <article class="card chart-card">
           <div class="card-title-row">
             <div>
-              <h3 class="chart-title">Top 5 Clientes</h3>
+              <h3 class="chart-title">Top 5 Empresas</h3>
               <p class="card-subtitle">Ranking por período em {{ vm.anoSelecionadoLabel | lowercase }}</p>
             </div>
 
             <div class="chart-controls chart-controls-inline">
               <label>
                 Período
-                <select [(ngModel)]="topClientesPeriodo" (change)="onTopClientesPeriodoChange()">
-                  <option *ngFor="let periodo of periodosTopClientes" [ngValue]="periodo.value">
+                <select [(ngModel)]="topEmpresasPeriodo" (change)="onTopEmpresasPeriodoChange()">
+                  <option *ngFor="let periodo of periodosTopEmpresas" [ngValue]="periodo.value">
                     {{ periodo.label }}
                   </option>
                 </select>
@@ -132,8 +132,8 @@
           </div>
 
           <canvas #clientsChart></canvas>
-          <div class="empty-state" *ngIf="vm.topClientes.length === 0">
-            Nenhum chamado encontrado para o período selecionado.
+          <div class="empty-state" *ngIf="vm.topEmpresas.length === 0">
+            {{ vm.topEmpresasPeriodo === "hoje" ? "Nenhum chamado registrado hoje." : "Nenhum chamado encontrado para o per&#237;odo selecionado." }}
           </div>
         </article>
       </div>

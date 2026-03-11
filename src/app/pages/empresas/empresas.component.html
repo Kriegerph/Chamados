@@ -1,0 +1,245 @@
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <article class="card empresas-hero">
+    <div class="empresas-hero-copy">
+      <span class="empresas-kicker">Cadastros</span>
+      <h2 class="page-title empresas-title">Empresas</h2>
+      <p class="page-subtitle empresas-subtitle">
+        Gerencie empresas atendidas e os funcionarios que abrem chamados.
+      </p>
+    </div>
+
+    <div class="empresas-hero-actions">
+      <span class="status-chip">Total: {{ vm.empresas.length }}</span>
+      <button class="btn primary" type="button" (click)="abrirCadastroEmpresa()">Nova empresa</button>
+    </div>
+  </article>
+
+  <div class="stack-md" *ngIf="vm.carregando && vm.empresas.length === 0">
+    <div class="skeleton" style="min-height: 300px;"></div>
+  </div>
+
+  <div class="stack-md" *ngIf="!vm.carregando || vm.empresas.length > 0">
+    <article class="card empresas-table-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Lista de empresas</h3>
+          <p class="card-subtitle">Clique em uma linha para abrir ou recolher os funcionarios vinculados.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+      <div class="table-wrap empresas-table-wrap" *ngIf="!vm.erro">
+        <table class="table empresas-table">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th class="empresas-col-funcionarios">Funcionarios</th>
+              <th class="empresas-col-acoes">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="vm.empresas.length === 0">
+              <td colspan="3">Nenhuma empresa cadastrada.</td>
+            </tr>
+
+            <ng-container *ngFor="let item of vm.empresas; trackBy: trackByEmpresa">
+              <tr
+                class="empresas-main-row"
+                [class.selected]="item.id === vm.empresaSelecionada?.id"
+                (click)="alternarEmpresa(item.id)"
+              >
+                <td>
+                  <div class="empresa-name">{{ item.nomeEmpresa }}</div>
+                  <div class="empresa-note" *ngIf="!!item.observacoes">{{ item.observacoes }}</div>
+                </td>
+                <td class="empresas-col-funcionarios">{{ item.totalFuncionariosLabel }}</td>
+                <td class="empresas-col-acoes">
+                  <div class="btn-group empresas-row-actions">
+                    <button
+                      class="btn secondary btn-sm"
+                      type="button"
+                      (click)="abrirEdicaoEmpresa(item); $event.stopPropagation()"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="btn danger btn-sm"
+                      type="button"
+                      (click)="excluirEmpresa(item); $event.stopPropagation()"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="empresas-expand-row" *ngIf="item.id === vm.empresaSelecionada?.id">
+                <td colspan="3" class="empresas-expand-cell">
+                  <div class="empresas-expand-panel">
+                    <div class="card-title-row empresas-funcionarios-header">
+                      <div>
+                        <h3 class="card-title">Funcionarios da empresa: {{ item.nomeEmpresa }}</h3>
+                        <p class="card-subtitle">Gerencie os funcionarios vinculados sem sair da listagem.</p>
+                      </div>
+                      <button
+                        class="btn primary"
+                        type="button"
+                        (click)="abrirCadastroFuncionario(); $event.stopPropagation()"
+                      >
+                        Adicionar funcionario
+                      </button>
+                    </div>
+
+                    <div class="empty-state" *ngIf="vm.funcionariosErro">{{ vm.funcionariosErro }}</div>
+                    <div class="skeleton" style="min-height: 180px;" *ngIf="vm.funcionariosCarregando"></div>
+
+                    <div class="table-wrap" *ngIf="!vm.funcionariosCarregando && !vm.funcionariosErro">
+                      <table class="table empresas-funcionarios-table">
+                        <thead>
+                          <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th class="empresas-col-acoes">Acoes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="vm.funcionarios.length === 0">
+                            <td colspan="3">Nenhum funcionario cadastrado.</td>
+                          </tr>
+                          <tr *ngFor="let funcionario of vm.funcionarios; trackBy: trackByFuncionario">
+                            <td>{{ funcionario.nomeFuncionario }}</td>
+                            <td>{{ funcionario.telefone || "-" }}</td>
+                            <td class="empresas-col-acoes">
+                              <div class="btn-group empresas-row-actions">
+                                <button
+                                  class="btn secondary btn-sm"
+                                  type="button"
+                                  (click)="abrirEdicaoFuncionario(funcionario); $event.stopPropagation()"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  class="btn danger btn-sm"
+                                  type="button"
+                                  (click)="excluirFuncionario(funcionario); $event.stopPropagation()"
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <div class="modal empresas-modal" *ngIf="cadastrandoEmpresa">
+    <div class="modal-content empresas-modal-panel">
+      <h3>Nova empresa</h3>
+      <p class="card-subtitle empresas-modal-subtitle">Cadastre uma empresa para vincular chamados e funcionarios.</p>
+      <form class="form" (ngSubmit)="cadastrarEmpresa()">
+        <label>
+          <span>Nome da empresa</span>
+          <input name="nomeEmpresa" type="text" [(ngModel)]="nomeEmpresa" required />
+        </label>
+        <label>
+          <span>Observacoes</span>
+          <textarea
+            name="observacoesEmpresa"
+            rows="3"
+            [(ngModel)]="observacoesEmpresa"
+            placeholder="Opcional"
+          ></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarCadastroEmpresa()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal empresas-modal" *ngIf="editandoEmpresa">
+    <div class="modal-content empresas-modal-panel">
+      <h3>Editar empresa</h3>
+      <p class="card-subtitle empresas-modal-subtitle">Atualize os dados exibidos na listagem de empresas.</p>
+      <form class="form" (ngSubmit)="salvarEdicaoEmpresa()">
+        <label>
+          <span>Empresa</span>
+          <input name="editEmpresaNome" type="text" [(ngModel)]="editEmpresaNome" required />
+        </label>
+        <label>
+          <span>Observacoes</span>
+          <textarea name="editEmpresaObservacoes" rows="3" [(ngModel)]="editEmpresaObservacoes"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarEdicaoEmpresa()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal empresas-modal" *ngIf="editandoFuncionario">
+    <div class="modal-content empresas-modal-panel">
+      <h3>Editar funcionario</h3>
+      <p class="card-subtitle empresas-modal-subtitle">Ajuste os dados do funcionario selecionado.</p>
+      <form class="form" (ngSubmit)="salvarEdicaoFuncionario()">
+        <label>
+          <span>Nome do funcionario</span>
+          <input name="editFuncionarioNome" type="text" [(ngModel)]="editFuncionarioNome" required />
+        </label>
+        <label>
+          <span>Telefone</span>
+          <input
+            name="editFuncionarioTelefone"
+            type="text"
+            [(ngModel)]="editFuncionarioTelefone"
+            placeholder="Opcional"
+          />
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarEdicaoFuncionario()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal empresas-modal" *ngIf="cadastrandoFuncionario">
+    <div class="modal-content empresas-modal-panel">
+      <h3>Novo funcionario</h3>
+      <p class="card-subtitle empresas-modal-subtitle" *ngIf="vm.empresaSelecionada">
+        Vinculado a {{ vm.empresaSelecionada.nomeEmpresa }}
+      </p>
+      <form class="form" (ngSubmit)="cadastrarFuncionario()">
+        <label>
+          <span>Nome</span>
+          <input name="funcionarioNome" type="text" [(ngModel)]="funcionarioNome" required />
+        </label>
+        <label>
+          <span>Telefone</span>
+          <input
+            name="funcionarioTelefone"
+            type="text"
+            [(ngModel)]="funcionarioTelefone"
+            placeholder="Opcional"
+          />
+        </label>
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarCadastroFuncionario()">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar funcionario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

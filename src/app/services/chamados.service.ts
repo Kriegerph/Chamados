@@ -4,6 +4,7 @@ import {
   collection,
   CollectionReference,
   DocumentData,
+  Timestamp,
   deleteDoc,
   doc,
   onSnapshot,
@@ -63,69 +64,122 @@ export class ChamadosService {
 
   async addChamadoNovo(data: {
     motivo: string;
-    clienteId: string;
-    clienteNome: string;
+    empresaId: string;
+    empresa: string;
+    funcionarioId: string;
+    funcionario: string;
     data: string;
   }) {
     const uid = this.getUidOrThrow();
+    const dataInicioAtendimento = Timestamp.now();
     const payload: Omit<Chamado, "id"> = {
       motivo: data.motivo,
-      cliente: data.clienteNome,
-      clienteId: data.clienteId,
-      clienteNome: data.clienteNome,
+      cliente: data.empresa,
+      clienteNome: data.empresa,
+      empresa: data.empresa,
+      empresaId: data.empresaId,
+      funcionario: data.funcionario,
+      funcionarioId: data.funcionarioId,
       data: data.data,
       status: "aberto",
       resolucao: "",
       criadoEm: serverTimestamp() as any,
       concluidoEm: null,
+      dataInicioAtendimento,
+      dataFimAtendimento: null,
+      tempoAtendimentoMinutos: null,
       tipoCadastro: "novo"
     };
-    await addDoc(this.getChamadosCol(uid), payload);
+    const ref = await addDoc(this.getChamadosCol(uid), payload);
+    this.applyLocalUpsert({
+      id: ref.id,
+      ...payload,
+      criadoEm: Timestamp.now()
+    });
   }
 
   async addChamadoAntigo(data: {
     motivo: string;
-    clienteId: string;
-    clienteNome: string;
+    empresaId: string;
+    empresa: string;
+    funcionarioId: string;
+    funcionario: string;
     data: string;
     resolucao: string;
   }) {
     const uid = this.getUidOrThrow();
+    const dataInicioAtendimento = Timestamp.now();
     const payload: Omit<Chamado, "id"> = {
       motivo: data.motivo,
-      cliente: data.clienteNome,
-      clienteId: data.clienteId,
-      clienteNome: data.clienteNome,
+      cliente: data.empresa,
+      clienteNome: data.empresa,
+      empresa: data.empresa,
+      empresaId: data.empresaId,
+      funcionario: data.funcionario,
+      funcionarioId: data.funcionarioId,
       data: data.data,
       status: "concluido",
       resolucao: data.resolucao,
       criadoEm: serverTimestamp() as any,
       concluidoEm: serverTimestamp() as any,
+      dataInicioAtendimento,
+      dataFimAtendimento: dataInicioAtendimento,
+      tempoAtendimentoMinutos: 0,
       tipoCadastro: "antigo"
     };
-    await addDoc(this.getChamadosCol(uid), payload);
+    const ref = await addDoc(this.getChamadosCol(uid), payload);
+    this.applyLocalUpsert({
+      id: ref.id,
+      ...payload,
+      criadoEm: Timestamp.now(),
+      concluidoEm: Timestamp.now()
+    });
   }
 
   async finalizarChamado(id: string, resolucao: string) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
-    await updateDoc(ref, {
+    const chamadoAtual = this.todosStateSubject.value.data.find((item) => item.id === id);
+    const dataFimAtendimento = Timestamp.now();
+    const dataInicioAtendimento =
+      this.getTimestamp(chamadoAtual?.dataInicioAtendimento) ??
+      this.getTimestamp(chamadoAtual?.criadoEm);
+
+    const payload: Partial<Chamado> & { concluidoEm: any } = {
       status: "concluido",
       resolucao,
-      concluidoEm: serverTimestamp()
+      concluidoEm: serverTimestamp() as any,
+      dataFimAtendimento
+    };
+
+    if (dataInicioAtendimento) {
+      payload.dataInicioAtendimento = dataInicioAtendimento;
+      payload.tempoAtendimentoMinutos = this.calcularTempoAtendimentoMinutos(
+        dataInicioAtendimento,
+        dataFimAtendimento
+      );
+    }
+
+    await updateDoc(ref, payload as any);
+    this.applyLocalPatch(id, {
+      ...payload,
+      concluidoEm: dataFimAtendimento
     });
   }
 
   async updateChamado(id: string, data: Partial<Chamado>) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
-    await updateDoc(ref, data as any);
+    const patch = { ...data };
+    await updateDoc(ref, patch as any);
+    this.applyLocalPatch(id, patch);
   }
 
   async deleteChamado(id: string) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
     await deleteDoc(ref);
+    this.applyLocalRemove(id);
   }
 
   private handleAuthChange(authState: AuthState) {
@@ -207,6 +261,62 @@ export class ChamadosService {
 
   private emitState(state: DataState<Chamado[]>) {
     this.zone.run(() => this.todosStateSubject.next(state));
+  }
+
+  private applyLocalUpsert(chamado: Chamado) {
+    const current = this.todosStateSubject.value;
+    const filtered = current.data.filter((item) => item.id !== chamado.id);
+    this.emitState({
+      ...current,
+      data: [...filtered, chamado]
+    });
+  }
+
+  private applyLocalPatch(id: string, patch: Partial<Chamado>) {
+    const current = this.todosStateSubject.value;
+    const data = current.data.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            ...patch
+          }
+        : item
+    );
+    this.emitState({
+      ...current,
+      data
+    });
+  }
+
+  private applyLocalRemove(id: string) {
+    const current = this.todosStateSubject.value;
+    this.emitState({
+      ...current,
+      data: current.data.filter((item) => item.id !== id)
+    });
+  }
+
+  private getTimestamp(value: unknown): Timestamp | null {
+    if (value instanceof Timestamp) {
+      return value;
+    }
+    if (
+      value &&
+      typeof value === "object" &&
+      typeof (value as Timestamp).toDate === "function" &&
+      typeof (value as Timestamp).toMillis === "function"
+    ) {
+      return value as Timestamp;
+    }
+    return null;
+  }
+
+  private calcularTempoAtendimentoMinutos(
+    dataInicioAtendimento: Timestamp,
+    dataFimAtendimento: Timestamp
+  ): number {
+    const diffMs = dataFimAtendimento.toMillis() - dataInicioAtendimento.toMillis();
+    return Math.max(0, Math.floor(diffMs / 60000));
   }
 
   private toErrorMessage(error: unknown): string {

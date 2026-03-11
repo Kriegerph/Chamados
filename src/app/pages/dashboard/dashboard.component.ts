@@ -11,15 +11,13 @@ import { FormsModule } from "@angular/forms";
 import { Chart } from "chart.js/auto";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
-import { Cliente } from "../../models/cliente.model";
 import { DataState } from "../../models/data-state.model";
 import { ChamadosService } from "../../services/chamados.service";
-import { ClientesService } from "../../services/clientes.service";
 
-type TopClientesPeriodo = "todos" | "ultimoMes" | "ultimos7Dias" | "hoje";
+type TopEmpresasPeriodo = "todos" | "ultimoMes" | "ultimos7Dias" | "hoje";
 type AnoFiltro = number | "__all__";
 
-type ClienteResumo = {
+type EmpresaResumo = {
   nome: string;
   total: number;
 };
@@ -59,8 +57,8 @@ type DashboardViewModel = {
   cards: DashboardCards;
   totaisPorMesGraficoMensal: number[];
   totalPeriodoGraficoMensal: number;
-  topClientes: ClienteResumo[];
-  topClientesPeriodo: TopClientesPeriodo;
+  topEmpresas: EmpresaResumo[];
+  topEmpresasPeriodo: TopEmpresasPeriodo;
   graficoDiario: GraficoDiario;
 };
 
@@ -81,16 +79,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   readonly meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   readonly ANO_TODOS = ANO_TODOS;
-  readonly periodosTopClientes: Array<{ value: TopClientesPeriodo; label: string }> = [
+  readonly periodosTopEmpresas: Array<{ value: TopEmpresasPeriodo; label: string }> = [
     { value: "todos", label: "Todos" },
-    { value: "ultimoMes", label: "Último mês" },
+    { value: "hoje", label: "Hoje" },
     { value: "ultimos7Dias", label: "Últimos 7 dias" },
-    { value: "hoje", label: "Hoje" }
+    { value: "ultimoMes", label: "Último mês" }
   ];
 
   anoSelecionado: AnoFiltro = ANO_TODOS;
   anoMensalSelecionado = this.getCurrentYear();
-  topClientesPeriodo: TopClientesPeriodo = "todos";
+  topEmpresasPeriodo: TopEmpresasPeriodo = "todos";
   anoDiarioSelecionado = this.getCurrentYear();
   mesDiarioSelecionado = this.getCurrentMonth();
 
@@ -98,7 +96,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private readonly anoSelecionadoSubject = new BehaviorSubject<AnoFiltro>(this.anoSelecionado);
   private readonly anoMensalSelecionadoSubject = new BehaviorSubject<number>(this.anoMensalSelecionado);
-  private readonly topClientesPeriodoSubject = new BehaviorSubject<TopClientesPeriodo>(this.topClientesPeriodo);
+  private readonly topEmpresasPeriodoSubject = new BehaviorSubject<TopEmpresasPeriodo>(this.topEmpresasPeriodo);
   private readonly graficoDiarioFiltroSubject = new BehaviorSubject<{ ano: number; mes: number }>({
     ano: this.anoDiarioSelecionado,
     mes: this.mesDiarioSelecionado
@@ -110,25 +108,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private latestVm: DashboardViewModel | null = null;
   private chartReady = false;
 
-  constructor(
-    private readonly chamadosService: ChamadosService,
-    private readonly clientesService: ClientesService
-  ) {
+  constructor(private readonly chamadosService: ChamadosService) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
-      this.clientesService.clientesState$,
       this.anoSelecionadoSubject,
       this.anoMensalSelecionadoSubject,
-      this.topClientesPeriodoSubject,
+      this.topEmpresasPeriodoSubject,
       this.graficoDiarioFiltroSubject
     ]).pipe(
-      map(([chamadosState, clientesState, anoSelecionado, anoMensalSelecionado, topClientesPeriodo, graficoDiarioFiltro]) =>
+      map(([chamadosState, anoSelecionado, anoMensalSelecionado, topEmpresasPeriodo, graficoDiarioFiltro]) =>
         this.buildViewModel(
           chamadosState,
-          clientesState,
           anoSelecionado,
           anoMensalSelecionado,
-          topClientesPeriodo,
+          topEmpresasPeriodo,
           graficoDiarioFiltro
         )
       ),
@@ -154,8 +147,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.anoSelecionadoSubject.next(this.anoSelecionado);
   }
 
-  onTopClientesPeriodoChange() {
-    this.topClientesPeriodoSubject.next(this.topClientesPeriodo);
+  onTopEmpresasPeriodoChange() {
+    this.topEmpresasPeriodoSubject.next(this.topEmpresasPeriodo);
   }
 
   onAnoMensalChange() {
@@ -171,10 +164,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
-    clientesState: DataState<Cliente[]>,
     anoSelecionado: AnoFiltro,
     anoMensalSelecionado: number,
-    topClientesPeriodo: TopClientesPeriodo,
+    topEmpresasPeriodo: TopEmpresasPeriodo,
     graficoDiarioFiltro: { ano: number; mes: number }
   ): DashboardViewModel {
     const chamados = chamadosState.data;
@@ -183,19 +175,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const anoMensalResolvido = this.resolveAnoMensalSelecionado(anoMensalSelecionado, anosDisponiveis);
     const graficoDiarioResolvido = this.resolveGraficoDiarioFiltro(graficoDiarioFiltro, anosDisponiveis);
 
-    const clientesMap = new Map(
-      clientesState.data
-        .filter((cliente) => !!cliente.id)
-        .map((cliente) => [cliente.id as string, cliente])
-    );
-
     const cards = this.buildCards(chamados, anoPrincipalResolvido);
     const totaisAnoMensal = this.buildMonthlyTotalsByYear(chamados, anoMensalResolvido);
-    const topClientes = this.buildTopClientes(
+    const topEmpresas = this.buildTopEmpresas(
       chamados,
-      clientesMap,
       anoPrincipalResolvido,
-      topClientesPeriodo
+      topEmpresasPeriodo
     );
     const graficoDiario = this.buildDailyTotalsByMonth(
       chamados,
@@ -204,8 +189,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     );
 
     return {
-      carregando: chamadosState.status === "loading" || clientesState.status === "loading",
-      erro: chamadosState.error || clientesState.error,
+      carregando: chamadosState.status === "loading",
+      erro: chamadosState.error,
       anoSelecionado: anoPrincipalResolvido,
       anoSelecionadoLabel:
         anoPrincipalResolvido === ANO_TODOS ? "Todos" : String(anoPrincipalResolvido),
@@ -215,8 +200,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       cards,
       totaisPorMesGraficoMensal: totaisAnoMensal.totaisPorMes,
       totalPeriodoGraficoMensal: totaisAnoMensal.totalAno,
-      topClientes,
-      topClientesPeriodo,
+      topEmpresas,
+      topEmpresasPeriodo,
       graficoDiario
     };
   }
@@ -307,26 +292,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     return { totaisPorMes, totalAno };
   }
 
-  private buildTopClientes(
+  private buildTopEmpresas(
     items: Chamado[],
-    clientesMap: Map<string, Cliente>,
     anoSelecionado: AnoFiltro,
-    periodo: TopClientesPeriodo
-  ): ClienteResumo[] {
+    periodo: TopEmpresasPeriodo
+  ): EmpresaResumo[] {
     const today = this.getToday();
     const inicioUltimos7Dias = this.shiftDate(today, -6);
     const inicioUltimoMes = this.shiftDate(today, -29);
-    const rankingMap = new Map<string, ClienteResumo>();
+    const rankingMap = new Map<string, EmpresaResumo>();
 
     items.forEach((item) => {
       const data = item.data || "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
-      if (anoSelecionado !== ANO_TODOS && !data.startsWith(`${anoSelecionado}-`)) return;
+      if (periodo !== "hoje" && anoSelecionado !== ANO_TODOS && !data.startsWith(`${anoSelecionado}-`)) return;
       if (!this.matchPeriodo(data, periodo, today, inicioUltimos7Dias, inicioUltimoMes)) return;
 
-      const nomeCliente = this.getClienteLabel(item, clientesMap);
-      const key = item.clienteId ? `id:${item.clienteId}` : `nome:${nomeCliente}`;
-      const atual = rankingMap.get(key) || { nome: nomeCliente, total: 0 };
+      if (!item.empresa?.trim()) return;
+
+      const nomeEmpresa = item.empresa.trim();
+      const key = this.normalizarTexto(nomeEmpresa);
+      const atual = rankingMap.get(key) || { nome: nomeEmpresa, total: 0 };
       atual.total += 1;
       rankingMap.set(key, atual);
     });
@@ -338,7 +324,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private matchPeriodo(
     data: string,
-    periodo: TopClientesPeriodo,
+    periodo: TopEmpresasPeriodo,
     today: string,
     inicioUltimos7Dias: string,
     inicioUltimoMes: string
@@ -445,13 +431,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     return local.toISOString().slice(0, 10);
   }
 
-  private getClienteLabel(item: Chamado, clientesMap: Map<string, Cliente>): string {
-    if (item.clienteNome) return item.clienteNome;
-    if (item.clienteId) {
-      const nome = clientesMap.get(item.clienteId)?.nome;
-      if (nome) return nome;
-    }
-    return item.cliente || "Sem cliente";
+  private normalizarTexto(value: string): string {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   }
 
   private syncControles(vm: DashboardViewModel) {
@@ -463,8 +444,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this.anoMensalSelecionado = vm.anoMensalSelecionado;
     }
 
-    if (this.topClientesPeriodo !== vm.topClientesPeriodo) {
-      this.topClientesPeriodo = vm.topClientesPeriodo;
+    if (this.topEmpresasPeriodo !== vm.topEmpresasPeriodo) {
+      this.topEmpresasPeriodo = vm.topEmpresasPeriodo;
     }
 
     if (this.anoDiarioSelecionado !== vm.graficoDiario.ano) {
@@ -482,7 +463,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     const vm = this.latestVm;
     this.renderMonthlyChart(vm.totaisPorMesGraficoMensal);
-    this.renderClientsChart(vm.topClientes);
+    this.renderClientsChart(vm.topEmpresas);
     this.renderDailyChart(vm.graficoDiario.labels, vm.graficoDiario.totais);
   }
 
@@ -521,10 +502,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private renderClientsChart(topClientes: ClienteResumo[]) {
+  private renderClientsChart(topEmpresas: EmpresaResumo[]) {
     this.clientsChart?.destroy();
-    const labels = topClientes.length ? topClientes.map((item) => item.nome) : ["Sem dados"];
-    const values = topClientes.length ? topClientes.map((item) => item.total) : [0];
+    const labels = topEmpresas.length
+      ? topEmpresas.map((item) => item.nome)
+      : ["1", "2", "3", "4", "5"];
+    const values = topEmpresas.length ? topEmpresas.map((item) => item.total) : [0, 0, 0, 0, 0];
 
     this.clientsChart = new Chart(this.clientsChartRef!.nativeElement, {
       type: "bar",
