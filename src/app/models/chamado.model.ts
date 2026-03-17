@@ -2,6 +2,7 @@ import { Timestamp } from "firebase/firestore";
 
 export type StatusChamado = "aberto" | "concluido";
 export type TipoCadastro = "novo" | "antigo";
+export type OrigemChamado = "manual" | "whatsapp";
 
 export interface Chamado {
   id?: string;
@@ -16,10 +17,13 @@ export interface Chamado {
   data: string;
   status: StatusChamado;
   resolucao: string;
+  origem?: OrigemChamado;
   criadoEm?: Timestamp | null;
   concluidoEm?: Timestamp | null;
+  dataFechamento?: Timestamp | null;
   dataInicioAtendimento?: Timestamp | null;
   dataFimAtendimento?: Timestamp | null;
+  tempoAtendimento?: number | null;
   tempoAtendimentoMinutos?: number | null;
   tipoCadastro: TipoCadastro;
 }

@@ -136,7 +136,7 @@
                   <button class="btn danger" type="button" (click)="excluirChamado(item)">
                     Excluir
                   </button>
-                  <button class="btn primary" type="button" (click)="abrirModalFinalizar(item.id!)">
+                  <button class="btn primary" type="button" (click)="abrirModalFinalizar(item)">
                     Finalizar
                   </button>
                 </div>
@@ -151,13 +151,33 @@
   <div class="modal" *ngIf="modalAberto">
     <div class="modal-content">
       <h3>Finalizar chamado</h3>
-      <p class="helper-text">Informe como foi resolvido:</p>
-      <textarea
-        rows="4"
-        [(ngModel)]="resolucaoFinalizar"
-        name="resolucaoFinalizar"
-        placeholder="Descreva a resolucao"
-      ></textarea>
+      <p class="helper-text">
+        {{
+          finalizarOrigem === "whatsapp"
+            ? "Preencha motivo e resolucao para concluir o chamado."
+            : "Informe como foi resolvido:"
+        }}
+      </p>
+      <div class="form">
+        <label *ngIf="finalizarOrigem === 'whatsapp'">
+          <span>Motivo</span>
+          <input
+            type="text"
+            [(ngModel)]="motivoFinalizar"
+            name="motivoFinalizar"
+            placeholder="Descreva o motivo do chamado"
+          />
+        </label>
+        <label>
+          <span>Resolucao</span>
+          <textarea
+            rows="4"
+            [(ngModel)]="resolucaoFinalizar"
+            name="resolucaoFinalizar"
+            placeholder="Descreva a resolucao"
+          ></textarea>
+        </label>
+      </div>
       <div class="modal-actions">
         <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
         <button class="btn primary" type="button" (click)="confirmarFinalizacao()">Confirmar</button>

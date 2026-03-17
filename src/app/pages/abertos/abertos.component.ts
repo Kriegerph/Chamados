@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Timestamp } from "firebase/firestore";
 import { combineLatest, map, Observable } from "rxjs";
-import { Chamado } from "../../models/chamado.model";
+import { Chamado, OrigemChamado } from "../../models/chamado.model";
 import { Cliente } from "../../models/cliente.model";
 import { DataState } from "../../models/data-state.model";
 import { Empresa, Funcionario } from "../../models/empresa.model";
@@ -47,6 +47,8 @@ export class AbertosComponent {
 
   modalAberto = false;
   finalizarId: string | null = null;
+  finalizarOrigem: OrigemChamado = "manual";
+  motivoFinalizar = "";
   resolucaoFinalizar = "";
 
   editando = false;
@@ -171,8 +173,10 @@ export class AbertosComponent {
     }
   }
 
-  abrirModalFinalizar(id: string) {
-    this.finalizarId = id;
+  abrirModalFinalizar(item: AbertoItemView) {
+    this.finalizarId = item.id ?? null;
+    this.finalizarOrigem = item.origem === "whatsapp" ? "whatsapp" : "manual";
+    this.motivoFinalizar = this.finalizarOrigem === "whatsapp" ? item.motivo || "" : "";
     this.resolucaoFinalizar = "";
     this.modalAberto = true;
   }
@@ -180,11 +184,21 @@ export class AbertosComponent {
   cancelarModal() {
     this.modalAberto = false;
     this.finalizarId = null;
+    this.finalizarOrigem = "manual";
+    this.motivoFinalizar = "";
+    this.resolucaoFinalizar = "";
   }
 
   async confirmarFinalizacao() {
-    const texto = this.resolucaoFinalizar.trim();
-    if (!texto) {
+    const resolucao = this.resolucaoFinalizar.trim();
+    const motivo = this.motivoFinalizar.trim();
+
+    if (this.finalizarOrigem === "whatsapp" && !motivo) {
+      this.toast.show("Informe o motivo do chamado.", "error");
+      return;
+    }
+
+    if (!resolucao) {
       this.toast.show("Informe como foi resolvido.", "error");
       return;
     }
@@ -192,7 +206,10 @@ export class AbertosComponent {
     if (!this.finalizarId) return;
 
     try {
-      await this.chamadosService.finalizarChamado(this.finalizarId, texto);
+      await this.chamadosService.finalizarChamado(this.finalizarId, {
+        resolucao,
+        motivo: this.finalizarOrigem === "whatsapp" ? motivo : undefined
+      });
       this.runInZone(() => {
         this.toast.show("Chamado finalizado.", "success");
         this.cancelarModal();

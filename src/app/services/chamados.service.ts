@@ -83,10 +83,13 @@ export class ChamadosService {
       data: data.data,
       status: "aberto",
       resolucao: "",
+      origem: "manual",
       criadoEm: serverTimestamp() as any,
+      dataFechamento: null,
       concluidoEm: null,
       dataInicioAtendimento,
       dataFimAtendimento: null,
+      tempoAtendimento: null,
       tempoAtendimentoMinutos: null,
       tipoCadastro: "novo"
     };
@@ -120,10 +123,13 @@ export class ChamadosService {
       data: data.data,
       status: "concluido",
       resolucao: data.resolucao,
+      origem: "manual",
       criadoEm: serverTimestamp() as any,
+      dataFechamento: serverTimestamp() as any,
       concluidoEm: serverTimestamp() as any,
       dataInicioAtendimento,
       dataFimAtendimento: dataInicioAtendimento,
+      tempoAtendimento: 0,
       tempoAtendimentoMinutos: 0,
       tipoCadastro: "antigo"
     };
@@ -136,34 +142,43 @@ export class ChamadosService {
     });
   }
 
-  async finalizarChamado(id: string, resolucao: string) {
+  async finalizarChamado(id: string, data: { resolucao: string; motivo?: string }) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
     const chamadoAtual = this.todosStateSubject.value.data.find((item) => item.id === id);
     const dataFimAtendimento = Timestamp.now();
     const dataInicioAtendimento =
       this.getTimestamp(chamadoAtual?.dataInicioAtendimento) ??
-      this.getTimestamp(chamadoAtual?.criadoEm);
+      this.getTimestamp(chamadoAtual?.criadoEm) ??
+      this.getTimestamp(chamadoAtual?.data);
 
-    const payload: Partial<Chamado> & { concluidoEm: any } = {
+    const payload: Partial<Chamado> & { concluidoEm: any; dataFechamento: any } = {
       status: "concluido",
-      resolucao,
+      resolucao: data.resolucao,
       concluidoEm: serverTimestamp() as any,
+      dataFechamento: serverTimestamp() as any,
       dataFimAtendimento
     };
 
+    if (typeof data.motivo === "string") {
+      payload.motivo = data.motivo;
+    }
+
     if (dataInicioAtendimento) {
       payload.dataInicioAtendimento = dataInicioAtendimento;
-      payload.tempoAtendimentoMinutos = this.calcularTempoAtendimentoMinutos(
+      const tempoAtendimentoMinutos = this.calcularTempoAtendimentoMinutos(
         dataInicioAtendimento,
         dataFimAtendimento
       );
+      payload.tempoAtendimentoMinutos = tempoAtendimentoMinutos;
+      payload.tempoAtendimento = tempoAtendimentoMinutos;
     }
 
     await updateDoc(ref, payload as any);
     this.applyLocalPatch(id, {
       ...payload,
-      concluidoEm: dataFimAtendimento
+      concluidoEm: dataFimAtendimento,
+      dataFechamento: dataFimAtendimento
     });
   }
 
@@ -231,7 +246,7 @@ export class ChamadosService {
       (snapshot) => {
         const items = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
-          ...(docSnap.data() as Chamado)
+          ...this.normalizeChamado(docSnap.data() as Chamado)
         }));
         this.emitState({
           status: "ready",
@@ -309,6 +324,66 @@ export class ChamadosService {
       return value as Timestamp;
     }
     return null;
+  }
+
+  private normalizeChamado(chamado: Chamado): Chamado {
+    const dataTimestamp = this.getTimestamp(chamado.data);
+    const criadoEm = this.getTimestamp(chamado.criadoEm) ?? dataTimestamp;
+    const dataInicioAtendimento =
+      this.getTimestamp(chamado.dataInicioAtendimento) ?? criadoEm;
+    const concluidoEm =
+      this.getTimestamp(chamado.concluidoEm) ??
+      this.getTimestamp(chamado.dataFechamento) ??
+      this.getTimestamp(chamado.dataFimAtendimento);
+    const dataFimAtendimento =
+      this.getTimestamp(chamado.dataFimAtendimento) ??
+      this.getTimestamp(chamado.dataFechamento) ??
+      concluidoEm;
+    const dataFechamento =
+      this.getTimestamp(chamado.dataFechamento) ??
+      this.getTimestamp(chamado.dataFimAtendimento) ??
+      concluidoEm;
+    const data = this.normalizeDataField(chamado.data);
+    const tempoAtendimentoMinutos =
+      chamado.tempoAtendimentoMinutos ??
+      this.normalizeTempoAtendimentoMinutos(chamado.tempoAtendimento);
+
+    return {
+      ...chamado,
+      resolucao: chamado.resolucao || "",
+      origem: chamado.origem === "whatsapp" ? "whatsapp" : "manual",
+      criadoEm,
+      concluidoEm,
+      dataFechamento,
+      dataInicioAtendimento,
+      dataFimAtendimento,
+      data,
+      tempoAtendimento: tempoAtendimentoMinutos,
+      tipoCadastro: chamado.tipoCadastro === "antigo" ? "antigo" : "novo",
+      tempoAtendimentoMinutos
+    };
+  }
+
+  private normalizeDataField(value: unknown): string {
+    if (typeof value === "string") {
+      return value;
+    }
+
+    const timestamp = this.getTimestamp(value);
+    if (!timestamp) {
+      return "";
+    }
+
+    const date = timestamp.toDate();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private normalizeTempoAtendimentoMinutos(value: unknown): number | null {
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
   }
 
   private calcularTempoAtendimentoMinutos(
