@@ -62,17 +62,17 @@
           />
         </label>
 
-        <label class="filter-field filter-field--cliente" for="filtroCliente">
-          <span class="field-label">Cliente</span>
+        <label class="filter-field filter-field--cliente" for="filtroEmpresa">
+          <span class="field-label">Empresa</span>
           <select
-            id="filtroCliente"
-            name="filtroCliente"
-            [(ngModel)]="filtrosDraft.clienteId"
+            id="filtroEmpresa"
+            name="filtroEmpresa"
+            [(ngModel)]="filtrosDraft.empresaId"
             (ngModelChange)="onFiltroDraftChange()"
           >
-            <option value="">Todos os clientes</option>
-            <option *ngFor="let cliente of vm.clientes" [value]="cliente.id">
-              {{ cliente.nome }}
+            <option value="">Todas as empresas</option>
+            <option *ngFor="let empresa of vm.empresasFiltro" [value]="empresa.valor">
+              {{ empresa.nome }}
             </option>
           </select>
         </label>

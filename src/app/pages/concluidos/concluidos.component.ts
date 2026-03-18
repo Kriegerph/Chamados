@@ -26,7 +26,7 @@ type ConcluidosFiltros = {
   ano: string;
   mes: string;
   data: string;
-  clienteId: string;
+  empresaId: string;
   texto: string;
 };
 
@@ -37,10 +37,16 @@ type MesFiltroOption = {
 
 type PaginationButton = number | "...";
 
+type EmpresaFiltroOption = {
+  valor: string;
+  nome: string;
+  empresaId: string;
+};
+
 type ConcluidosViewModel = {
   carregando: boolean;
   erro: string | null;
-  clientes: Cliente[];
+  empresasFiltro: EmpresaFiltroOption[];
   empresas: Empresa[];
   grupos: GrupoConcluidos[];
   totalConcluidos: number;
@@ -58,7 +64,7 @@ const FILTROS_INICIAIS: ConcluidosFiltros = {
   ano: "",
   mes: "",
   data: "",
-  clienteId: "",
+  empresaId: "",
   texto: ""
 };
 
@@ -375,7 +381,8 @@ export class ConcluidosComponent {
     }));
 
     this.atualizarOpcoesData(concluidos);
-    const filtrados = this.filtrarConcluidos(concluidos, filtros, clientesMap);
+    const empresasFiltro = this.buildEmpresasFiltro(concluidos, empresasMap);
+    const filtrados = this.filtrarConcluidos(concluidos, filtros, empresasFiltro);
     const totalItems = filtrados.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 0;
     const paginaAtual = totalPages > 0 ? Math.min(Math.max(currentPage, 1), totalPages) : 1;
@@ -390,7 +397,7 @@ export class ConcluidosComponent {
         clientesState.status === "loading" ||
         empresasState.status === "loading",
       erro: chamadosState.error || clientesState.error || empresasState.error,
-      clientes,
+      empresasFiltro,
       empresas,
       grupos,
       totalConcluidos: concluidos.length,
@@ -430,11 +437,13 @@ export class ConcluidosComponent {
   private filtrarConcluidos(
     items: ConcluidoItemView[],
     filtros: ConcluidosFiltros,
-    clientesMap: Map<string, Cliente>
+    empresasFiltro: EmpresaFiltroOption[]
   ): ConcluidoItemView[] {
     const textoBusca = this.normalizarTexto(filtros.texto.trim());
-    const clienteFiltroNome = filtros.clienteId
-      ? this.normalizarTexto(clientesMap.get(filtros.clienteId)?.nome || "")
+    const empresaFiltroSelecionada =
+      empresasFiltro.find((item) => item.valor === filtros.empresaId) ?? null;
+    const empresaFiltroNomeNormalizado = empresaFiltroSelecionada
+      ? this.normalizarTexto(empresaFiltroSelecionada.nome)
       : "";
 
     return items.filter((item) => {
@@ -447,13 +456,19 @@ export class ConcluidosComponent {
         if (filtros.mes && data.slice(5, 7) !== filtros.mes) return false;
       }
 
-      if (filtros.clienteId) {
-        if (item.clienteId) {
-          if (item.clienteId !== filtros.clienteId) return false;
+      if (filtros.empresaId && empresaFiltroSelecionada) {
+        if (empresaFiltroSelecionada.empresaId) {
+          if (item.empresaId === empresaFiltroSelecionada.empresaId) {
+            // Match direto por empresaId.
+          } else {
+            const nomeItem = this.normalizarTexto(item.clienteLabel || item.empresa || item.cliente || "");
+            if (!empresaFiltroNomeNormalizado || nomeItem !== empresaFiltroNomeNormalizado) return false;
+          }
+        } else if (empresaFiltroNomeNormalizado) {
+          const nomeItem = this.normalizarTexto(item.clienteLabel || item.empresa || item.cliente || "");
+          if (nomeItem !== empresaFiltroNomeNormalizado) return false;
         } else {
-          if (!clienteFiltroNome) return false;
-          const nomeItem = this.normalizarTexto(item.clienteLabel || item.cliente || "");
-          if (nomeItem !== clienteFiltroNome) return false;
+          return false;
         }
       }
 
@@ -466,6 +481,52 @@ export class ConcluidosComponent {
 
       return true;
     });
+  }
+
+  private buildEmpresasFiltro(
+    items: ConcluidoItemView[],
+    empresasMap: Map<string, Empresa>
+  ): EmpresaFiltroOption[] {
+    const opcoesPorChave = new Map<string, EmpresaFiltroOption>();
+
+    items.forEach((item) => {
+      const empresaId = item.empresaId || "";
+      const nomeEmpresa =
+        item.empresa ||
+        (empresaId ? empresasMap.get(empresaId)?.nomeEmpresa || "" : "") ||
+        item.clienteLabel ||
+        item.cliente ||
+        "";
+      const nomeNormalizado = this.normalizarTexto(nomeEmpresa);
+
+      if (empresaId) {
+        const chave = `id:${empresaId}`;
+        if (!opcoesPorChave.has(chave)) {
+          opcoesPorChave.set(chave, {
+            valor: chave,
+            nome: nomeEmpresa || "Empresa nao informada",
+            empresaId
+          });
+        }
+        return;
+      }
+
+      if (!nomeNormalizado) return;
+      const jaExisteComMesmoNome = Array.from(opcoesPorChave.values()).some(
+        (itemOpcao) => this.normalizarTexto(itemOpcao.nome) === nomeNormalizado
+      );
+      if (jaExisteComMesmoNome) return;
+      const chave = `nome:${nomeNormalizado}`;
+      if (!opcoesPorChave.has(chave)) {
+        opcoesPorChave.set(chave, {
+          valor: chave,
+          nome: nomeEmpresa,
+          empresaId: ""
+        });
+      }
+    });
+
+    return Array.from(opcoesPorChave.values()).sort((a, b) => a.nome.localeCompare(b.nome));
   }
 
   private agruparPorData(items: ConcluidoItemView[]): GrupoConcluidos[] {
