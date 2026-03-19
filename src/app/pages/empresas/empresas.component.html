@@ -100,16 +100,29 @@
                           <tr>
                             <th>Nome</th>
                             <th>Telefone</th>
+                            <th>Criar chamado via WhatsApp</th>
                             <th class="empresas-col-acoes">Acoes</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr *ngIf="vm.funcionarios.length === 0">
-                            <td colspan="3">Nenhum funcionario cadastrado.</td>
+                            <td colspan="4">Nenhum funcionario cadastrado.</td>
                           </tr>
                           <tr *ngFor="let funcionario of vm.funcionarios; trackBy: trackByFuncionario">
                             <td>{{ funcionario.nomeFuncionario }}</td>
                             <td>{{ funcionario.telefone || "-" }}</td>
+                            <td>
+                              <span
+                                class="status-chip"
+                                [class.warning]="funcionario?.criarChamadoAutomatico === false"
+                              >
+                                {{
+                                  funcionario?.criarChamadoAutomatico === false
+                                    ? "Desativado"
+                                    : "Ativado"
+                                }}
+                              </span>
+                            </td>
                             <td class="empresas-col-acoes">
                               <div class="btn-group empresas-row-actions">
                                 <button
@@ -189,24 +202,40 @@
     </div>
   </div>
 
-  <div class="modal empresas-modal" *ngIf="editandoFuncionario">
+  <div class="modal empresas-modal" *ngIf="editandoFuncionario && editFuncionario">
     <div class="modal-content empresas-modal-panel">
       <h3>Editar funcionario</h3>
       <p class="card-subtitle empresas-modal-subtitle">Ajuste os dados do funcionario selecionado.</p>
       <form class="form" (ngSubmit)="salvarEdicaoFuncionario()">
         <label>
           <span>Nome do funcionario</span>
-          <input name="editFuncionarioNome" type="text" [(ngModel)]="editFuncionarioNome" required />
+          <input
+            name="editFuncionarioNome"
+            type="text"
+            [(ngModel)]="editFuncionario.nomeFuncionario"
+            required
+          />
         </label>
         <label>
           <span>Telefone</span>
           <input
             name="editFuncionarioTelefone"
             type="text"
-            [(ngModel)]="editFuncionarioTelefone"
+            [(ngModel)]="editFuncionario.telefone"
             placeholder="Opcional"
           />
         </label>
+        <label class="empresas-checkbox">
+          <input
+            name="editFuncionarioCriarChamadoAutomatico"
+            type="checkbox"
+            [(ngModel)]="editFuncionario.criarChamadoAutomatico"
+          />
+          <span>Criar chamado automaticamente via WhatsApp</span>
+        </label>
+        <div class="helper-text">
+          Desmarcado: mensagens desse funcionario serao ignoradas sem erro.
+        </div>
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarEdicaoFuncionario()">Cancelar</button>
           <button class="btn primary" type="submit">Salvar</button>
@@ -215,7 +244,7 @@
     </div>
   </div>
 
-  <div class="modal empresas-modal" *ngIf="cadastrandoFuncionario">
+  <div class="modal empresas-modal" *ngIf="cadastrandoFuncionario && funcionario">
     <div class="modal-content empresas-modal-panel">
       <h3>Novo funcionario</h3>
       <p class="card-subtitle empresas-modal-subtitle" *ngIf="vm.empresaSelecionada">
@@ -224,17 +253,33 @@
       <form class="form" (ngSubmit)="cadastrarFuncionario()">
         <label>
           <span>Nome</span>
-          <input name="funcionarioNome" type="text" [(ngModel)]="funcionarioNome" required />
+          <input
+            name="funcionarioNome"
+            type="text"
+            [(ngModel)]="funcionario.nomeFuncionario"
+            required
+          />
         </label>
         <label>
           <span>Telefone</span>
           <input
             name="funcionarioTelefone"
             type="text"
-            [(ngModel)]="funcionarioTelefone"
+            [(ngModel)]="funcionario.telefone"
             placeholder="Opcional"
           />
         </label>
+        <label class="empresas-checkbox">
+          <input
+            name="funcionarioCriarChamadoAutomatico"
+            type="checkbox"
+            [(ngModel)]="funcionario.criarChamadoAutomatico"
+          />
+          <span>Criar chamado automaticamente via WhatsApp</span>
+        </label>
+        <div class="helper-text">
+          Desmarcado: mensagens desse funcionario serao ignoradas sem erro.
+        </div>
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarCadastroFuncionario()">Cancelar</button>
           <button class="btn primary" type="submit">Salvar funcionario</button>

@@ -87,6 +87,9 @@ export class EmpresasService {
       id: docSnap.id,
       nomeFuncionario: String(docSnap.data()["nomeFuncionario"] || ""),
       telefone: String(docSnap.data()["telefone"] || ""),
+      criarChamadoAutomatico: this.normalizeCriacaoAutomatica(
+        docSnap.data()["criarChamadoAutomatico"]
+      ),
       ativo: docSnap.data()["ativo"] !== false,
       dataCadastro: (docSnap.data()["dataCadastro"] as Funcionario["dataCadastro"]) ?? null,
       atualizadoEm: (docSnap.data()["atualizadoEm"] as Funcionario["atualizadoEm"]) ?? null
@@ -98,12 +101,14 @@ export class EmpresasService {
     data: {
       nomeFuncionario: string;
       telefone?: string;
+      criarChamadoAutomatico?: boolean;
     }
   ) {
     const uid = this.getUidOrThrow();
     const payload: Omit<Funcionario, "id"> = {
       nomeFuncionario: data.nomeFuncionario.trim(),
       telefone: data.telefone?.trim() || "",
+      criarChamadoAutomatico: this.normalizeCriacaoAutomatica(data.criarChamadoAutomatico),
       ativo: true,
       dataCadastro: serverTimestamp() as any,
       atualizadoEm: serverTimestamp() as any
@@ -131,11 +136,19 @@ export class EmpresasService {
       funcionarioId
     );
     await updateDoc(ref, {
-      ...data,
+      nomeFuncionario: data.nomeFuncionario?.trim() || "",
+      telefone: data.telefone?.trim() || "",
+      criarChamadoAutomatico: this.normalizeCriacaoAutomatica(data.criarChamadoAutomatico),
       cargo: deleteField(),
       email: deleteField(),
       atualizadoEm: serverTimestamp()
     } as any);
+  }
+
+  isCriacaoAutomaticaHabilitada(
+    funcionario?: Pick<Funcionario, "criarChamadoAutomatico"> | null
+  ): boolean {
+    return this.normalizeCriacaoAutomatica(funcionario?.criarChamadoAutomatico);
   }
 
   async deleteFuncionario(empresaId: string, funcionarioId: string) {
@@ -177,6 +190,10 @@ export class EmpresasService {
       throw new Error("Faca login.");
     }
     return uid;
+  }
+
+  private normalizeCriacaoAutomatica(value: unknown): boolean {
+    return value === false ? false : true;
   }
 
   private handleAuthChange(authState: AuthState) {

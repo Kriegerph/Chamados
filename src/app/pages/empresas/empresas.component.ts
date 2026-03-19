@@ -21,6 +21,12 @@ type EmpresasViewModel = {
   funcionariosErro: string | null;
 };
 
+type FuncionarioFormModel = {
+  nomeFuncionario: string;
+  telefone: string;
+  criarChamadoAutomatico: boolean;
+};
+
 @Component({
   selector: "app-empresas",
   standalone: true,
@@ -35,8 +41,7 @@ export class EmpresasComponent {
   observacoesEmpresa = "";
 
   cadastrandoFuncionario = false;
-  funcionarioNome = "";
-  funcionarioTelefone = "";
+  funcionario: FuncionarioFormModel = this.createEmptyFuncionarioForm();
 
   editandoEmpresa = false;
   editEmpresaId: string | null = null;
@@ -46,8 +51,7 @@ export class EmpresasComponent {
   editandoFuncionario = false;
   editFuncionarioId: string | null = null;
   editFuncionarioEmpresaId: string | null = null;
-  editFuncionarioNome = "";
-  editFuncionarioTelefone = "";
+  editFuncionario: FuncionarioFormModel = this.createEmptyFuncionarioForm();
 
   private readonly empresaSelecionadaIdSubject = new BehaviorSubject<string | null>(null);
   private readonly funcionariosStateSubject = new BehaviorSubject<DataState<Funcionario[]>>({
@@ -192,7 +196,7 @@ export class EmpresasComponent {
 
   async cadastrarFuncionario() {
     const empresaId = this.empresaSelecionadaIdSubject.value;
-    const nomeFuncionario = this.funcionarioNome.trim();
+    const nomeFuncionario = this.funcionario.nomeFuncionario.trim();
     if (!empresaId) {
       this.toast.show("Selecione uma empresa primeiro.", "error");
       return;
@@ -205,7 +209,8 @@ export class EmpresasComponent {
     try {
       await this.empresasService.addFuncionario(empresaId, {
         nomeFuncionario,
-        telefone: this.funcionarioTelefone
+        telefone: this.funcionario.telefone,
+        criarChamadoAutomatico: this.funcionario.criarChamadoAutomatico
       });
       await this.carregarFuncionarios(empresaId);
       this.runInZone(() => {
@@ -220,14 +225,12 @@ export class EmpresasComponent {
   abrirCadastroFuncionario() {
     if (!this.empresaSelecionadaIdSubject.value) return;
     this.cadastrandoFuncionario = true;
-    this.funcionarioNome = "";
-    this.funcionarioTelefone = "";
+    this.funcionario = this.createEmptyFuncionarioForm();
   }
 
   cancelarCadastroFuncionario() {
     this.cadastrandoFuncionario = false;
-    this.funcionarioNome = "";
-    this.funcionarioTelefone = "";
+    this.funcionario = this.createEmptyFuncionarioForm();
   }
 
   abrirEdicaoFuncionario(item: Funcionario) {
@@ -237,21 +240,19 @@ export class EmpresasComponent {
     this.editandoFuncionario = true;
     this.editFuncionarioId = item.id ?? null;
     this.editFuncionarioEmpresaId = empresaId;
-    this.editFuncionarioNome = item.nomeFuncionario || "";
-    this.editFuncionarioTelefone = item.telefone || "";
+    this.editFuncionario = this.createFuncionarioForm(item);
   }
 
   cancelarEdicaoFuncionario() {
     this.editandoFuncionario = false;
     this.editFuncionarioId = null;
     this.editFuncionarioEmpresaId = null;
-    this.editFuncionarioNome = "";
-    this.editFuncionarioTelefone = "";
+    this.editFuncionario = this.createEmptyFuncionarioForm();
   }
 
   async salvarEdicaoFuncionario() {
     if (!this.editFuncionarioId || !this.editFuncionarioEmpresaId) return;
-    const nomeFuncionario = this.editFuncionarioNome.trim();
+    const nomeFuncionario = this.editFuncionario.nomeFuncionario.trim();
     if (!nomeFuncionario) {
       this.toast.show("Informe o nome do funcionario.", "error");
       return;
@@ -263,7 +264,8 @@ export class EmpresasComponent {
         this.editFuncionarioId,
         {
           nomeFuncionario,
-          telefone: this.editFuncionarioTelefone.trim()
+          telefone: this.editFuncionario.telefone,
+          criarChamadoAutomatico: this.editFuncionario.criarChamadoAutomatico
         }
       );
       await this.carregarFuncionarios(this.editFuncionarioEmpresaId);
@@ -347,6 +349,23 @@ export class EmpresasComponent {
     return [...items].sort((a, b) =>
       (a.nomeFuncionario || "").localeCompare(b.nomeFuncionario || "")
     );
+  }
+
+  private createEmptyFuncionarioForm(): FuncionarioFormModel {
+    return {
+      nomeFuncionario: "",
+      telefone: "",
+      criarChamadoAutomatico: true
+    };
+  }
+
+  private createFuncionarioForm(funcionario?: Partial<Funcionario> | null): FuncionarioFormModel {
+    return {
+      nomeFuncionario: funcionario?.nomeFuncionario || "",
+      telefone: funcionario?.telefone || "",
+      criarChamadoAutomatico:
+        funcionario?.criarChamadoAutomatico ?? true
+    };
   }
 
   private emitFuncionariosState(state: DataState<Funcionario[]>) {

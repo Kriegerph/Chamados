@@ -153,6 +153,29 @@
   margin-bottom: 16px;
 }
 
+.empresas-checkbox {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #d8e2f0;
+  border-radius: var(--radius-sm);
+  background: #f8fbff;
+}
+
+.empresas-checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary-500);
+}
+
+.empresas-checkbox span {
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
 @media (max-width: 720px) {
   .empresas-hero {
     flex-direction: column;
