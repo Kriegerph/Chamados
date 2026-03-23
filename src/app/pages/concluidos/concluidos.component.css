@@ -58,7 +58,7 @@
 .concluidos-pagination-wrap {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #e2e9f5;
+  border-top: 1px solid #e2e8f0;
   display: grid;
   gap: 10px;
 }
@@ -79,7 +79,7 @@
   height: 34px;
   padding: 0 12px;
   border-radius: 9px;
-  background: #f7faff;
+  background: #ffffff;
 }
 
 .pagination-btn-number {
@@ -88,37 +88,38 @@
 }
 
 .pagination-btn-number.active {
-  background: linear-gradient(180deg, #3e78df 0%, #2f67cf 100%);
-  border-color: #2d63c6;
+  background: var(--primary-500);
+  border-color: var(--primary-500);
   color: #ffffff;
 }
 
 .pagination-ellipsis {
   min-width: 20px;
   text-align: center;
-  color: #6f7f99;
+  color: var(--text-muted);
   font-weight: 700;
 }
 
 .concluido-group {
-  border: 1px dashed #d4dfef;
+  border: 1px dashed #cbd5e1;
   border-radius: 12px;
-  padding: 12px;
-  background: #f8fbff;
+  padding: 14px;
+  background: #f8fafc;
 }
 
 .concluido-group h3 {
   margin: 0 0 8px;
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 .concluido-item {
-  border: 1px solid #dce5f2;
+  border: 1px solid #dbe3ee;
   border-radius: 12px;
   background: #ffffff;
   overflow: hidden;
   margin-bottom: 10px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 .concluido-item:last-child {
@@ -135,7 +136,7 @@
 .item-body,
 .item-resolucao,
 .item-footer {
-  border-top: 1px solid #e8eef8;
+  border-top: 1px solid #e2e8f0;
 }
 
 .item-header {
@@ -148,6 +149,7 @@
 .cliente-nome {
   min-width: 0;
   font-size: 15px;
+  color: var(--text-main);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -171,29 +173,32 @@
 }
 
 .meta-badge {
-  border: 1px solid #d4deee;
+  border: 1px solid #dbe3ee;
   border-radius: 999px;
-  background: #f0f5ff;
-  color: #3b537b;
+  background: #f8fafc;
+  color: #475569;
   font-size: 11px;
-  padding: 2px 8px;
+  font-weight: 700;
+  padding: 4px 9px;
 }
 
 .badge-tipo.antigo {
-  background: #eef4ff;
-  border-color: #cadcfb;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
 }
 
 .badge-tipo.novo {
-  background: #eef8ef;
-  border-color: #cde5cf;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.30);
+  color: #15803d;
 }
 
 .item-label {
   margin: 0 0 5px;
   font-size: 11px;
   font-weight: 700;
-  color: #61708b;
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 
@@ -201,20 +206,21 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
+  color: var(--text-main);
 }
 
 .resolucao-box {
-  border: 1px solid #cfdbef;
+  border: 1px solid #dbe3ee;
   border-radius: 10px;
-  background: #f4f8ff;
-  padding: 10px 11px;
+  background: #f8fafc;
+  padding: 12px;
 }
 
 .resolucao-box p {
   margin: 0;
   white-space: pre-wrap;
   font-size: 13.5px;
-  color: #384d71;
+  color: var(--text-main);
 }
 
 .item-footer {
@@ -243,7 +249,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #61708b;
+  color: var(--text-muted);
 }
 
 .concluido-actions {

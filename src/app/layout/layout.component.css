@@ -17,7 +17,9 @@
 
 .app-content {
   flex: 1;
-  padding: 24px;
+  padding: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%);
 }
 
 .page-enter {

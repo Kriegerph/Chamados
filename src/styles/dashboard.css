@@ -1,22 +1,27 @@
 .dashboard-layout {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .dashboard-full-width {
   grid-column: 1 / -1;
+}
+
+.chart-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
 }
 
 .chart-card canvas {
@@ -26,7 +31,8 @@
 
 .chart-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  color: var(--text-main);
 }
 
 .chart-controls {
@@ -41,6 +47,7 @@
   gap: 8px;
   font-size: 12px;
   color: var(--text-muted);
+  font-weight: 700;
 }
 
 .chart-controls select {
@@ -48,6 +55,7 @@
   min-width: 90px;
   height: 34px;
   padding: 0 28px 0 10px;
+  background: #ffffff;
 }
 
 .chart-controls-inline label {

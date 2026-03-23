@@ -3,13 +3,13 @@
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   box-shadow: var(--shadow-soft);
-  padding: 18px;
+  padding: 22px;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .card:hover {
-  border-color: #cad6ea;
-  box-shadow: var(--shadow-card);
+  border-color: #c2cedd;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.10);
   transform: translateY(-2px);
 }
 
@@ -23,34 +23,34 @@
 
 .card-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   letter-spacing: -0.01em;
 }
 
 .card-subtitle {
   margin: 2px 0 0;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .stat-card {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 14px 15px;
+  padding: 18px;
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-accent);
-  color: var(--primary-500);
+  background: #dbeafe;
+  color: var(--primary-600);
 }
 
 .stat-icon svg {
@@ -67,7 +67,7 @@
 
 .stat-label {
   font-size: 12px;
-  color: var(--text-soft);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -77,7 +77,7 @@
   line-height: 1;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #10213f;
+  color: var(--text-main);
 }
 
 .stat-note {
@@ -86,18 +86,18 @@
 }
 
 .stat-card.success .stat-icon {
-  color: #258555;
-  background: #e8f5ef;
+  color: var(--success-600);
+  background: var(--success-100);
 }
 
 .stat-card.warning .stat-icon {
-  color: #a26927;
-  background: #fff4e6;
+  color: #b45309;
+  background: var(--warning-100);
 }
 
 .stat-card.neutral .stat-icon {
-  color: #5b6f8f;
-  background: #eff3fb;
+  color: #475569;
+  background: #e2e8f0;
 }
 
 .activity-list {
@@ -110,9 +110,9 @@
 
 .activity-item {
   padding: 11px 12px;
-  border: 1px solid #dde5f2;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-md);
-  background: #fbfdff;
+  background: var(--surface-card-muted);
   display: grid;
   gap: 5px;
 }
@@ -129,5 +129,5 @@
 .activity-client {
   font-size: 13px;
   font-weight: 700;
-  color: #1c2d4f;
+  color: var(--text-main);
 }

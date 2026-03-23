@@ -468,6 +468,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderMonthlyChart(data: number[]) {
+    const palette = this.getChartPalette();
     this.monthlyChart?.destroy();
     this.monthlyChart = new Chart(this.monthlyChartRef!.nativeElement, {
       type: "bar",
@@ -478,8 +479,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             label: "Chamados por mês",
             data,
             borderRadius: 6,
-            backgroundColor: "#4a81ea",
-            hoverBackgroundColor: "#2f67cf"
+            backgroundColor: palette.primary,
+            hoverBackgroundColor: palette.primaryDark
           }
         ]
       },
@@ -492,9 +493,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { precision: 0 }
+            ticks: { precision: 0, color: palette.textMuted },
+            grid: { color: palette.grid }
           },
           x: {
+            ticks: { color: palette.textMuted },
             grid: { display: false }
           }
         }
@@ -503,6 +506,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderClientsChart(topEmpresas: EmpresaResumo[]) {
+    const palette = this.getChartPalette();
     this.clientsChart?.destroy();
     const labels = topEmpresas.length
       ? topEmpresas.map((item) => item.nome)
@@ -518,8 +522,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             label: "Chamados",
             data: values,
             borderRadius: 6,
-            backgroundColor: "#6fa0ff",
-            hoverBackgroundColor: "#4a81ea"
+            backgroundColor: palette.primaryLight,
+            hoverBackgroundColor: palette.primary
           }
         ]
       },
@@ -533,9 +537,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { precision: 0 }
+            ticks: { precision: 0, color: palette.textMuted },
+            grid: { color: palette.grid }
           },
           y: {
+            ticks: { color: palette.textMuted },
             grid: { display: false }
           }
         }
@@ -544,6 +550,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderDailyChart(labels: number[], data: number[]) {
+    const palette = this.getChartPalette();
     this.dailyChart?.destroy();
     this.dailyChart = new Chart(this.dailyChartRef!.nativeElement, {
       type: "bar",
@@ -554,8 +561,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             label: "Chamados por dia",
             data,
             borderRadius: 4,
-            backgroundColor: "#3f76dc",
-            hoverBackgroundColor: "#2f67cf",
+            backgroundColor: palette.primary,
+            hoverBackgroundColor: palette.primaryDark,
             maxBarThickness: 18
           }
         ]
@@ -569,14 +576,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { precision: 0 }
+            ticks: { precision: 0, color: palette.textMuted },
+            grid: { color: palette.grid }
           },
           x: {
+            ticks: { color: palette.textMuted },
             grid: { display: false }
           }
         }
       }
     });
+  }
+
+  private getChartPalette() {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      primary: styles.getPropertyValue("--primary-500").trim() || "#3b82f6",
+      primaryDark: styles.getPropertyValue("--primary-600").trim() || "#2563eb",
+      primaryLight: styles.getPropertyValue("--primary-400").trim() || "#60a5fa",
+      textMuted: styles.getPropertyValue("--text-muted").trim() || "#64748b",
+      grid: "rgba(148, 163, 184, 0.22)"
+    };
   }
 
   private destroyCharts() {

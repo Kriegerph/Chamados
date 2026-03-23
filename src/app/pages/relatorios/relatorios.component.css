@@ -38,11 +38,11 @@
 .empresas-selector-list {
   max-height: 320px;
   overflow-y: auto;
-  border: 1px solid #d7e0ee;
+  border: 1px solid #dbe3ee;
   border-radius: 12px;
-  background: #fbfcff;
+  background: #ffffff;
   padding: 8px 0;
-  box-shadow: inset 0 8px 14px -18px rgba(25, 43, 74, 0.55);
+  box-shadow: inset 0 8px 14px -18px rgba(15, 23, 42, 0.6);
 }
 
 .empresa-selector-item {
@@ -50,7 +50,7 @@
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  border-bottom: 1px solid #e8eef8;
+  border-bottom: 1px solid #e2e8f0;
   cursor: pointer;
 }
 
@@ -59,7 +59,7 @@
 }
 
 .empresa-selector-item:hover {
-  background: #f5f9ff;
+  background: #f8fafc;
 }
 
 .empresa-selector-item input {
@@ -71,7 +71,7 @@
 
 .empresa-selector-item span {
   font-size: 13.5px;
-  color: #213453;
+  color: var(--text-main);
 }
 
 .empresas-selector-list::-webkit-scrollbar {
@@ -79,13 +79,13 @@
 }
 
 .empresas-selector-list::-webkit-scrollbar-thumb {
-  background: #cfdaec;
+  background: #cbd5e1;
   border-radius: 999px;
-  border: 2px solid #f8fbff;
+  border: 2px solid #ffffff;
 }
 
 .empresas-selector-list::-webkit-scrollbar-track {
-  background: #f3f7fd;
+  background: #f8fafc;
 }
 
 .relatorios-date-grid {
@@ -109,23 +109,23 @@
   display: grid;
   gap: 4px;
   padding: 14px 14px 14px 42px;
-  border: 1px solid #d7e0ee;
+  border: 1px solid #dbe3ee;
   border-radius: 13px;
-  background: #fbfcff;
+  background: #ffffff;
   cursor: pointer;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .tipo-card:hover {
-  border-color: #bfd1eb;
+  border-color: #bfdbfe;
   box-shadow: var(--shadow-soft);
   transform: translateY(-1px);
 }
 
 .tipo-card.active {
-  border-color: #93b4e9;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
-  box-shadow: 0 10px 20px rgba(27, 68, 133, 0.08);
+  border-color: #93c5fd;
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+  box-shadow: 0 12px 22px rgba(37, 99, 235, 0.10);
 }
 
 .tipo-card input {
@@ -140,7 +140,7 @@
 .tipo-card-title {
   font-size: 14px;
   font-weight: 700;
-  color: #1c2d4d;
+  color: var(--text-main);
 }
 
 .tipo-card-description {
@@ -162,14 +162,14 @@
   display: grid;
   gap: 4px;
   padding: 12px;
-  border: 1px solid #dbe4f2;
+  border: 1px solid #dbe3ee;
   border-radius: 12px;
-  background: #f9fbff;
+  background: #f8fafc;
 }
 
 .stat-mini strong {
   font-size: 18px;
-  color: #17305b;
+  color: var(--text-main);
 }
 
 .stat-mini-label {
@@ -184,9 +184,9 @@
   display: grid;
   gap: 4px;
   padding: 12px 13px;
-  border: 1px dashed #ced9ea;
+  border: 1px dashed #cbd5e1;
   border-radius: 12px;
-  background: #f6f9ff;
+  background: #f8fafc;
 }
 
 .export-summary-label {
@@ -200,7 +200,7 @@
 .export-summary-value {
   font-size: 14px;
   font-weight: 700;
-  color: #1d3155;
+  color: var(--text-main);
 }
 
 .export-btn {

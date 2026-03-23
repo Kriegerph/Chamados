@@ -1,6 +1,6 @@
 .abertos-table {
   table-layout: fixed;
-  min-width: 760px;
+  min-width: 100%;
 }
 
 .abertos-table .col-data {
@@ -32,7 +32,7 @@
 
 .chamado-principal {
   font-weight: 700;
-  color: #1d3155;
+  color: var(--text-main);
   word-break: break-word;
 }
 
@@ -47,7 +47,15 @@
   justify-content: flex-end;
 }
 
+.abertos-table tbody tr:first-child:last-child td {
+  color: var(--text-muted);
+}
+
 @media (max-width: 640px) {
+  .abertos-table {
+    min-width: 760px;
+  }
+
   .action-buttons {
     justify-content: flex-start;
   }
