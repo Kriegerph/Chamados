@@ -18,6 +18,11 @@ export const appRoutes: Routes = [
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "abertos", component: AbertosComponent },
+      {
+        path: "anotacoes",
+        loadComponent: () =>
+          import("./pages/anotacoes/anotacoes.component").then((m) => m.AnotacoesComponent)
+      },
       { path: "clientes", redirectTo: "empresas", pathMatch: "full" },
       { path: "concluidos", component: ConcluidosComponent },
       { path: "dashboard", component: DashboardComponent },

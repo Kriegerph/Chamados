@@ -1,0 +1,171 @@
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <article class="card anotacoes-hero">
+    <div class="anotacoes-hero-copy">
+      <span class="anotacoes-kicker">Produtividade</span>
+      <h2 class="page-title anotacoes-title">Anota&ccedil;&otilde;es</h2>
+      <p class="page-subtitle anotacoes-subtitle">
+        Salve observa&ccedil;&otilde;es do usu&aacute;rio com formata&ccedil;&atilde;o b&aacute;sica e edi&ccedil;&atilde;o r&aacute;pida.
+      </p>
+    </div>
+
+    <div class="anotacoes-hero-actions">
+      <span class="status-chip">Total: {{ vm.total }}</span>
+      <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anota&ccedil;&atilde;o</button>
+    </div>
+  </article>
+
+  <div class="anotacoes-layout">
+    <article class="card anotacoes-list-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Lista de anota&ccedil;&otilde;es</h3>
+          <p class="card-subtitle">Selecione uma anota&ccedil;&atilde;o para continuar a edi&ccedil;&atilde;o.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+      <div class="skeleton anotacoes-skeleton" *ngIf="vm.carregando && vm.anotacoes.length === 0"></div>
+
+      <div class="anotacoes-list" *ngIf="!vm.erro && (!vm.carregando || vm.anotacoes.length > 0)">
+        <div class="empty-state" *ngIf="vm.anotacoes.length === 0">
+          Nenhuma anota&ccedil;&atilde;o salva.
+        </div>
+
+        <button
+          class="anotacao-item"
+          type="button"
+          *ngFor="let item of vm.anotacoes; trackBy: trackByAnotacao"
+          [class.selected]="item.id === anotacaoSelecionadaId"
+          (click)="selecionarAnotacao(item)"
+        >
+          <span class="anotacao-item-title">{{ item.titulo || "Sem titulo" }}</span>
+          <span class="anotacao-item-date" *ngIf="item.dataLabel">{{ item.dataLabel }}</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card anotacoes-editor-card">
+      <div class="card-title-row anotacoes-editor-header">
+        <div>
+          <h3 class="card-title">Editor</h3>
+          <p class="card-subtitle">Use a barra para aplicar negrito, listas, cor e tamanho da fonte.</p>
+        </div>
+        <span class="status-chip neutral">{{ getStatusLabel() }}</span>
+      </div>
+
+      <form class="form anotacoes-form" (ngSubmit)="salvarAnotacao()">
+        <label>
+          <span>Titulo</span>
+          <input
+            name="tituloAnotacao"
+            type="text"
+            [(ngModel)]="titulo"
+            placeholder="Digite um titulo"
+            required
+          />
+        </label>
+
+        <div class="field">
+          <span class="field-label">Conteudo</span>
+
+          <div class="editor-shell">
+            <div class="editor-toolbar">
+              <div class="editor-toolbar-group">
+                <button
+                  class="toolbar-btn"
+                  type="button"
+                  *ngFor="let button of formatButtons"
+                  [title]="button.title"
+                  (mousedown)="onToolbarMouseDown($event)"
+                  (click)="aplicarFormatacao(button)"
+                >
+                  {{ button.label }}
+                </button>
+              </div>
+
+              <div class="editor-toolbar-group">
+                <button
+                  class="toolbar-btn toolbar-btn-size"
+                  type="button"
+                  *ngFor="let button of fontButtons"
+                  [title]="button.title"
+                  (mousedown)="onToolbarMouseDown($event)"
+                  (click)="aplicarFormatacao(button)"
+                >
+                  {{ button.label }}
+                </button>
+              </div>
+
+              <div class="editor-toolbar-group">
+                <button
+                  class="toolbar-btn toolbar-btn-color"
+                  type="button"
+                  *ngFor="let color of colorButtons"
+                  [title]="color.label"
+                  [style.color]="color.value"
+                  (mousedown)="onToolbarMouseDown($event)"
+                  (click)="aplicarCor(color.value)"
+                >
+                  A
+                </button>
+              </div>
+
+              <div class="editor-toolbar-group">
+                <button
+                  class="toolbar-btn toolbar-btn-wide"
+                  type="button"
+                  *ngFor="let button of listButtons"
+                  [title]="button.title"
+                  (mousedown)="onToolbarMouseDown($event)"
+                  (click)="aplicarFormatacao(button)"
+                >
+                  {{ button.label }}
+                </button>
+                <button
+                  class="toolbar-btn toolbar-btn-wide"
+                  type="button"
+                  title="Inserir quebra de linha"
+                  (mousedown)="onToolbarMouseDown($event)"
+                  (click)="inserirQuebraDeLinha()"
+                >
+                  Enter
+                </button>
+              </div>
+            </div>
+
+            <div
+              #editor
+              class="editor-content"
+              contenteditable="true"
+              spellcheck="true"
+              data-placeholder="Escreva sua anotacao aqui..."
+              (input)="onEditorInput()"
+              (focus)="capturarSelecao()"
+              (keyup)="capturarSelecao()"
+              (mouseup)="capturarSelecao()"
+              (paste)="onEditorPaste($event)"
+            ></div>
+          </div>
+        </div>
+
+        <div class="anotacoes-actions">
+          <button class="btn secondary" type="button" (click)="abrirNovaAnotacao()">
+            Nova anota&ccedil;&atilde;o
+          </button>
+          <button class="btn primary" type="submit" [disabled]="salvando || excluindo || vm.carregando">
+            {{ getSalvarLabel() }}
+          </button>
+          <button
+            class="btn danger"
+            type="button"
+            *ngIf="podeExibirExcluir()"
+            (click)="excluirAnotacao()"
+            [disabled]="excluindo || salvando"
+          >
+            {{ getExcluirLabel() }}
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</section>
