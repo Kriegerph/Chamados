@@ -1,3 +1,10 @@
+.anotacoes-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+}
+
 .anotacoes-hero {
   display: flex;
   align-items: center;
@@ -51,24 +58,52 @@
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
+  margin: 0;
 }
 
 .anotacoes-list-card,
 .anotacoes-editor-card {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.anotacoes-list-card:hover,
+.anotacoes-editor-card:hover {
+  transform: none;
+}
+
+.anotacoes-list-card > .empty-state,
+.anotacoes-list-card > .anotacoes-skeleton {
+  flex: 1;
+  min-height: 0;
 }
 
 .anotacoes-skeleton {
   min-height: 300px;
 }
 
+.anotacoes-search-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.anotacoes-search-field input {
+  width: 100%;
+}
+
 .anotacoes-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  max-height: min(720px, calc(100vh - 250px));
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .anotacao-item {
@@ -115,6 +150,23 @@
 
 .anotacoes-editor-header {
   align-items: center;
+  flex: 0 0 auto;
+}
+
+.anotacoes-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.anotacoes-form > label {
+  flex: 0 0 auto;
+}
+
+.anotacoes-form > .field {
+  flex: 1;
+  min-height: 0;
 }
 
 .editor-shell {
@@ -122,6 +174,10 @@
   border-radius: var(--radius-md);
   background: #ffffff;
   overflow: hidden;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .editor-toolbar {
@@ -178,7 +234,8 @@
 }
 
 .editor-content {
-  min-height: 380px;
+  flex: 1;
+  min-height: 260px;
   padding: 16px;
   font-size: 14px;
   line-height: 1.7;
@@ -208,16 +265,54 @@
   align-items: center;
   gap: 10px;
   flex-wrap: nowrap;
-  margin-top: 6px;
+  margin-top: auto;
+  margin-bottom: 0;
+  padding-top: 6px;
+  flex: 0 0 auto;
+}
+
+@media (min-width: 1025px) {
+  .anotacoes-page {
+    height: calc(100dvh - var(--header-height) - 56px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .anotacoes-layout {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 @media (max-width: 1024px) {
+  .anotacoes-page {
+    display: grid;
+  }
+
   .anotacoes-layout {
     grid-template-columns: 1fr;
   }
 
+  .anotacoes-list-card,
+  .anotacoes-editor-card {
+    height: auto;
+    overflow: visible;
+  }
+
   .anotacoes-list {
     max-height: 320px;
+    min-height: unset;
+  }
+
+  .anotacoes-form,
+  .anotacoes-form > .field,
+  .editor-shell {
+    min-height: unset;
+  }
+
+  .editor-content {
+    min-height: 380px;
   }
 }
 

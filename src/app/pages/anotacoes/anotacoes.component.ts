@@ -11,7 +11,7 @@ import {
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { Timestamp } from "firebase/firestore";
-import { map, Observable } from "rxjs";
+import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
 import { Anotacao } from "../../models/anotacao.model";
 import { DataState } from "../../models/data-state.model";
 import { AnotacoesService } from "../../services/anotacoes.service";
@@ -25,6 +25,7 @@ type AnotacoesViewModel = {
   carregando: boolean;
   erro: string | null;
   anotacoes: AnotacaoListItem[];
+  totalFiltrado: number;
   total: number;
 };
 
@@ -56,6 +57,7 @@ export class AnotacoesComponent implements AfterViewInit {
   excluindo = false;
   modoNovaAnotacao = false;
   anotacaoSelecionadaId: string | null = null;
+  filtroTitulo = "";
 
   readonly fontButtons: ToolbarButton[] = [
     { label: "12", title: "Fonte pequena", command: "fontSize", value: "2" },
@@ -82,6 +84,7 @@ export class AnotacoesComponent implements AfterViewInit {
   readonly vm$: Observable<AnotacoesViewModel>;
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly filtroTituloSubject = new BehaviorSubject<string>("");
   private readonly fontSizeMap: Record<string, string> = {
     "1": "10px",
     "2": "12px",
@@ -104,8 +107,11 @@ export class AnotacoesComponent implements AfterViewInit {
     private readonly anotacoesService: AnotacoesService,
     private readonly toast: ToastService
   ) {
-    this.vm$ = this.anotacoesService.anotacoesState$.pipe(
-      map((state) => this.buildViewModel(state))
+    this.vm$ = combineLatest([
+      this.anotacoesService.anotacoesState$,
+      this.filtroTituloSubject
+    ]).pipe(
+      map(([state, filtroTitulo]) => this.buildViewModel(state, filtroTitulo))
     );
 
     this.anotacoesService.anotacoesState$
@@ -265,17 +271,24 @@ export class AnotacoesComponent implements AfterViewInit {
     return this.excluindo ? "Excluindo..." : "Excluir anotacao";
   }
 
-  private buildViewModel(state: DataState<Anotacao[]>): AnotacoesViewModel {
-    const anotacoes = this.sortAnotacoes(state.data).map((item) => ({
+  atualizarFiltroTitulo(valor: string) {
+    this.filtroTitulo = valor;
+    this.filtroTituloSubject.next(valor);
+  }
+
+  private buildViewModel(state: DataState<Anotacao[]>, filtroTitulo: string): AnotacoesViewModel {
+    const anotacoesOrdenadas = this.sortAnotacoes(state.data).map((item) => ({
       ...item,
       dataLabel: this.formatDate(item.dataAtualizacao ?? item.dataCriacao ?? null)
     }));
+    const anotacoes = this.filterAnotacoes(anotacoesOrdenadas, filtroTitulo);
 
     return {
       carregando: state.status === "loading",
       erro: state.error,
       anotacoes,
-      total: anotacoes.length
+      totalFiltrado: anotacoes.length,
+      total: anotacoesOrdenadas.length
     };
   }
 
@@ -312,6 +325,23 @@ export class AnotacoesComponent implements AfterViewInit {
 
       if (diff !== 0) return diff;
       return (a.titulo || "").localeCompare(b.titulo || "");
+    });
+  }
+
+  private filterAnotacoes(items: AnotacaoListItem[], filtroTitulo: string): AnotacaoListItem[] {
+    const termos = filtroTitulo
+      .trim()
+      .toLocaleLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (termos.length === 0) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const titulo = (item.titulo || "").toLocaleLowerCase();
+      return termos.every((termo) => titulo.includes(termo));
     });
   }
 

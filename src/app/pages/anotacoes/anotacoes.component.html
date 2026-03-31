@@ -1,4 +1,4 @@
-<section class="page-section" *ngIf="vm$ | async as vm">
+<section class="page-section anotacoes-page" *ngIf="vm$ | async as vm">
   <article class="card anotacoes-hero">
     <div class="anotacoes-hero-copy">
       <span class="anotacoes-kicker">Produtividade</span>
@@ -23,12 +23,27 @@
         </div>
       </div>
 
-      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
-      <div class="skeleton anotacoes-skeleton" *ngIf="vm.carregando && vm.anotacoes.length === 0"></div>
+      <label class="anotacoes-search-field">
+        <input
+          name="buscarAnotacaoTitulo"
+          type="text"
+          [ngModel]="filtroTitulo"
+          (ngModelChange)="atualizarFiltroTitulo($event)"
+          placeholder="Buscar anota&ccedil;&atilde;o por t&iacute;tulo..."
+          autocomplete="off"
+        />
+      </label>
 
-      <div class="anotacoes-list" *ngIf="!vm.erro && (!vm.carregando || vm.anotacoes.length > 0)">
-        <div class="empty-state" *ngIf="vm.anotacoes.length === 0">
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+      <div class="skeleton anotacoes-skeleton" *ngIf="vm.carregando && vm.total === 0"></div>
+
+      <div class="anotacoes-list" *ngIf="!vm.erro && (!vm.carregando || vm.total > 0)">
+        <div class="empty-state" *ngIf="vm.total === 0">
           Nenhuma anota&ccedil;&atilde;o salva.
+        </div>
+
+        <div class="empty-state" *ngIf="vm.total > 0 && vm.totalFiltrado === 0">
+          Nenhuma anota&ccedil;&atilde;o encontrada
         </div>
 
         <button
