@@ -4,11 +4,18 @@ import { FormsModule } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
 import { DataState } from "../../models/data-state.model";
 import { Empresa, Funcionario } from "../../models/empresa.model";
+import { Sistema } from "../../models/sistema.model";
 import { EmpresasService } from "../../services/empresas.service";
+import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
 
 type EmpresaItemView = Empresa & {
   totalFuncionariosLabel: number;
+  sistemas: string[];
+};
+
+type SistemaOptionView = Sistema & {
+  id: string;
 };
 
 type EmpresasViewModel = {
@@ -16,6 +23,8 @@ type EmpresasViewModel = {
   erro: string | null;
   empresas: EmpresaItemView[];
   empresaSelecionada: EmpresaItemView | null;
+  sistemas: SistemaOptionView[];
+  sistemasErro: string | null;
   funcionarios: Funcionario[];
   funcionariosCarregando: boolean;
   funcionariosErro: string | null;
@@ -39,6 +48,7 @@ export class EmpresasComponent {
   cadastrandoEmpresa = false;
   nomeEmpresa = "";
   observacoesEmpresa = "";
+  sistemasEmpresaSelecionados: string[] = [];
 
   cadastrandoFuncionario = false;
   funcionario: FuncionarioFormModel = this.createEmptyFuncionarioForm();
@@ -47,6 +57,7 @@ export class EmpresasComponent {
   editEmpresaId: string | null = null;
   editEmpresaNome = "";
   editEmpresaObservacoes = "";
+  editEmpresaSistemasSelecionados: string[] = [];
 
   editandoFuncionario = false;
   editFuncionarioId: string | null = null;
@@ -64,16 +75,18 @@ export class EmpresasComponent {
 
   constructor(
     private readonly empresasService: EmpresasService,
+    private readonly sistemasService: SistemasService,
     private readonly toast: ToastService,
     private readonly zone: NgZone
   ) {
     this.vm$ = combineLatest([
       this.empresasService.empresasState$,
+      this.sistemasService.sistemasState$,
       this.empresaSelecionadaIdSubject,
       this.funcionariosStateSubject
     ]).pipe(
-      map(([empresasState, empresaSelecionadaId, funcionariosState]) =>
-        this.buildViewModel(empresasState, empresaSelecionadaId, funcionariosState)
+      map(([empresasState, sistemasState, empresaSelecionadaId, funcionariosState]) =>
+        this.buildViewModel(empresasState, sistemasState, empresaSelecionadaId, funcionariosState)
       )
     );
   }
@@ -86,6 +99,10 @@ export class EmpresasComponent {
     return item.id ?? item.nomeFuncionario;
   }
 
+  trackBySistema(_: number, item: SistemaOptionView): string {
+    return item.id;
+  }
+
   async cadastrarEmpresa() {
     const nomeEmpresa = this.nomeEmpresa.trim();
     if (!nomeEmpresa) {
@@ -96,7 +113,8 @@ export class EmpresasComponent {
     try {
       await this.empresasService.addEmpresa({
         nomeEmpresa,
-        observacoes: this.observacoesEmpresa
+        observacoes: this.observacoesEmpresa,
+        sistemas: this.sanitizeSistemaIds(this.sistemasEmpresaSelecionados)
       });
       this.runInZone(() => {
         this.toast.show("Empresa cadastrada com sucesso.", "success");
@@ -111,12 +129,14 @@ export class EmpresasComponent {
     this.cadastrandoEmpresa = true;
     this.nomeEmpresa = "";
     this.observacoesEmpresa = "";
+    this.sistemasEmpresaSelecionados = [];
   }
 
   cancelarCadastroEmpresa() {
     this.cadastrandoEmpresa = false;
     this.nomeEmpresa = "";
     this.observacoesEmpresa = "";
+    this.sistemasEmpresaSelecionados = [];
   }
 
   alternarEmpresa(empresaId?: string | null) {
@@ -147,6 +167,7 @@ export class EmpresasComponent {
     this.editEmpresaId = item.id ?? null;
     this.editEmpresaNome = item.nomeEmpresa || "";
     this.editEmpresaObservacoes = item.observacoes || "";
+    this.editEmpresaSistemasSelecionados = this.sanitizeSistemaIds(item.sistemas);
   }
 
   cancelarEdicaoEmpresa() {
@@ -154,6 +175,7 @@ export class EmpresasComponent {
     this.editEmpresaId = null;
     this.editEmpresaNome = "";
     this.editEmpresaObservacoes = "";
+    this.editEmpresaSistemasSelecionados = [];
   }
 
   async salvarEdicaoEmpresa() {
@@ -167,7 +189,8 @@ export class EmpresasComponent {
     try {
       await this.empresasService.updateEmpresa(this.editEmpresaId, {
         nomeEmpresa,
-        observacoes: this.editEmpresaObservacoes.trim()
+        observacoes: this.editEmpresaObservacoes.trim(),
+        sistemas: this.sanitizeSistemaIds(this.editEmpresaSistemasSelecionados)
       });
       this.runInZone(() => {
         this.toast.show("Empresa atualizada.", "success");
@@ -293,6 +316,29 @@ export class EmpresasComponent {
     }
   }
 
+  isSistemaSelecionado(sistemaId: string, editando = false): boolean {
+    const selecionados = editando
+      ? this.editEmpresaSistemasSelecionados
+      : this.sistemasEmpresaSelecionados;
+
+    return selecionados.includes(sistemaId);
+  }
+
+  alternarSistemaEmpresa(sistemaId: string, selecionado: boolean, editando = false) {
+    const atuais = editando ? this.editEmpresaSistemasSelecionados : this.sistemasEmpresaSelecionados;
+    const atualizados = selecionado
+      ? [...atuais, sistemaId]
+      : atuais.filter((item) => item !== sistemaId);
+    const normalizados = this.sanitizeSistemaIds(atualizados);
+
+    if (editando) {
+      this.editEmpresaSistemasSelecionados = normalizados;
+      return;
+    }
+
+    this.sistemasEmpresaSelecionados = normalizados;
+  }
+
   private async carregarFuncionarios(empresaId: string) {
     this.emitFuncionariosState({
       status: "loading",
@@ -318,23 +364,34 @@ export class EmpresasComponent {
 
   private buildViewModel(
     empresasState: DataState<Empresa[]>,
+    sistemasState: DataState<Sistema[]>,
     empresaSelecionadaId: string | null,
     funcionariosState: DataState<Funcionario[]>
   ): EmpresasViewModel {
     const empresas = this.sortEmpresas(empresasState.data).map((item) => ({
       ...item,
+      sistemas: this.sanitizeSistemaIds(item.sistemas),
       totalFuncionariosLabel: item.totalFuncionarios ?? 0
     }));
+    const sistemas = this.sortSistemas(sistemasState.data)
+      .filter((item): item is SistemaOptionView => !!item.id)
+      .map((item) => ({
+        ...item,
+        id: item.id!
+      }));
     const empresaSelecionada =
       empresas.find((item) => item.id === empresaSelecionadaId) ?? null;
 
     return {
       carregando:
         empresasState.status === "loading" ||
+        sistemasState.status === "loading" ||
         (!!empresaSelecionadaId && funcionariosState.status === "loading"),
       erro: empresasState.error,
       empresas,
       empresaSelecionada,
+      sistemas,
+      sistemasErro: sistemasState.error,
       funcionarios: funcionariosState.data,
       funcionariosCarregando: !!empresaSelecionadaId && funcionariosState.status === "loading",
       funcionariosErro: funcionariosState.error
@@ -349,6 +406,23 @@ export class EmpresasComponent {
     return [...items].sort((a, b) =>
       (a.nomeFuncionario || "").localeCompare(b.nomeFuncionario || "")
     );
+  }
+
+  private sortSistemas(items: Sistema[]): Sistema[] {
+    return [...items].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+  }
+
+  private sanitizeSistemaIds(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return [...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )];
   }
 
   private createEmptyFuncionarioForm(): FuncionarioFormModel {

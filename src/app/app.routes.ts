@@ -35,6 +35,11 @@ export const appRoutes: Routes = [
         path: "relatorios",
         loadComponent: () =>
           import("./pages/relatorios/relatorios.component").then((m) => m.RelatoriosComponent)
+      },
+      {
+        path: "sistemas",
+        loadComponent: () =>
+          import("./pages/sistemas/sistemas.component").then((m) => m.SistemasComponent)
       }
     ]
   },

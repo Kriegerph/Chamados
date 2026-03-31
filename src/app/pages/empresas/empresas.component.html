@@ -173,6 +173,28 @@
             placeholder="Opcional"
           ></textarea>
         </label>
+
+        <div class="field">
+          <span class="field-label">Sistemas utilizados</span>
+          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+          <div class="helper-text" *ngIf="!vm.sistemasErro && vm.sistemas.length === 0">
+            Nenhum sistema cadastrado. Cadastre primeiro na aba Sistemas.
+          </div>
+          <div class="empresas-sistemas-list" *ngIf="vm.sistemas.length > 0">
+            <label
+              class="empresas-checkbox"
+              *ngFor="let sistema of vm.sistemas; trackBy: trackBySistema"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSistemaSelecionado(sistema.id)"
+                (change)="alternarSistemaEmpresa(sistema.id, $any($event.target).checked)"
+              />
+              <span>{{ sistema.nome }}</span>
+            </label>
+          </div>
+        </div>
+
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarCadastroEmpresa()">Cancelar</button>
           <button class="btn primary" type="submit">Salvar</button>
@@ -194,6 +216,28 @@
           <span>Observacoes</span>
           <textarea name="editEmpresaObservacoes" rows="3" [(ngModel)]="editEmpresaObservacoes"></textarea>
         </label>
+
+        <div class="field">
+          <span class="field-label">Sistemas utilizados</span>
+          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+          <div class="helper-text" *ngIf="!vm.sistemasErro && vm.sistemas.length === 0">
+            Nenhum sistema cadastrado. Cadastre primeiro na aba Sistemas.
+          </div>
+          <div class="empresas-sistemas-list" *ngIf="vm.sistemas.length > 0">
+            <label
+              class="empresas-checkbox"
+              *ngFor="let sistema of vm.sistemas; trackBy: trackBySistema"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSistemaSelecionado(sistema.id, true)"
+                (change)="alternarSistemaEmpresa(sistema.id, $any($event.target).checked, true)"
+              />
+              <span>{{ sistema.nome }}</span>
+            </label>
+          </div>
+        </div>
+
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarEdicaoEmpresa()">Cancelar</button>
           <button class="btn primary" type="submit">Salvar</button>

@@ -109,6 +109,8 @@ export class ChamadosService {
     funcionario: string;
     data: string;
     resolucao: string;
+    contextoSistemaId: string;
+    sistemasRelacionados?: string[];
   }) {
     const uid = this.getUidOrThrow();
     const dataInicioAtendimento = Timestamp.now();
@@ -120,6 +122,11 @@ export class ChamadosService {
       empresaId: data.empresaId,
       funcionario: data.funcionario,
       funcionarioId: data.funcionarioId,
+      contextoSistemaId: data.contextoSistemaId.trim(),
+      sistemasRelacionados: this.normalizeSistemaIds(
+        data.sistemasRelacionados,
+        data.contextoSistemaId
+      ),
       data: data.data,
       status: "concluido",
       resolucao: data.resolucao,
@@ -142,7 +149,15 @@ export class ChamadosService {
     });
   }
 
-  async finalizarChamado(id: string, data: { resolucao: string; motivo?: string }) {
+  async finalizarChamado(
+    id: string,
+    data: {
+      resolucao: string;
+      motivo?: string;
+      contextoSistemaId: string;
+      sistemasRelacionados?: string[];
+    }
+  ) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
     const chamadoAtual = this.todosStateSubject.value.data.find((item) => item.id === id);
@@ -155,6 +170,11 @@ export class ChamadosService {
     const payload: Partial<Chamado> & { concluidoEm: any; dataFechamento: any } = {
       status: "concluido",
       resolucao: data.resolucao,
+      contextoSistemaId: data.contextoSistemaId.trim(),
+      sistemasRelacionados: this.normalizeSistemaIds(
+        data.sistemasRelacionados,
+        data.contextoSistemaId
+      ),
       concluidoEm: serverTimestamp() as any,
       dataFechamento: serverTimestamp() as any,
       dataFimAtendimento
@@ -185,7 +205,20 @@ export class ChamadosService {
   async updateChamado(id: string, data: Partial<Chamado>) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "chamados", id);
-    const patch = { ...data };
+    const patch: Partial<Chamado> = { ...data };
+
+    if ("contextoSistemaId" in data || "sistemasRelacionados" in data) {
+      const contextoSistemaId = typeof data.contextoSistemaId === "string"
+        ? data.contextoSistemaId.trim()
+        : "";
+
+      patch.contextoSistemaId = contextoSistemaId;
+      patch.sistemasRelacionados = this.normalizeSistemaIds(
+        data.sistemasRelacionados,
+        contextoSistemaId
+      );
+    }
+
     await updateDoc(ref, patch as any);
     this.applyLocalPatch(id, patch);
   }
@@ -351,6 +384,13 @@ export class ChamadosService {
     return {
       ...chamado,
       resolucao: chamado.resolucao || "",
+      contextoSistemaId: typeof chamado.contextoSistemaId === "string"
+        ? chamado.contextoSistemaId.trim()
+        : "",
+      sistemasRelacionados: this.normalizeSistemaIds(
+        chamado.sistemasRelacionados,
+        chamado.contextoSistemaId
+      ),
       origem: chamado.origem === "whatsapp" ? "whatsapp" : "manual",
       criadoEm,
       concluidoEm,
@@ -384,6 +424,20 @@ export class ChamadosService {
 
   private normalizeTempoAtendimentoMinutos(value: unknown): number | null {
     return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  private normalizeSistemaIds(value: unknown, contextoSistemaId?: string | null): string[] {
+    const contexto = typeof contextoSistemaId === "string" ? contextoSistemaId.trim() : "";
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return [...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => !!item && item !== contexto)
+    )];
   }
 
   private calcularTempoAtendimentoMinutos(

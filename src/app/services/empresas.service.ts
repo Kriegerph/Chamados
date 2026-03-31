@@ -52,11 +52,12 @@ export class EmpresasService {
     });
   }
 
-  async addEmpresa(data: { nomeEmpresa: string; observacoes?: string }) {
+  async addEmpresa(data: { nomeEmpresa: string; observacoes?: string; sistemas?: string[] }) {
     const uid = this.getUidOrThrow();
     const payload: Omit<Empresa, "id"> = {
       nomeEmpresa: data.nomeEmpresa.trim(),
       observacoes: data.observacoes?.trim() || "",
+      sistemas: this.normalizeSistemaIds(data.sistemas),
       totalFuncionarios: 0,
       dataCadastro: serverTimestamp() as any,
       atualizadoEm: serverTimestamp() as any
@@ -67,8 +68,16 @@ export class EmpresasService {
   async updateEmpresa(id: string, data: Partial<Empresa>) {
     const uid = this.getUidOrThrow();
     const ref = doc(this.firebase.db, "users", uid, "empresas", id);
+    const payload: Partial<Empresa> = {
+      ...data
+    };
+
+    if ("sistemas" in data) {
+      payload.sistemas = this.normalizeSistemaIds(data.sistemas);
+    }
+
     await updateDoc(ref, {
-      ...data,
+      ...payload,
       atualizadoEm: serverTimestamp()
     } as any);
   }
@@ -196,6 +205,28 @@ export class EmpresasService {
     return value === false ? false : true;
   }
 
+  private normalizeEmpresa(data: Empresa): Empresa {
+    return {
+      ...data,
+      nomeEmpresa: data.nomeEmpresa || "",
+      observacoes: data.observacoes || "",
+      sistemas: this.normalizeSistemaIds(data.sistemas)
+    };
+  }
+
+  private normalizeSistemaIds(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return [...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )];
+  }
+
   private handleAuthChange(authState: AuthState) {
     if (authState.status === "loading") {
       this.emitState({
@@ -245,7 +276,7 @@ export class EmpresasService {
       (snapshot) => {
         const items = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
-          ...(docSnap.data() as Empresa)
+          ...this.normalizeEmpresa(docSnap.data() as Empresa)
         }));
         this.emitState({
           status: "ready",

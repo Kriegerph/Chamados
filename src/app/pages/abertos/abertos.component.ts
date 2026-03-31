@@ -8,9 +8,11 @@ import { Chamado, OrigemChamado } from "../../models/chamado.model";
 import { Cliente } from "../../models/cliente.model";
 import { DataState } from "../../models/data-state.model";
 import { Empresa, Funcionario } from "../../models/empresa.model";
+import { Sistema } from "../../models/sistema.model";
 import { ChamadosService } from "../../services/chamados.service";
 import { ClientesService } from "../../services/clientes.service";
 import { EmpresasService } from "../../services/empresas.service";
+import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
 
 type AbertoItemView = Chamado & {
@@ -25,6 +27,12 @@ type AbertosViewModel = {
   abertos: AbertoItemView[];
   clientes: Cliente[];
   empresas: Empresa[];
+  sistemas: SistemaOptionView[];
+  sistemasErro: string | null;
+};
+
+type SistemaOptionView = Sistema & {
+  id: string;
 };
 
 @Component({
@@ -42,14 +50,19 @@ export class AbertosComponent {
   funcionarioId = "";
   data = "";
   resolucao = "";
+  cadastroContextoSistemaId = "";
+  cadastroSistemasRelacionados: string[] = [];
   funcionariosFormulario: Funcionario[] = [];
   carregandoFuncionariosFormulario = false;
 
   modalAberto = false;
   finalizarId: string | null = null;
+  finalizarEmpresaId = "";
   finalizarOrigem: OrigemChamado = "manual";
   motivoFinalizar = "";
   resolucaoFinalizar = "";
+  finalizarContextoSistemaId = "";
+  finalizarSistemasRelacionados: string[] = [];
 
   editando = false;
   editId: string | null = null;
@@ -63,6 +76,8 @@ export class AbertosComponent {
   editEmpresaNomeOriginal = "";
   editFuncionarioId = "";
   editFuncionarioNomeOriginal = "";
+  editContextoSistemaId = "";
+  editSistemasRelacionados: string[] = [];
   editFuncionarios: Funcionario[] = [];
   editCarregandoFuncionarios = false;
 
@@ -72,6 +87,7 @@ export class AbertosComponent {
     private readonly chamadosService: ChamadosService,
     private readonly clientesService: ClientesService,
     private readonly empresasService: EmpresasService,
+    private readonly sistemasService: SistemasService,
     private readonly toast: ToastService,
     private readonly router: Router,
     private readonly zone: NgZone,
@@ -81,10 +97,11 @@ export class AbertosComponent {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
-      this.empresasService.empresasState$
+      this.empresasService.empresasState$,
+      this.sistemasService.sistemasState$
     ]).pipe(
-      map(([chamadosState, clientesState, empresasState]) =>
-        this.buildViewModel(chamadosState, clientesState, empresasState)
+      map(([chamadosState, clientesState, empresasState, sistemasState]) =>
+        this.buildViewModel(chamadosState, clientesState, empresasState, sistemasState)
       )
     );
   }
@@ -92,6 +109,8 @@ export class AbertosComponent {
   onModoChange() {
     if (this.modoCadastro === "novo") {
       this.resolucao = "";
+      this.cadastroContextoSistemaId = "";
+      this.cadastroSistemasRelacionados = [];
     }
     if (!this.data) {
       this.data = this.getToday();
@@ -127,6 +146,12 @@ export class AbertosComponent {
     const funcionario = this.getFuncionarioNomeById(funcionarioId, this.funcionariosFormulario);
     const data = this.data;
     const resolucao = this.resolucao.trim();
+    const contextoSistemaId = this.cadastroContextoSistemaId.trim();
+    const sistemasRelacionados = this.sanitizeSistemaIds(
+      this.cadastroSistemasRelacionados,
+      contextoSistemaId,
+      empresaId
+    );
 
     if (!motivo || !empresaId || !empresa || !funcionarioId || !funcionario || !data) {
       this.toast.show("Preencha motivo, empresa, funcionario e data.", "error");
@@ -135,6 +160,11 @@ export class AbertosComponent {
 
     if (this.modoCadastro === "antigo" && !resolucao) {
       this.toast.show("Informe como foi resolvido.", "error");
+      return;
+    }
+
+    if (this.modoCadastro === "antigo" && !contextoSistemaId) {
+      this.toast.show("Selecione o sistema do problema.", "error");
       return;
     }
 
@@ -156,7 +186,9 @@ export class AbertosComponent {
           funcionarioId,
           funcionario,
           data,
-          resolucao
+          resolucao,
+          contextoSistemaId,
+          sistemasRelacionados
         });
       }
       this.runInZone(() => {
@@ -166,6 +198,8 @@ export class AbertosComponent {
         this.funcionarioId = "";
         this.funcionariosFormulario = [];
         this.resolucao = "";
+        this.cadastroContextoSistemaId = "";
+        this.cadastroSistemasRelacionados = [];
         this.data = this.getToday();
       });
     } catch (err: any) {
@@ -175,23 +209,35 @@ export class AbertosComponent {
 
   abrirModalFinalizar(item: AbertoItemView) {
     this.finalizarId = item.id ?? null;
+    this.finalizarEmpresaId = item.empresaId || this.getEmpresaIdByNome(item.empresa || "");
     this.finalizarOrigem = item.origem === "whatsapp" ? "whatsapp" : "manual";
     this.motivoFinalizar = this.finalizarOrigem === "whatsapp" ? item.motivo || "" : "";
     this.resolucaoFinalizar = "";
+    this.finalizarContextoSistemaId = "";
+    this.finalizarSistemasRelacionados = [];
     this.modalAberto = true;
   }
 
   cancelarModal() {
     this.modalAberto = false;
     this.finalizarId = null;
+    this.finalizarEmpresaId = "";
     this.finalizarOrigem = "manual";
     this.motivoFinalizar = "";
     this.resolucaoFinalizar = "";
+    this.finalizarContextoSistemaId = "";
+    this.finalizarSistemasRelacionados = [];
   }
 
   async confirmarFinalizacao() {
     const resolucao = this.resolucaoFinalizar.trim();
     const motivo = this.motivoFinalizar.trim();
+    const contextoSistemaId = this.finalizarContextoSistemaId.trim();
+    const sistemasRelacionados = this.sanitizeSistemaIds(
+      this.finalizarSistemasRelacionados,
+      contextoSistemaId,
+      this.finalizarEmpresaId
+    );
 
     if (this.finalizarOrigem === "whatsapp" && !motivo) {
       this.toast.show("Informe o motivo do chamado.", "error");
@@ -203,12 +249,19 @@ export class AbertosComponent {
       return;
     }
 
+    if (!contextoSistemaId) {
+      this.toast.show("Selecione o sistema do problema.", "error");
+      return;
+    }
+
     if (!this.finalizarId) return;
 
     try {
       await this.chamadosService.finalizarChamado(this.finalizarId, {
         resolucao,
-        motivo: this.finalizarOrigem === "whatsapp" ? motivo : undefined
+        motivo: this.finalizarOrigem === "whatsapp" ? motivo : undefined,
+        contextoSistemaId,
+        sistemasRelacionados
       });
       this.runInZone(() => {
         this.toast.show("Chamado finalizado.", "success");
@@ -238,6 +291,12 @@ export class AbertosComponent {
     this.editEmpresaNomeOriginal = item.empresa || "";
     this.editFuncionarioId = item.funcionarioId || "";
     this.editFuncionarioNomeOriginal = item.funcionario || "";
+    this.editContextoSistemaId = item.contextoSistemaId || "";
+    this.editSistemasRelacionados = this.sanitizeSistemaIds(
+      item.sistemasRelacionados,
+      item.contextoSistemaId,
+      this.editEmpresaId
+    );
     if (this.editEmpresaId) {
       await this.carregarFuncionariosEdicao(this.editEmpresaId);
       if (!this.editFuncionarioId && this.editFuncionarioNomeOriginal) {
@@ -262,6 +321,8 @@ export class AbertosComponent {
     this.editEmpresaNomeOriginal = "";
     this.editFuncionarioId = "";
     this.editFuncionarioNomeOriginal = "";
+    this.editContextoSistemaId = "";
+    this.editSistemasRelacionados = [];
     this.editFuncionarios = [];
     this.editUsaEmpresa = false;
   }
@@ -311,6 +372,12 @@ export class AbertosComponent {
       }
       if (this.editStatus === "concluido") {
         payload.resolucao = resolucao;
+        payload.contextoSistemaId = this.editContextoSistemaId.trim();
+        payload.sistemasRelacionados = this.sanitizeSistemaIds(
+          this.editSistemasRelacionados,
+          this.editContextoSistemaId,
+          this.editEmpresaId
+        );
       }
       await this.chamadosService.updateChamado(this.editId, payload);
       this.runInZone(() => {
@@ -337,7 +404,8 @@ export class AbertosComponent {
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
     clientesState: DataState<Cliente[]>,
-    empresasState: DataState<Empresa[]>
+    empresasState: DataState<Empresa[]>,
+    sistemasState: DataState<Sistema[]>
   ): AbertosViewModel {
     const clientes = this.sortClientes(clientesState.data);
     const clientesMap = new Map(
@@ -351,15 +419,25 @@ export class AbertosComponent {
       chamadosState.data.filter((item) => item.status === "aberto")
     ).map((item) => this.buildAbertoItemView(item, clientesMap, empresasMap));
 
+    const sistemas = this.sortSistemas(sistemasState.data)
+      .filter((item): item is SistemaOptionView => !!item.id)
+      .map((item) => ({
+        ...item,
+        id: item.id!
+      }));
+
     return {
       carregando:
         chamadosState.status === "loading" ||
         clientesState.status === "loading" ||
-        empresasState.status === "loading",
+        empresasState.status === "loading" ||
+        sistemasState.status === "loading",
       erro: chamadosState.error || clientesState.error || empresasState.error,
       abertos,
       clientes,
-      empresas
+      empresas,
+      sistemas,
+      sistemasErro: sistemasState.error
     };
   }
 
@@ -487,10 +565,144 @@ export class AbertosComponent {
     );
   }
 
+  private sortSistemas(items: Sistema[]): Sistema[] {
+    return [...items].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+  }
+
+  getSistemasEmpresaOptions(empresaId: string, sistemas: SistemaOptionView[]): SistemaOptionView[] {
+    if (!empresaId) return [];
+
+    const empresa = this.empresasService.getEmpresasSnapshot().find((item) => item.id === empresaId);
+    const sistemaIds = this.sanitizeSistemaIds(empresa?.sistemas);
+    if (sistemaIds.length === 0) return [];
+
+    const sistemasMap = new Map(
+      sistemas.filter((item) => !!item.id).map((item) => [item.id, item])
+    );
+
+    return sistemaIds
+      .map((id) => sistemasMap.get(id) ?? null)
+      .filter((item): item is SistemaOptionView => !!item);
+  }
+
+  getSistemasRelacionadosOptions(
+    empresaId: string,
+    sistemas: SistemaOptionView[],
+    contextoSistemaId: string
+  ): SistemaOptionView[] {
+    const contexto = contextoSistemaId.trim();
+    return this.getSistemasEmpresaOptions(empresaId, sistemas).filter((item) => item.id !== contexto);
+  }
+
+  isSistemaRelacionadoSelecionado(sistemaId: string, editando = false): boolean {
+    const selecionados = editando ? this.editSistemasRelacionados : this.finalizarSistemasRelacionados;
+    return selecionados.includes(sistemaId);
+  }
+
+  isCadastroSistemaRelacionadoSelecionado(sistemaId: string): boolean {
+    return this.cadastroSistemasRelacionados.includes(sistemaId);
+  }
+
+  onCadastroContextoSistemaChange() {
+    this.cadastroSistemasRelacionados = this.sanitizeSistemaIds(
+      this.cadastroSistemasRelacionados,
+      this.cadastroContextoSistemaId,
+      this.empresaId
+    );
+  }
+
+  onContextoSistemaChange(editando = false) {
+    if (editando) {
+      this.editSistemasRelacionados = this.sanitizeSistemaIds(
+        this.editSistemasRelacionados,
+        this.editContextoSistemaId,
+        this.editEmpresaId
+      );
+      return;
+    }
+
+    this.finalizarSistemasRelacionados = this.sanitizeSistemaIds(
+      this.finalizarSistemasRelacionados,
+      this.finalizarContextoSistemaId,
+      this.finalizarEmpresaId
+    );
+  }
+
+  alternarSistemaRelacionado(
+    sistemaId: string,
+    selecionado: boolean,
+    empresaId: string,
+    editando = false
+  ) {
+    const atuais = editando ? this.editSistemasRelacionados : this.finalizarSistemasRelacionados;
+    const contextoSistemaId = editando ? this.editContextoSistemaId : this.finalizarContextoSistemaId;
+    const atualizados = selecionado
+      ? [...atuais, sistemaId]
+      : atuais.filter((item) => item !== sistemaId);
+    const normalizados = this.sanitizeSistemaIds(atualizados, contextoSistemaId, empresaId);
+
+    if (editando) {
+      this.editSistemasRelacionados = normalizados;
+      return;
+    }
+
+    this.finalizarSistemasRelacionados = normalizados;
+  }
+
+  alternarCadastroSistemaRelacionado(sistemaId: string, selecionado: boolean) {
+    const atualizados = selecionado
+      ? [...this.cadastroSistemasRelacionados, sistemaId]
+      : this.cadastroSistemasRelacionados.filter((item) => item !== sistemaId);
+
+    this.cadastroSistemasRelacionados = this.sanitizeSistemaIds(
+      atualizados,
+      this.cadastroContextoSistemaId,
+      this.empresaId
+    );
+  }
+
+  private sanitizeSistemaIds(
+    value: unknown,
+    contextoSistemaId = "",
+    empresaId = ""
+  ): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const permitidos = new Set(this.getEmpresaSistemaIds(empresaId));
+    const contexto = contextoSistemaId.trim();
+
+    return [...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => !!item && item !== contexto && (!empresaId || permitidos.has(item)))
+    )];
+  }
+
+  private getEmpresaSistemaIds(empresaId: string): string[] {
+    if (!empresaId) return [];
+
+    const empresa = this.empresasService.getEmpresasSnapshot().find((item) => item.id === empresaId);
+    if (!empresa?.sistemas || !Array.isArray(empresa.sistemas)) {
+      return [];
+    }
+
+    return [...new Set(
+      empresa.sistemas
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )];
+  }
+
   private iniciarCarregamentoFuncionariosFormulario(empresaId: string) {
     this.runInZone(() => {
       this.empresaId = empresaId;
       this.funcionarioId = "";
+      this.cadastroContextoSistemaId = "";
+      this.cadastroSistemasRelacionados = [];
       this.funcionariosFormulario = [];
       this.carregandoFuncionariosFormulario = !!empresaId;
       this.forcarAtualizacaoFormulario();
@@ -509,6 +721,8 @@ export class AbertosComponent {
     this.runInZone(() => {
       this.editEmpresaId = empresaId;
       this.editFuncionarioId = "";
+      this.editContextoSistemaId = "";
+      this.editSistemasRelacionados = [];
       this.editFuncionarios = [];
       this.editCarregandoFuncionarios = !!empresaId;
       this.forcarAtualizacaoFormulario();

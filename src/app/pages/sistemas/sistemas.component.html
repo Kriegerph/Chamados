@@ -1,0 +1,95 @@
+<section class="page-section" *ngIf="vm$ | async as vm">
+  <header class="page-header">
+    <div>
+      <h2 class="page-title">Sistemas</h2>
+      <p class="page-subtitle">Cadastro de sistemas utilizados no suporte.</p>
+    </div>
+    <span class="status-chip">Total: {{ vm.total }}</span>
+  </header>
+
+  <div class="grid-2" *ngIf="vm.carregando && vm.sistemas.length === 0">
+    <div class="skeleton" style="min-height: 280px;"></div>
+    <div class="skeleton" style="min-height: 280px;"></div>
+  </div>
+
+  <div class="sistemas-layout" *ngIf="!vm.carregando || vm.sistemas.length > 0">
+    <article class="card sistemas-col sistemas-form-col">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Novo sistema</h3>
+          <p class="card-subtitle">Cadastre nomes padronizados para uso futuro em empresas e chamados.</p>
+        </div>
+      </div>
+
+      <form class="form sistemas-form" (ngSubmit)="adicionarSistema()">
+        <label>
+          <span>Nome do sistema</span>
+          <input
+            name="nomeSistema"
+            type="text"
+            [(ngModel)]="nome"
+            placeholder="Ex: SG8, Transmissor SG8, Office"
+            required
+          />
+        </label>
+
+        <div class="helper-text">
+          ID gerado automaticamente:
+          <strong>{{ getSistemaIdPreview() || "-" }}</strong>
+        </div>
+
+        <div class="sistemas-form-actions">
+          <button class="btn primary" type="submit" [disabled]="salvando">
+            {{ salvando ? "Adicionando..." : "Adicionar sistema" }}
+          </button>
+        </div>
+      </form>
+    </article>
+
+    <article class="card sistemas-col sistemas-list-col">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Lista de sistemas</h3>
+          <p class="card-subtitle">Visualize o nome padronizado, o ID gerado e remova itens fora de uso.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+      <div class="sistemas-list-scroll" *ngIf="!vm.erro">
+        <table class="table sistemas-table">
+          <thead>
+            <tr>
+              <th>Sistema</th>
+              <th>ID</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="vm.sistemas.length === 0">
+              <td colspan="3">Nenhum sistema cadastrado.</td>
+            </tr>
+            <tr *ngFor="let item of vm.sistemas; trackBy: trackBySistema">
+              <td class="sistema-nome-cell">
+                <strong>{{ item.nome }}</strong>
+              </td>
+              <td>
+                <span class="sistema-id">{{ item.id }}</span>
+              </td>
+              <td>
+                <button
+                  class="btn danger"
+                  type="button"
+                  (click)="excluirSistema(item)"
+                  [disabled]="excluindoId === item.id"
+                >
+                  {{ getExcluirLabel(item) }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+</section>

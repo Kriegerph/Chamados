@@ -35,7 +35,8 @@ export class LayoutComponent {
     anotacoes: "Anota\u00e7\u00f5es",
     concluidos: "Chamados Concluidos",
     empresas: "Empresas",
-    relatorios: "Relatorios"
+    relatorios: "Relatorios",
+    sistemas: "Sistemas"
   };
 
   constructor(

@@ -83,6 +83,56 @@
           ></textarea>
         </label>
 
+        <label *ngIf="modoCadastro === 'antigo'">
+          <span>Sistema do problema</span>
+          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+          <select
+            name="cadastroContextoSistemaId"
+            [(ngModel)]="cadastroContextoSistemaId"
+            (ngModelChange)="onCadastroContextoSistemaChange()"
+          >
+            <option value="">
+              {{
+                getSistemasEmpresaOptions(empresaId, vm.sistemas).length === 0
+                  ? "Empresa sem sistemas vinculados"
+                  : "Selecione o sistema principal"
+              }}
+            </option>
+            <option
+              *ngFor="let sistema of getSistemasEmpresaOptions(empresaId, vm.sistemas)"
+              [value]="sistema.id"
+            >
+              {{ sistema.nome }}
+            </option>
+          </select>
+        </label>
+
+        <div class="field" *ngIf="modoCadastro === 'antigo'">
+          <span class="field-label">Sistemas envolvidos</span>
+          <div class="helper-text">
+            Opcional. O sistema principal e removido automaticamente desta lista.
+          </div>
+          <div
+            class="abertos-sistemas-list"
+            *ngIf="getSistemasRelacionadosOptions(empresaId, vm.sistemas, cadastroContextoSistemaId).length > 0; else semSistemasCadastro"
+          >
+            <label
+              class="abertos-sistema-checkbox"
+              *ngFor="let sistema of getSistemasRelacionadosOptions(empresaId, vm.sistemas, cadastroContextoSistemaId)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isCadastroSistemaRelacionadoSelecionado(sistema.id)"
+                (change)="alternarCadastroSistemaRelacionado(sistema.id, $any($event.target).checked)"
+              />
+              <span>{{ sistema.nome }}</span>
+            </label>
+          </div>
+          <ng-template #semSistemasCadastro>
+            <div class="helper-text">Nenhum sistema adicional disponivel para esta empresa.</div>
+          </ng-template>
+        </div>
+
         <button class="btn primary" type="submit">Salvar chamado</button>
       </form>
     </article>
@@ -177,6 +227,56 @@
             placeholder="Descreva a resolucao"
           ></textarea>
         </label>
+
+        <label>
+          <span>Sistema do problema</span>
+          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+          <select
+            name="finalizarContextoSistemaId"
+            [(ngModel)]="finalizarContextoSistemaId"
+            (ngModelChange)="onContextoSistemaChange()"
+          >
+            <option value="">
+              {{
+                getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
+                  ? "Empresa sem sistemas vinculados"
+                  : "Selecione o sistema principal"
+              }}
+            </option>
+            <option
+              *ngFor="let sistema of getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas)"
+              [value]="sistema.id"
+            >
+              {{ sistema.nome }}
+            </option>
+          </select>
+        </label>
+
+        <div class="field">
+          <span class="field-label">Sistemas envolvidos</span>
+          <div class="helper-text">
+            Opcional. Apenas sistemas vinculados a empresa do chamado podem ser selecionados.
+          </div>
+          <div
+            class="abertos-sistemas-list"
+            *ngIf="getSistemasRelacionadosOptions(finalizarEmpresaId, vm.sistemas, finalizarContextoSistemaId).length > 0; else semSistemasFinalizar"
+          >
+            <label
+              class="abertos-sistema-checkbox"
+              *ngFor="let sistema of getSistemasRelacionadosOptions(finalizarEmpresaId, vm.sistemas, finalizarContextoSistemaId)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSistemaRelacionadoSelecionado(sistema.id)"
+                (change)="alternarSistemaRelacionado(sistema.id, $any($event.target).checked, finalizarEmpresaId)"
+              />
+              <span>{{ sistema.nome }}</span>
+            </label>
+          </div>
+          <ng-template #semSistemasFinalizar>
+            <div class="helper-text">Nenhum sistema disponivel para esta empresa.</div>
+          </ng-template>
+        </div>
       </div>
       <div class="modal-actions">
         <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
@@ -186,63 +286,140 @@
   </div>
 
   <div class="modal" *ngIf="editando">
-    <div class="modal-content">
+    <div class="modal-content chamado-edit-modal">
       <h3>Editar chamado</h3>
-      <form class="form" (ngSubmit)="salvarEdicao()">
-        <label>
-          <span>Motivo</span>
-          <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
-        </label>
+      <form class="form chamado-edit-form" (ngSubmit)="salvarEdicao()">
+        <div class="chamado-edit-grid">
+          <div class="chamado-edit-col chamado-edit-col-main">
+            <label>
+              <span>Motivo</span>
+              <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
+            </label>
 
-        <label>
-          <span>Empresa</span>
-          <div class="helper-text">Atual: {{ editEmpresaNomeOriginal || "Sem empresa vinculada" }}</div>
-          <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
-            Cliente historico: {{ editClienteNomeOriginal }}
+            <label>
+              <span>Empresa</span>
+              <div class="helper-text">Atual: {{ editEmpresaNomeOriginal || "Sem empresa vinculada" }}</div>
+              <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
+                Cliente historico: {{ editClienteNomeOriginal }}
+              </div>
+              <select
+                name="editEmpresaId"
+                [(ngModel)]="editEmpresaId"
+                (ngModelChange)="onEditEmpresaChange($event)"
+              >
+                <option value="">Selecione uma empresa</option>
+                <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+                  {{ empresa.nomeEmpresa }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              <span>Funcionario</span>
+              <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionario vinculado" }}</div>
+              <select
+                name="editFuncionarioId"
+                [(ngModel)]="editFuncionarioId"
+                [disabled]="!editEmpresaId || editCarregandoFuncionarios"
+              >
+                <option value="">
+                  {{
+                    !editEmpresaId
+                      ? "Selecione a empresa primeiro"
+                      : editCarregandoFuncionarios
+                        ? "Carregando funcionarios..."
+                        : "Selecione um funcionario"
+                  }}
+                </option>
+                <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
+                  {{ getFuncionarioOptionLabel(funcionario) }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              <span>Data</span>
+              <input name="editData" type="date" [(ngModel)]="editData" />
+            </label>
+
+            <label *ngIf="editStatus === 'concluido'">
+              <span>Descricao da resolucao</span>
+              <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
+            </label>
           </div>
-          <select
-            name="editEmpresaId"
-            [(ngModel)]="editEmpresaId"
-            (ngModelChange)="onEditEmpresaChange($event)"
-          >
-            <option value="">Selecione uma empresa</option>
-            <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
-              {{ empresa.nomeEmpresa }}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>Funcionario</span>
-          <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionario vinculado" }}</div>
-          <select
-            name="editFuncionarioId"
-            [(ngModel)]="editFuncionarioId"
-            [disabled]="!editEmpresaId || editCarregandoFuncionarios"
-          >
-            <option value="">
-              {{
-                !editEmpresaId
-                  ? "Selecione a empresa primeiro"
-                  : editCarregandoFuncionarios
-                    ? "Carregando funcionarios..."
-                    : "Selecione um funcionario"
-              }}
-            </option>
-            <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
-              {{ getFuncionarioOptionLabel(funcionario) }}
-            </option>
-          </select>
-        </label>
 
-        <label>
-          <span>Data</span>
-          <input name="editData" type="date" [(ngModel)]="editData" />
-        </label>
-        <label *ngIf="editStatus === 'concluido'">
-          <span>Descricao da resolucao</span>
-          <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
-        </label>
-        <div class="modal-actions">
+          <div class="chamado-edit-col chamado-edit-col-sistemas">
+            <div class="chamado-edit-sidehead">
+              <h4>Sistemas</h4>
+              <p *ngIf="editStatus === 'concluido'">
+                Defina o sistema principal e os sistemas envolvidos no chamado.
+              </p>
+              <p *ngIf="editStatus !== 'concluido'">
+                Sistemas sao definidos quando o chamado e concluido.
+              </p>
+            </div>
+
+            <ng-container *ngIf="editStatus === 'concluido'; else sistemasIndisponiveisEdicao">
+              <label>
+                <span>Sistema do problema</span>
+                <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+                <select
+                  name="editContextoSistemaId"
+                  [(ngModel)]="editContextoSistemaId"
+                  (ngModelChange)="onContextoSistemaChange(true)"
+                >
+                  <option value="">
+                    {{
+                      getSistemasEmpresaOptions(editEmpresaId, vm.sistemas).length === 0
+                        ? "Empresa sem sistemas vinculados"
+                        : "Selecione o sistema principal"
+                    }}
+                  </option>
+                  <option
+                    *ngFor="let sistema of getSistemasEmpresaOptions(editEmpresaId, vm.sistemas)"
+                    [value]="sistema.id"
+                  >
+                    {{ sistema.nome }}
+                  </option>
+                </select>
+              </label>
+
+              <div class="field chamado-edit-sistemas-field">
+                <span class="field-label">Sistemas envolvidos</span>
+                <div class="helper-text">
+                  Opcional. O sistema principal nao pode ser duplicado nos relacionados.
+                </div>
+                <div
+                  class="abertos-sistemas-list"
+                  *ngIf="getSistemasRelacionadosOptions(editEmpresaId, vm.sistemas, editContextoSistemaId).length > 0; else semSistemasEditar"
+                >
+                  <label
+                    class="abertos-sistema-checkbox"
+                    *ngFor="let sistema of getSistemasRelacionadosOptions(editEmpresaId, vm.sistemas, editContextoSistemaId)"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="isSistemaRelacionadoSelecionado(sistema.id, true)"
+                      (change)="alternarSistemaRelacionado(sistema.id, $any($event.target).checked, editEmpresaId, true)"
+                    />
+                    <span>{{ sistema.nome }}</span>
+                  </label>
+                </div>
+                <ng-template #semSistemasEditar>
+                  <div class="helper-text">Nenhum sistema disponivel para esta empresa.</div>
+                </ng-template>
+              </div>
+            </ng-container>
+
+            <ng-template #sistemasIndisponiveisEdicao>
+              <div class="empty-state chamado-edit-empty">
+                Este chamado ainda esta aberto. Os sistemas serao definidos na finalizacao.
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="modal-actions chamado-edit-actions">
           <button class="btn" type="button" (click)="cancelarEdicao()">Cancelar</button>
           <button class="btn primary" type="submit">Salvar</button>
         </div>

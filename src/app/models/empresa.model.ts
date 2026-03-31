@@ -4,6 +4,7 @@ export interface Empresa {
   id?: string;
   nomeEmpresa: string;
   observacoes?: string;
+  sistemas?: string[];
   totalFuncionarios?: number;
   dataCadastro?: Timestamp | null;
   atualizadoEm?: Timestamp | null;

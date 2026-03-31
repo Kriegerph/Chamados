@@ -177,6 +177,14 @@
   font-weight: 600;
 }
 
+.empresas-sistemas-list {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 @media (max-width: 720px) {
   .empresas-hero {
     flex-direction: column;

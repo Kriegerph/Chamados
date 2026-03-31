@@ -7,9 +7,11 @@ import { Chamado } from "../../models/chamado.model";
 import { Cliente } from "../../models/cliente.model";
 import { DataState } from "../../models/data-state.model";
 import { Empresa, Funcionario } from "../../models/empresa.model";
+import { Sistema } from "../../models/sistema.model";
 import { ChamadosService } from "../../services/chamados.service";
 import { ClientesService } from "../../services/clientes.service";
 import { EmpresasService } from "../../services/empresas.service";
+import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
 
 interface GrupoConcluidos {
@@ -20,6 +22,8 @@ interface GrupoConcluidos {
 type ConcluidoItemView = Chamado & {
   clienteLabel: string;
   funcionarioLabel: string;
+  sistemaResumo: string;
+  sistemaTooltip: string;
 };
 
 type ConcluidosFiltros = {
@@ -43,11 +47,17 @@ type EmpresaFiltroOption = {
   empresaId: string;
 };
 
+type SistemaOptionView = Sistema & {
+  id: string;
+};
+
 type ConcluidosViewModel = {
   carregando: boolean;
   erro: string | null;
   empresasFiltro: EmpresaFiltroOption[];
   empresas: Empresa[];
+  sistemas: SistemaOptionView[];
+  sistemasErro: string | null;
   grupos: GrupoConcluidos[];
   totalConcluidos: number;
   totalItems: number;
@@ -105,6 +115,8 @@ export class ConcluidosComponent {
   editEmpresaNomeOriginal = "";
   editFuncionarioId = "";
   editFuncionarioNomeOriginal = "";
+  editContextoSistemaId = "";
+  editSistemasRelacionados: string[] = [];
   editData = "";
   editResolucao = "";
   editUsaEmpresa = false;
@@ -125,6 +137,7 @@ export class ConcluidosComponent {
     private readonly chamadosService: ChamadosService,
     private readonly clientesService: ClientesService,
     private readonly empresasService: EmpresasService,
+    private readonly sistemasService: SistemasService,
     private readonly toast: ToastService,
     private readonly zone: NgZone,
     private readonly cdr: ChangeDetectorRef
@@ -133,15 +146,17 @@ export class ConcluidosComponent {
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
       this.empresasService.empresasState$,
+      this.sistemasService.sistemasState$,
       this.filtrosAplicadosSubject,
       this.pageSizeSubject,
       this.currentPageSubject
     ]).pipe(
-      map(([chamadosState, clientesState, empresasState, filtros, pageSize, currentPage]) =>
+      map(([chamadosState, clientesState, empresasState, sistemasState, filtros, pageSize, currentPage]) =>
         this.buildViewModel(
           chamadosState,
           clientesState,
           empresasState,
+          sistemasState,
           filtros,
           pageSize,
           currentPage
@@ -261,6 +276,12 @@ export class ConcluidosComponent {
     this.editEmpresaNomeOriginal = item.empresa || "";
     this.editFuncionarioId = item.funcionarioId || "";
     this.editFuncionarioNomeOriginal = item.funcionario || "";
+    this.editContextoSistemaId = item.contextoSistemaId || "";
+    this.editSistemasRelacionados = this.sanitizeSistemaIds(
+      item.sistemasRelacionados,
+      item.contextoSistemaId,
+      this.editEmpresaId
+    );
     if (this.editEmpresaId) {
       await this.carregarFuncionariosEdicao(this.editEmpresaId);
       if (!this.editFuncionarioId && this.editFuncionarioNomeOriginal) {
@@ -283,6 +304,8 @@ export class ConcluidosComponent {
     this.editEmpresaNomeOriginal = "";
     this.editFuncionarioId = "";
     this.editFuncionarioNomeOriginal = "";
+    this.editContextoSistemaId = "";
+    this.editSistemasRelacionados = [];
     this.editData = "";
     this.editResolucao = "";
     this.editUsaEmpresa = false;
@@ -328,7 +351,13 @@ export class ConcluidosComponent {
         empresa,
         empresaId: this.editEmpresaId,
         funcionario,
-        funcionarioId: this.editFuncionarioId
+        funcionarioId: this.editFuncionarioId,
+        contextoSistemaId: this.editContextoSistemaId.trim(),
+        sistemasRelacionados: this.sanitizeSistemaIds(
+          this.editSistemasRelacionados,
+          this.editContextoSistemaId,
+          this.editEmpresaId
+        )
       };
       if (this.editUsaEmpresa) {
         payload.cliente = empresa;
@@ -360,6 +389,7 @@ export class ConcluidosComponent {
     chamadosState: DataState<Chamado[]>,
     clientesState: DataState<Cliente[]>,
     empresasState: DataState<Empresa[]>,
+    sistemasState: DataState<Sistema[]>,
     filtros: ConcluidosFiltros,
     pageSize: number,
     currentPage: number
@@ -372,12 +402,21 @@ export class ConcluidosComponent {
     const empresasMap = new Map(
       empresas.filter((item) => !!item.id).map((item) => [item.id as string, item])
     );
+    const sistemas = this.sortSistemas(sistemasState.data)
+      .filter((item): item is SistemaOptionView => !!item.id)
+      .map((item) => ({
+        ...item,
+        id: item.id!
+      }));
+    const sistemasMap = new Map(sistemas.map((item) => [item.id, item]));
     const concluidos = this.sortByDataDesc(
       chamadosState.data.filter((item) => item.status === "concluido")
     ).map((item) => ({
       ...item,
       clienteLabel: this.getClienteLabelFromMap(item, clientesMap, empresasMap),
-      funcionarioLabel: item.funcionario || ""
+      funcionarioLabel: item.funcionario || "",
+      sistemaResumo: this.buildSistemaResumo(item, sistemasMap),
+      sistemaTooltip: this.buildSistemaTooltip(item, sistemasMap)
     }));
 
     this.atualizarOpcoesData(concluidos);
@@ -395,10 +434,13 @@ export class ConcluidosComponent {
       carregando:
         chamadosState.status === "loading" ||
         clientesState.status === "loading" ||
-        empresasState.status === "loading",
+        empresasState.status === "loading" ||
+        sistemasState.status === "loading",
       erro: chamadosState.error || clientesState.error || empresasState.error,
       empresasFiltro,
       empresas,
+      sistemas,
+      sistemasErro: sistemasState.error,
       grupos,
       totalConcluidos: concluidos.length,
       totalItems,
@@ -633,6 +675,56 @@ export class ConcluidosComponent {
     return item.cliente || "Cliente nao informado";
   }
 
+  private buildSistemaResumo(
+    item: Chamado,
+    sistemasMap: Map<string, SistemaOptionView>
+  ): string {
+    const contextoSistemaId = item.contextoSistemaId?.trim() || "";
+    if (!contextoSistemaId) return "";
+
+    const sistemaPrincipal = sistemasMap.get(contextoSistemaId)?.nome?.trim() || "";
+    if (!sistemaPrincipal) return "";
+
+    const relacionados = this.getSistemasRelacionadosNomes(item, sistemasMap);
+    return relacionados.length > 0 ? `${sistemaPrincipal} +${relacionados.length}` : sistemaPrincipal;
+  }
+
+  private buildSistemaTooltip(
+    item: Chamado,
+    sistemasMap: Map<string, SistemaOptionView>
+  ): string {
+    const contextoSistemaId = item.contextoSistemaId?.trim() || "";
+    if (!contextoSistemaId) return "";
+
+    const sistemaPrincipal = sistemasMap.get(contextoSistemaId)?.nome?.trim() || "";
+    if (!sistemaPrincipal) return "";
+
+    const relacionados = this.getSistemasRelacionadosNomes(item, sistemasMap);
+    if (relacionados.length === 0) {
+      return `Sistema principal: ${sistemaPrincipal}`;
+    }
+
+    return `Sistema principal: ${sistemaPrincipal}\nRelacionados: ${relacionados.join(", ")}`;
+  }
+
+  private getSistemasRelacionadosNomes(
+    item: Chamado,
+    sistemasMap: Map<string, SistemaOptionView>
+  ): string[] {
+    if (!Array.isArray(item.sistemasRelacionados)) {
+      return [];
+    }
+
+    return [...new Set(
+      item.sistemasRelacionados
+        .filter((sistemaId): sistemaId is string => typeof sistemaId === "string")
+        .map((sistemaId) => sistemaId.trim())
+        .filter((sistemaId) => !!sistemaId && sistemaId !== item.contextoSistemaId)
+        .map((sistemaId) => sistemasMap.get(sistemaId)?.nome?.trim() || "")
+        .filter(Boolean)
+    )];
+  }
+
   private isChamadoEmpresa(item: Chamado): boolean {
     return !!(item.empresaId || item.empresa || item.funcionarioId || item.funcionario);
   }
@@ -688,10 +780,100 @@ export class ConcluidosComponent {
     );
   }
 
+  private sortSistemas(items: Sistema[]): Sistema[] {
+    return [...items].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+  }
+
+  getSistemasEmpresaOptions(empresaId: string, sistemas: SistemaOptionView[]): SistemaOptionView[] {
+    if (!empresaId) return [];
+
+    const sistemaIds = this.getEmpresaSistemaIds(empresaId);
+    if (sistemaIds.length === 0) return [];
+
+    const sistemasMap = new Map(
+      sistemas.filter((item) => !!item.id).map((item) => [item.id, item])
+    );
+
+    return sistemaIds
+      .map((id) => sistemasMap.get(id) ?? null)
+      .filter((item): item is SistemaOptionView => !!item);
+  }
+
+  getSistemasRelacionadosOptions(
+    empresaId: string,
+    sistemas: SistemaOptionView[],
+    contextoSistemaId: string
+  ): SistemaOptionView[] {
+    const contexto = contextoSistemaId.trim();
+    return this.getSistemasEmpresaOptions(empresaId, sistemas).filter((item) => item.id !== contexto);
+  }
+
+  isSistemaRelacionadoSelecionado(sistemaId: string): boolean {
+    return this.editSistemasRelacionados.includes(sistemaId);
+  }
+
+  onEditContextoSistemaChange() {
+    this.editSistemasRelacionados = this.sanitizeSistemaIds(
+      this.editSistemasRelacionados,
+      this.editContextoSistemaId,
+      this.editEmpresaId
+    );
+  }
+
+  alternarSistemaRelacionado(sistemaId: string, selecionado: boolean) {
+    const atualizados = selecionado
+      ? [...this.editSistemasRelacionados, sistemaId]
+      : this.editSistemasRelacionados.filter((item) => item !== sistemaId);
+
+    this.editSistemasRelacionados = this.sanitizeSistemaIds(
+      atualizados,
+      this.editContextoSistemaId,
+      this.editEmpresaId
+    );
+  }
+
+  private sanitizeSistemaIds(
+    value: unknown,
+    contextoSistemaId = "",
+    empresaId = ""
+  ): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const permitidos = new Set(this.getEmpresaSistemaIds(empresaId));
+    const contexto = contextoSistemaId.trim();
+
+    return [...new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => !!item && item !== contexto && (!empresaId || permitidos.has(item)))
+    )];
+  }
+
+  private getEmpresaSistemaIds(empresaId: string): string[] {
+    if (!empresaId) return [];
+
+    const empresa = this.empresasService.getEmpresasSnapshot().find((item) => item.id === empresaId);
+    if (!empresa?.sistemas || !Array.isArray(empresa.sistemas)) {
+      return [];
+    }
+
+    return [...new Set(
+      empresa.sistemas
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )];
+  }
+
   private iniciarCarregamentoFuncionariosEdicao(empresaId: string) {
     this.runInZone(() => {
       this.editEmpresaId = empresaId;
       this.editFuncionarioId = "";
+      this.editContextoSistemaId = "";
+      this.editSistemasRelacionados = [];
       this.editFuncionarios = [];
       this.editCarregandoFuncionarios = !!empresaId;
       this.forcarAtualizacaoFormulario();
