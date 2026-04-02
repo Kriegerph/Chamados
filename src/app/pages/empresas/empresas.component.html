@@ -19,138 +19,160 @@
   </div>
 
   <div class="stack-md" *ngIf="!vm.carregando || vm.empresas.length > 0">
-    <article class="card empresas-table-card">
+    <article class="card empresas-list-card">
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Lista de empresas</h3>
-          <p class="card-subtitle">Clique em uma linha para abrir ou recolher os funcionarios vinculados.</p>
+          <p class="card-subtitle">Clique no card para abrir ou recolher os funcionarios vinculados.</p>
         </div>
       </div>
 
       <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
 
-      <div class="table-wrap empresas-table-wrap" *ngIf="!vm.erro">
-        <table class="table empresas-table">
-          <thead>
-            <tr>
-              <th>Empresa</th>
-              <th class="empresas-col-funcionarios">Funcionarios</th>
-              <th class="empresas-col-acoes">Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="vm.empresas.length === 0">
-              <td colspan="3">Nenhuma empresa cadastrada.</td>
-            </tr>
+      <div class="empty-state" *ngIf="!vm.erro && vm.empresas.length === 0">
+        Nenhuma empresa cadastrada.
+      </div>
 
-            <ng-container *ngFor="let item of vm.empresas; trackBy: trackByEmpresa">
-              <tr
-                class="empresas-main-row"
-                [class.selected]="item.id === vm.empresaSelecionada?.id"
-                (click)="alternarEmpresa(item.id)"
-              >
-                <td>
-                  <div class="empresa-name">{{ item.nomeEmpresa }}</div>
-                  <div class="empresa-note" *ngIf="!!item.observacoes">{{ item.observacoes }}</div>
-                </td>
-                <td class="empresas-col-funcionarios">{{ item.totalFuncionariosLabel }}</td>
-                <td class="empresas-col-acoes">
-                  <div class="btn-group empresas-row-actions">
-                    <button
-                      class="btn secondary btn-sm"
-                      type="button"
-                      (click)="abrirEdicaoEmpresa(item); $event.stopPropagation()"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      class="btn danger btn-sm"
-                      type="button"
-                      (click)="excluirEmpresa(item); $event.stopPropagation()"
-                    >
-                      Excluir
-                    </button>
+      <div class="empresas-list" *ngIf="!vm.erro && vm.empresas.length > 0">
+        <article
+          class="empresa-card"
+          *ngFor="let item of vm.empresas; trackBy: trackByEmpresa"
+          [class.is-open]="item.id === vm.empresaSelecionada?.id"
+        >
+          <div
+            class="empresa-card-header"
+            role="button"
+            tabindex="0"
+            [attr.aria-expanded]="item.id === vm.empresaSelecionada?.id"
+            (click)="alternarEmpresa(item.id)"
+            (keydown.enter)="alternarEmpresa(item.id)"
+            (keydown.space)="alternarEmpresa(item.id); $event.preventDefault()"
+          >
+            <div class="empresa-card-primary">
+              <div class="empresa-name">{{ item.nomeEmpresa }}</div>
+              <div class="empresa-card-subtitle">
+                {{ item.sistemasQuantidadeLabel }}
+                <span *ngIf="!!item.observacoes">• {{ item.observacoes }}</span>
+              </div>
+            </div>
+
+            <div
+              class="empresa-card-sistemas"
+              [attr.title]="item.sistemasTooltip || null"
+            >
+              <div class="empresa-card-label">Sistemas</div>
+              <div class="empresa-badges" *ngIf="item.sistemasNomes.length > 0; else semSistemas">
+                <span
+                  class="empresa-system-badge"
+                  *ngFor="let sistema of item.sistemasVisiveis"
+                >
+                  {{ sistema }}
+                </span>
+                <span class="empresa-system-badge empresa-system-badge-extra" *ngIf="item.sistemasExtras > 0">
+                  +{{ item.sistemasExtras }}
+                </span>
+              </div>
+              <ng-template #semSistemas>
+                <span class="empresa-system-empty">Sem sistemas</span>
+              </ng-template>
+            </div>
+
+            <div class="empresa-card-side">
+              <span class="empresa-funcionarios-badge">
+                <span aria-hidden="true">&#128100;</span>
+                {{ item.totalFuncionariosLabel }} func.
+              </span>
+
+              <div class="btn-group empresas-row-actions">
+                <button
+                  class="btn secondary btn-sm"
+                  type="button"
+                  (click)="abrirEdicaoEmpresa(item); $event.stopPropagation()"
+                >
+                  Editar
+                </button>
+                <button
+                  class="btn danger btn-sm"
+                  type="button"
+                  (click)="excluirEmpresa(item); $event.stopPropagation()"
+                >
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empresa-expand-shell">
+            <div class="empresa-expand-inner">
+              <div class="empresa-expand-panel" *ngIf="item.id === vm.empresaSelecionada?.id">
+                <div class="card-title-row empresas-funcionarios-header">
+                  <div>
+                    <h3 class="card-title">Funcionarios</h3>
+                    <p class="card-subtitle">Gerencie os vinculados sem sair desta empresa.</p>
                   </div>
-                </td>
-              </tr>
+                  <button
+                    class="btn secondary btn-sm empresa-add-funcionario-btn"
+                    type="button"
+                    (click)="abrirCadastroFuncionario(); $event.stopPropagation()"
+                  >
+                    Adicionar funcionario
+                  </button>
+                </div>
 
-              <tr class="empresas-expand-row" *ngIf="item.id === vm.empresaSelecionada?.id">
-                <td colspan="3" class="empresas-expand-cell">
-                  <div class="empresas-expand-panel">
-                    <div class="card-title-row empresas-funcionarios-header">
-                      <div>
-                        <h3 class="card-title">Funcionarios da empresa: {{ item.nomeEmpresa }}</h3>
-                        <p class="card-subtitle">Gerencie os funcionarios vinculados sem sair da listagem.</p>
+                <div class="empty-state" *ngIf="vm.funcionariosErro">{{ vm.funcionariosErro }}</div>
+                <div class="skeleton" style="min-height: 180px;" *ngIf="vm.funcionariosCarregando"></div>
+
+                <div class="empresa-funcionarios-list" *ngIf="!vm.funcionariosCarregando && !vm.funcionariosErro">
+                  <div class="empty-state" *ngIf="vm.funcionarios.length === 0">
+                    Nenhum funcionario cadastrado.
+                  </div>
+
+                  <div
+                    class="empresa-funcionario-row"
+                    *ngFor="let funcionario of vm.funcionarios; trackBy: trackByFuncionario"
+                  >
+                    <div class="empresa-funcionario-main">
+                      <div class="empresa-funcionario-name">{{ funcionario.nomeFuncionario }}</div>
+                      <div class="empresa-funcionario-detail">
+                        {{ funcionario.telefone || "Telefone nao informado" }}
                       </div>
-                      <button
-                        class="btn primary"
-                        type="button"
-                        (click)="abrirCadastroFuncionario(); $event.stopPropagation()"
-                      >
-                        Adicionar funcionario
-                      </button>
                     </div>
 
-                    <div class="empty-state" *ngIf="vm.funcionariosErro">{{ vm.funcionariosErro }}</div>
-                    <div class="skeleton" style="min-height: 180px;" *ngIf="vm.funcionariosCarregando"></div>
+                    <div class="empresa-funcionario-actions">
+                      <span
+                        class="status-chip"
+                        [class.warning]="funcionario?.criarChamadoAutomatico === false"
+                      >
+                        {{
+                          funcionario?.criarChamadoAutomatico === false
+                            ? "WhatsApp desativado"
+                            : "WhatsApp ativado"
+                        }}
+                      </span>
 
-                    <div class="table-wrap" *ngIf="!vm.funcionariosCarregando && !vm.funcionariosErro">
-                      <table class="table empresas-funcionarios-table">
-                        <thead>
-                          <tr>
-                            <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Criar chamado via WhatsApp</th>
-                            <th class="empresas-col-acoes">Acoes</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngIf="vm.funcionarios.length === 0">
-                            <td colspan="4">Nenhum funcionario cadastrado.</td>
-                          </tr>
-                          <tr *ngFor="let funcionario of vm.funcionarios; trackBy: trackByFuncionario">
-                            <td>{{ funcionario.nomeFuncionario }}</td>
-                            <td>{{ funcionario.telefone || "-" }}</td>
-                            <td>
-                              <span
-                                class="status-chip"
-                                [class.warning]="funcionario?.criarChamadoAutomatico === false"
-                              >
-                                {{
-                                  funcionario?.criarChamadoAutomatico === false
-                                    ? "Desativado"
-                                    : "Ativado"
-                                }}
-                              </span>
-                            </td>
-                            <td class="empresas-col-acoes">
-                              <div class="btn-group empresas-row-actions">
-                                <button
-                                  class="btn secondary btn-sm"
-                                  type="button"
-                                  (click)="abrirEdicaoFuncionario(funcionario); $event.stopPropagation()"
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  class="btn danger btn-sm"
-                                  type="button"
-                                  (click)="excluirFuncionario(funcionario); $event.stopPropagation()"
-                                >
-                                  Excluir
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      <div class="btn-group empresas-row-actions">
+                        <button
+                          class="btn secondary btn-sm"
+                          type="button"
+                          (click)="abrirEdicaoFuncionario(funcionario); $event.stopPropagation()"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          class="btn danger btn-sm"
+                          type="button"
+                          (click)="excluirFuncionario(funcionario); $event.stopPropagation()"
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
     </article>
   </div>

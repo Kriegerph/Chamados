@@ -12,7 +12,9 @@ import { Chart } from "chart.js/auto";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
 import { DataState } from "../../models/data-state.model";
+import { Sistema } from "../../models/sistema.model";
 import { ChamadosService } from "../../services/chamados.service";
+import { SistemasService } from "../../services/sistemas.service";
 
 type TopEmpresasPeriodo = "todos" | "ultimoMes" | "ultimos7Dias" | "hoje";
 type AnoFiltro = number | "__all__";
@@ -46,6 +48,42 @@ type GraficoDiario = {
   semChamados: boolean;
 };
 
+type SistemaResumo = {
+  id: string;
+  nome: string;
+  totalChamados: number;
+  percentual: number;
+  tempoMedioMinutos: number | null;
+  chamadosComTempo: number;
+  scoreCriticidade: number;
+};
+
+type GraficoDistribuicaoSistemas = {
+  labels: string[];
+  valores: number[];
+  total: number;
+  semDados: boolean;
+};
+
+type AnaliseSistemas = {
+  topSistemas: SistemaResumo[];
+  tempoMedioSistemas: SistemaResumo[];
+  distribuicao: GraficoDistribuicaoSistemas;
+  sistemasCriticos: SistemaResumo[];
+  totalConcluidos: number;
+  totalChamadosComSistema: number;
+  semDados: boolean;
+  filtroLabel: string;
+};
+
+type SistemaAcumulado = {
+  id: string;
+  nome: string;
+  totalChamados: number;
+  totalTempoMinutos: number;
+  chamadosComTempo: number;
+};
+
 type DashboardViewModel = {
   carregando: boolean;
   erro: string | null;
@@ -60,6 +98,7 @@ type DashboardViewModel = {
   topEmpresas: EmpresaResumo[];
   topEmpresasPeriodo: TopEmpresasPeriodo;
   graficoDiario: GraficoDiario;
+  analiseSistemas: AnaliseSistemas;
 };
 
 const ANO_TODOS: AnoFiltro = "__all__";
@@ -76,6 +115,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   @ViewChild("monthlyChart") monthlyChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild("clientsChart") clientsChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild("dailyChart") dailyChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild("topSystemsChart") topSystemsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild("avgSystemsChart") avgSystemsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild("systemsDistributionChart") systemsDistributionChartRef?: ElementRef<HTMLCanvasElement>;
 
   readonly meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   readonly ANO_TODOS = ANO_TODOS;
@@ -105,25 +147,41 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private monthlyChart: Chart | null = null;
   private clientsChart: Chart | null = null;
   private dailyChart: Chart | null = null;
+  private topSystemsChart: Chart | null = null;
+  private avgSystemsChart: Chart | null = null;
+  private systemsDistributionChart: Chart | null = null;
   private latestVm: DashboardViewModel | null = null;
   private chartReady = false;
 
-  constructor(private readonly chamadosService: ChamadosService) {
+  constructor(
+    private readonly chamadosService: ChamadosService,
+    private readonly sistemasService: SistemasService
+  ) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
+      this.sistemasService.sistemasState$,
       this.anoSelecionadoSubject,
       this.anoMensalSelecionadoSubject,
       this.topEmpresasPeriodoSubject,
       this.graficoDiarioFiltroSubject
     ]).pipe(
-      map(([chamadosState, anoSelecionado, anoMensalSelecionado, topEmpresasPeriodo, graficoDiarioFiltro]) =>
-        this.buildViewModel(
+      map(
+        ([
           chamadosState,
+          sistemasState,
           anoSelecionado,
           anoMensalSelecionado,
           topEmpresasPeriodo,
           graficoDiarioFiltro
-        )
+        ]) =>
+          this.buildViewModel(
+            chamadosState,
+            sistemasState,
+            anoSelecionado,
+            anoMensalSelecionado,
+            topEmpresasPeriodo,
+            graficoDiarioFiltro
+          )
       ),
       tap((vm) => {
         this.latestVm = vm;
@@ -162,14 +220,59 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  formatTempoMedio(minutos: number | null | undefined): string {
+    if (typeof minutos !== "number" || !Number.isFinite(minutos)) {
+      return "Sem tempo";
+    }
+
+    const totalMinutos = Math.max(0, Math.round(minutos));
+    if (totalMinutos < 60) {
+      return `${totalMinutos} min`;
+    }
+
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    return `${horas}h ${minutosRestantes.toString().padStart(2, "0")}m`;
+  }
+
+  formatPercentual(percentual: number): string {
+    return `${percentual.toFixed(percentual >= 10 ? 0 : 1)}%`;
+  }
+
+  getDistribuicaoLegenda(distribuicao: GraficoDistribuicaoSistemas): Array<{
+    cor: string;
+    nome: string;
+    percentual: string;
+    valor: number;
+  }> {
+    if (distribuicao.semDados) {
+      return [];
+    }
+
+    const cores = this.getPieColors(distribuicao.valores.length);
+    return distribuicao.labels.map((nome, index) => {
+      const valor = distribuicao.valores[index] ?? 0;
+      const percentual = distribuicao.total > 0 ? (valor / distribuicao.total) * 100 : 0;
+
+      return {
+        cor: cores[index] ?? cores[0] ?? "#3b82f6",
+        nome,
+        percentual: this.formatPercentual(percentual),
+        valor
+      };
+    });
+  }
+
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
+    sistemasState: DataState<Sistema[]>,
     anoSelecionado: AnoFiltro,
     anoMensalSelecionado: number,
     topEmpresasPeriodo: TopEmpresasPeriodo,
     graficoDiarioFiltro: { ano: number; mes: number }
   ): DashboardViewModel {
     const chamados = chamadosState.data;
+    const sistemas = sistemasState.data;
     const anosDisponiveis = this.buildAvailableYears(chamados);
     const anoPrincipalResolvido = this.resolveAnoSelecionado(anoSelecionado, anosDisponiveis);
     const anoMensalResolvido = this.resolveAnoMensalSelecionado(anoMensalSelecionado, anosDisponiveis);
@@ -182,6 +285,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       anoPrincipalResolvido,
       topEmpresasPeriodo
     );
+    const analiseSistemas = this.buildAnaliseSistemas(
+      chamados,
+      sistemas,
+      anoPrincipalResolvido
+    );
     const graficoDiario = this.buildDailyTotalsByMonth(
       chamados,
       graficoDiarioResolvido.ano,
@@ -189,8 +297,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     );
 
     return {
-      carregando: chamadosState.status === "loading",
-      erro: chamadosState.error,
+      carregando: chamadosState.status === "loading" || sistemasState.status === "loading",
+      erro: chamadosState.error || sistemasState.error,
       anoSelecionado: anoPrincipalResolvido,
       anoSelecionadoLabel:
         anoPrincipalResolvido === ANO_TODOS ? "Todos" : String(anoPrincipalResolvido),
@@ -202,7 +310,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       totalPeriodoGraficoMensal: totaisAnoMensal.totalAno,
       topEmpresas,
       topEmpresasPeriodo,
-      graficoDiario
+      graficoDiario,
+      analiseSistemas
     };
   }
 
@@ -322,6 +431,137 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       .slice(0, 5);
   }
 
+  private buildAnaliseSistemas(
+    items: Chamado[],
+    sistemas: Sistema[],
+    anoSelecionado: AnoFiltro
+  ): AnaliseSistemas {
+    const sistemasMap = new Map(
+      sistemas
+        .filter((item): item is Sistema & { id: string } => !!item.id)
+        .map((item) => [item.id, item.nome?.trim() || item.id])
+    );
+    const principalMap = new Map<string, SistemaAcumulado>();
+
+    const concluidos = items.filter(
+      (item) =>
+        item.status === "concluido" &&
+        !!item.contextoSistemaId?.trim() &&
+        this.matchAnoFiltro(item, anoSelecionado)
+    );
+
+    concluidos.forEach((item) => {
+      const sistemaPrincipalId = item.contextoSistemaId!.trim();
+      const acumuladoPrincipal = this.getOrCreateSistemaAcumulado(
+        principalMap,
+        sistemaPrincipalId,
+        sistemasMap
+      );
+      acumuladoPrincipal.totalChamados += 1;
+
+      const tempoMinutos = this.getTempoAtendimentoMinutos(item);
+      if (tempoMinutos != null) {
+        acumuladoPrincipal.totalTempoMinutos += tempoMinutos;
+        acumuladoPrincipal.chamadosComTempo += 1;
+      }
+    });
+
+    const totalChamadosComSistema = Array.from(principalMap.values()).reduce(
+      (acc, item) => acc + item.totalChamados,
+      0
+    );
+    const base = Array.from(principalMap.values())
+      .map((id) => {
+        const totalChamados = id.totalChamados ?? 0;
+        const chamadosComTempo = id.chamadosComTempo ?? 0;
+        const tempoMedioMinutos =
+          chamadosComTempo > 0 ? (id.totalTempoMinutos ?? 0) / chamadosComTempo : null;
+
+        return {
+          id: id.id,
+          nome: this.resolveSistemaNome(id.id, sistemasMap),
+          totalChamados,
+          percentual:
+            totalChamadosComSistema > 0
+              ? (totalChamados / totalChamadosComSistema) * 100
+              : 0,
+          tempoMedioMinutos,
+          chamadosComTempo,
+          scoreCriticidade: totalChamados + (tempoMedioMinutos ?? 0)
+        } satisfies SistemaResumo;
+      })
+      .filter((item) => item.totalChamados > 0 || item.chamadosComTempo > 0);
+
+    const topSistemas = [...base]
+      .sort((a, b) => b.totalChamados - a.totalChamados || a.nome.localeCompare(b.nome))
+      .slice(0, 5);
+    const tempoMedioSistemas = [...base]
+      .filter((item) => item.tempoMedioMinutos != null)
+      .sort(
+        (a, b) =>
+          (b.tempoMedioMinutos ?? 0) - (a.tempoMedioMinutos ?? 0) ||
+          b.totalChamados - a.totalChamados ||
+          a.nome.localeCompare(b.nome)
+      )
+      .slice(0, 5);
+    const sistemasCriticos = [...base]
+      .sort(
+        (a, b) =>
+          b.scoreCriticidade - a.scoreCriticidade ||
+          b.totalChamados - a.totalChamados ||
+          (b.tempoMedioMinutos ?? 0) - (a.tempoMedioMinutos ?? 0) ||
+          a.nome.localeCompare(b.nome)
+      )
+      .slice(0, 5);
+
+    return {
+      topSistemas,
+      tempoMedioSistemas,
+      distribuicao: this.buildDistribuicaoSistemas(base),
+      sistemasCriticos,
+      totalConcluidos: concluidos.length,
+      totalChamadosComSistema,
+      semDados: concluidos.length === 0 || base.length === 0,
+      filtroLabel:
+        anoSelecionado === ANO_TODOS
+          ? "Concluidos de todos os anos"
+          : `Concluidos de ${anoSelecionado}`
+    };
+  }
+
+  private buildDistribuicaoSistemas(items: SistemaResumo[]): GraficoDistribuicaoSistemas {
+    const ordenados = [...items]
+      .filter((item) => item.totalChamados > 0)
+      .sort((a, b) => b.totalChamados - a.totalChamados || a.nome.localeCompare(b.nome));
+
+    if (ordenados.length === 0) {
+      return {
+        labels: ["Sem dados"],
+        valores: [1],
+        total: 0,
+        semDados: true
+      };
+    }
+
+    const limite = 6;
+    const principais = ordenados.slice(0, limite);
+    const outros = ordenados.slice(limite);
+    const totalOutros = outros.reduce((acc, item) => acc + item.totalChamados, 0);
+
+    return {
+      labels:
+        totalOutros > 0
+          ? [...principais.map((item) => item.nome), "Outros"]
+          : principais.map((item) => item.nome),
+      valores:
+        totalOutros > 0
+          ? [...principais.map((item) => item.totalChamados), totalOutros]
+          : principais.map((item) => item.totalChamados),
+      total: ordenados.reduce((acc, item) => acc + item.totalChamados, 0),
+      semDados: false
+    };
+  }
+
   private matchPeriodo(
     data: string,
     periodo: TopEmpresasPeriodo,
@@ -339,6 +579,45 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       default:
         return true;
     }
+  }
+
+  private matchAnoFiltro(item: Chamado, anoSelecionado: AnoFiltro): boolean {
+    if (anoSelecionado === ANO_TODOS) {
+      return true;
+    }
+
+    const data = item.data || "";
+    return /^\d{4}-\d{2}-\d{2}$/.test(data) && data.startsWith(`${anoSelecionado}-`);
+  }
+
+  private getTempoAtendimentoMinutos(item: Chamado): number | null {
+    const valor = item.tempoAtendimentoMinutos ?? item.tempoAtendimento ?? null;
+    return typeof valor === "number" && Number.isFinite(valor) ? valor : null;
+  }
+
+  private getOrCreateSistemaAcumulado(
+    map: Map<string, SistemaAcumulado>,
+    sistemaId: string,
+    sistemasMap: Map<string, string>
+  ): SistemaAcumulado {
+    const atual = map.get(sistemaId);
+    if (atual) {
+      return atual;
+    }
+
+    const criado: SistemaAcumulado = {
+      id: sistemaId,
+      nome: this.resolveSistemaNome(sistemaId, sistemasMap),
+      totalChamados: 0,
+      totalTempoMinutos: 0,
+      chamadosComTempo: 0
+    };
+    map.set(sistemaId, criado);
+    return criado;
+  }
+
+  private resolveSistemaNome(sistemaId: string, sistemasMap: Map<string, string>): string {
+    return sistemasMap.get(sistemaId)?.trim() || sistemaId;
   }
 
   private buildDailyTotalsByMonth(items: Chamado[], ano: number, mes: number): GraficoDiario {
@@ -459,12 +738,24 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private renderCharts() {
     if (!this.chartReady || !this.latestVm) return;
-    if (!this.monthlyChartRef || !this.clientsChartRef || !this.dailyChartRef) return;
+    if (
+      !this.monthlyChartRef ||
+      !this.clientsChartRef ||
+      !this.dailyChartRef ||
+      !this.topSystemsChartRef ||
+      !this.avgSystemsChartRef ||
+      !this.systemsDistributionChartRef
+    ) {
+      return;
+    }
 
     const vm = this.latestVm;
     this.renderMonthlyChart(vm.totaisPorMesGraficoMensal);
     this.renderClientsChart(vm.topEmpresas);
     this.renderDailyChart(vm.graficoDiario.labels, vm.graficoDiario.totais);
+    this.renderTopSystemsChart(vm.analiseSistemas.topSistemas);
+    this.renderAvgSystemsChart(vm.analiseSistemas.tempoMedioSistemas);
+    this.renderSystemsDistributionChart(vm.analiseSistemas.distribuicao);
   }
 
   private renderMonthlyChart(data: number[]) {
@@ -588,23 +879,189 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private renderTopSystemsChart(items: SistemaResumo[]) {
+    const palette = this.getChartPalette();
+    this.topSystemsChart?.destroy();
+
+    const labels = items.length ? items.map((item) => item.nome) : ["Sem dados"];
+    const values = items.length ? items.map((item) => item.totalChamados) : [0];
+
+    this.topSystemsChart = new Chart(this.topSystemsChartRef!.nativeElement, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Chamados",
+            data: values,
+            borderRadius: 6,
+            backgroundColor: palette.primaryLight,
+            hoverBackgroundColor: palette.primary
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: palette.textMuted },
+            grid: { color: palette.grid }
+          },
+          y: {
+            ticks: { color: palette.textMuted },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  private renderAvgSystemsChart(items: SistemaResumo[]) {
+    const palette = this.getChartPalette();
+    this.avgSystemsChart?.destroy();
+
+    const labels = items.length ? items.map((item) => item.nome) : ["Sem dados"];
+    const values = items.length ? items.map((item) => Math.round(item.tempoMedioMinutos ?? 0)) : [0];
+
+    this.avgSystemsChart = new Chart(this.avgSystemsChartRef!.nativeElement, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Tempo medio (min)",
+            data: values,
+            borderRadius: 6,
+            backgroundColor: palette.warning,
+            hoverBackgroundColor: palette.warningDark
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => `Tempo medio: ${this.formatTempoMedio(Number(context.raw) || 0)}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: palette.textMuted,
+              callback: (value) => `${value}m`
+            },
+            grid: { color: palette.grid }
+          },
+          x: {
+            ticks: { color: palette.textMuted },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  private renderSystemsDistributionChart(distribuicao: GraficoDistribuicaoSistemas) {
+    const palette = this.getChartPalette();
+    const backgroundColor = distribuicao.semDados
+      ? [palette.neutral]
+      : this.getPieColors(distribuicao.valores.length);
+
+    this.systemsDistributionChart?.destroy();
+    this.systemsDistributionChart = new Chart(this.systemsDistributionChartRef!.nativeElement, {
+      type: "doughnut",
+      data: {
+        labels: distribuicao.labels,
+        datasets: [
+          {
+            data: distribuicao.valores,
+            backgroundColor,
+            borderColor: "#ffffff",
+            borderWidth: 3,
+            spacing: 2,
+            hoverOffset: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "74%",
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                if (distribuicao.semDados) {
+                  return "Sem dados";
+                }
+
+                const total = distribuicao.valores.reduce((acc, value) => acc + value, 0);
+                const valor = Number(context.raw) || 0;
+                const percentual = total > 0 ? (valor / total) * 100 : 0;
+                return `${context.label}: ${valor} (${this.formatPercentual(percentual)})`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   private getChartPalette() {
     const styles = getComputedStyle(document.documentElement);
     return {
       primary: styles.getPropertyValue("--primary-500").trim() || "#3b82f6",
       primaryDark: styles.getPropertyValue("--primary-600").trim() || "#2563eb",
       primaryLight: styles.getPropertyValue("--primary-400").trim() || "#60a5fa",
+      warning: styles.getPropertyValue("--warning-500").trim() || "#f59e0b",
+      warningDark: styles.getPropertyValue("--warning-600").trim() || "#d97706",
+      neutral: styles.getPropertyValue("--border-color").trim() || "#cbd5e1",
       textMuted: styles.getPropertyValue("--text-muted").trim() || "#64748b",
       grid: "rgba(148, 163, 184, 0.22)"
     };
+  }
+
+  private getPieColors(total: number): string[] {
+    const styles = getComputedStyle(document.documentElement);
+    const palette = [
+      styles.getPropertyValue("--primary-500").trim() || "#3b82f6",
+      styles.getPropertyValue("--primary-400").trim() || "#60a5fa",
+      styles.getPropertyValue("--success-500").trim() || "#22c55e",
+      styles.getPropertyValue("--warning-500").trim() || "#f59e0b",
+      "#0ea5e9",
+      "#14b8a6",
+      "#f97316"
+    ];
+
+    return Array.from({ length: total }, (_, index) => palette[index % palette.length]);
   }
 
   private destroyCharts() {
     this.monthlyChart?.destroy();
     this.clientsChart?.destroy();
     this.dailyChart?.destroy();
+    this.topSystemsChart?.destroy();
+    this.avgSystemsChart?.destroy();
+    this.systemsDistributionChart?.destroy();
     this.monthlyChart = null;
     this.clientsChart = null;
     this.dailyChart = null;
+    this.topSystemsChart = null;
+    this.avgSystemsChart = null;
+    this.systemsDistributionChart = null;
   }
 }

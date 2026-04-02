@@ -12,6 +12,11 @@ import { ToastService } from "../../services/toast.service";
 type EmpresaItemView = Empresa & {
   totalFuncionariosLabel: number;
   sistemas: string[];
+  sistemasNomes: string[];
+  sistemasVisiveis: string[];
+  sistemasExtras: number;
+  sistemasTooltip: string;
+  sistemasQuantidadeLabel: string;
 };
 
 type SistemaOptionView = Sistema & {
@@ -368,17 +373,28 @@ export class EmpresasComponent {
     empresaSelecionadaId: string | null,
     funcionariosState: DataState<Funcionario[]>
   ): EmpresasViewModel {
-    const empresas = this.sortEmpresas(empresasState.data).map((item) => ({
-      ...item,
-      sistemas: this.sanitizeSistemaIds(item.sistemas),
-      totalFuncionariosLabel: item.totalFuncionarios ?? 0
-    }));
     const sistemas = this.sortSistemas(sistemasState.data)
       .filter((item): item is SistemaOptionView => !!item.id)
       .map((item) => ({
         ...item,
         id: item.id!
       }));
+    const sistemasMap = new Map(sistemas.map((item) => [item.id, item]));
+    const empresas = this.sortEmpresas(empresasState.data).map((item) => {
+      const sistemasIds = this.sanitizeSistemaIds(item.sistemas);
+      const sistemasNomes = this.resolveEmpresaSistemaNomes(sistemasIds, sistemasMap);
+
+      return {
+        ...item,
+        sistemas: sistemasIds,
+        sistemasNomes,
+        sistemasVisiveis: sistemasNomes.slice(0, 2),
+        sistemasExtras: Math.max(0, sistemasNomes.length - 2),
+        sistemasTooltip: sistemasNomes.join(", "),
+        sistemasQuantidadeLabel: this.buildEmpresaSistemasQuantidadeLabel(sistemasNomes.length),
+        totalFuncionariosLabel: item.totalFuncionarios ?? 0
+      };
+    });
     const empresaSelecionada =
       empresas.find((item) => item.id === empresaSelecionadaId) ?? null;
 
@@ -423,6 +439,29 @@ export class EmpresasComponent {
         .map((item) => item.trim())
         .filter(Boolean)
     )];
+  }
+
+  private resolveEmpresaSistemaNomes(
+    sistemaIds: string[],
+    sistemasMap: Map<string, SistemaOptionView>
+  ): string[] {
+    return [...new Set(
+      sistemaIds
+        .map((sistemaId) => sistemasMap.get(sistemaId)?.nome?.trim() || sistemaId)
+        .filter(Boolean)
+    )];
+  }
+
+  private buildEmpresaSistemasQuantidadeLabel(total: number): string {
+    if (total <= 0) {
+      return "Nenhum sistema vinculado";
+    }
+
+    if (total === 1) {
+      return "1 sistema vinculado";
+    }
+
+    return `${total} sistemas vinculados`;
   }
 
   private createEmptyFuncionarioForm(): FuncionarioFormModel {

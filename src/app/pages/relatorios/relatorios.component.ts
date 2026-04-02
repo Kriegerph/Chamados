@@ -6,8 +6,10 @@ import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado, StatusChamado } from "../../models/chamado.model";
 import { DataState } from "../../models/data-state.model";
 import { Empresa } from "../../models/empresa.model";
+import { Sistema } from "../../models/sistema.model";
 import { ChamadosService } from "../../services/chamados.service";
 import { EmpresasService } from "../../services/empresas.service";
+import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
 
 type StatusFiltroRelatorio = StatusChamado | "ambos";
@@ -109,16 +111,18 @@ export class RelatoriosComponent {
   constructor(
     private readonly chamadosService: ChamadosService,
     private readonly empresasService: EmpresasService,
+    private readonly sistemasService: SistemasService,
     private readonly toast: ToastService
   ) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.empresasService.empresasState$,
+      this.sistemasService.sistemasState$,
       this.filtrosSubject,
       this.tipoRelatorioSubject
     ]).pipe(
-      map(([chamadosState, empresasState, filtros, tipoRelatorio]) =>
-        this.buildViewModel(chamadosState, empresasState, filtros, tipoRelatorio)
+      map(([chamadosState, empresasState, sistemasState, filtros, tipoRelatorio]) =>
+        this.buildViewModel(chamadosState, empresasState, sistemasState, filtros, tipoRelatorio)
       ),
       tap((viewModel) => {
         this.currentViewModel = viewModel;
@@ -239,10 +243,16 @@ export class RelatoriosComponent {
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
     empresasState: DataState<Empresa[]>,
+    sistemasState: DataState<Sistema[]>,
     filtros: RelatoriosFiltros,
     tipoRelatorio: TipoRelatorio
   ): RelatoriosViewModel {
     const empresas = this.sortEmpresas(empresasState.data);
+    const sistemasMap = new Map(
+      this.sortSistemas(sistemasState.data)
+        .filter((item): item is Sistema & { id: string } => !!item.id)
+        .map((item) => [item.id, item.nome?.trim() || item.id])
+    );
     const filtrosEfetivos = this.resolveFiltrosEmpresas(filtros, empresas);
     const empresasMap = new Map(
       empresas.filter((item) => !!item.id).map((item) => [item.id as string, item])
@@ -253,7 +263,7 @@ export class RelatoriosComponent {
     const filtrados = mensagemResultado
       ? []
       : this.aplicarFiltrosFrontend(chamados, filtrosEfetivos, empresasMap, empresaIdsDisponiveis);
-    const dataset = this.buildDataset(filtrados, tipoRelatorio, empresasMap);
+    const dataset = this.buildDataset(filtrados, tipoRelatorio, empresasMap, sistemasMap);
     const empresasNosResultados = new Set(
       filtrados.map((item) => this.getEmpresaLabel(item, empresasMap))
     );
@@ -262,8 +272,11 @@ export class RelatoriosComponent {
     );
 
     return {
-      carregando: chamadosState.status === "loading" || empresasState.status === "loading",
-      erro: chamadosState.error || empresasState.error,
+      carregando:
+        chamadosState.status === "loading" ||
+        empresasState.status === "loading" ||
+        sistemasState.status === "loading",
+      erro: chamadosState.error || empresasState.error || sistemasState.error,
       empresas,
       dataset,
       totalChamadosFiltrados: filtrados.length,
@@ -329,7 +342,8 @@ export class RelatoriosComponent {
   private buildDataset(
     chamados: Chamado[],
     tipoRelatorio: TipoRelatorio,
-    empresasMap: Map<string, Empresa>
+    empresasMap: Map<string, Empresa>,
+    sistemasMap: Map<string, string>
   ): RelatorioDataset {
     switch (tipoRelatorio) {
       case "tempo-por-empresa":
@@ -338,13 +352,14 @@ export class RelatoriosComponent {
         return this.buildRankingEmpresasDataset(chamados, empresasMap);
       case "detalhado-chamados":
       default:
-        return this.buildDetalhadoDataset(chamados, empresasMap);
+        return this.buildDetalhadoDataset(chamados, empresasMap, sistemasMap);
     }
   }
 
   private buildDetalhadoDataset(
     chamados: Chamado[],
-    empresasMap: Map<string, Empresa>
+    empresasMap: Map<string, Empresa>,
+    sistemasMap: Map<string, string>
   ): RelatorioDataset {
     return {
       sheetName: "Chamados",
@@ -353,6 +368,8 @@ export class RelatoriosComponent {
         { key: "funcionario", label: "Funcionario" },
         { key: "motivo", label: "Motivo" },
         { key: "dataChamado", label: "Data do Chamado" },
+        { key: "sistemaPrincipal", label: "Sistema principal" },
+        { key: "sistemasRelacionados", label: "Sistemas relacionados" },
         { key: "resolucao", label: "Resolucao" },
         { key: "tempoAtendimento", label: "Tempo de Atendimento" },
         { key: "status", label: "Status" }
@@ -362,6 +379,8 @@ export class RelatoriosComponent {
         funcionario: item.funcionario || "",
         motivo: item.motivo || "",
         dataChamado: item.data || "",
+        sistemaPrincipal: this.getSistemaNome(item.contextoSistemaId, sistemasMap),
+        sistemasRelacionados: this.getSistemasRelacionadosLabel(item.sistemasRelacionados, sistemasMap),
         resolucao: item.resolucao || "",
         tempoAtendimento: this.formatTempoMinutos(item.tempoAtendimentoMinutos, ""),
         status: this.formatStatus(item.status)
@@ -492,6 +511,10 @@ export class RelatoriosComponent {
     return [...items].sort((a, b) => (a.nomeEmpresa || "").localeCompare(b.nomeEmpresa || ""));
   }
 
+  private sortSistemas(items: Sistema[]): Sistema[] {
+    return [...items].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+  }
+
   private sortByDataDesc(items: Chamado[]): Chamado[] {
     return [...items].sort((a, b) => {
       const dataCmp = (b.data || "").localeCompare(a.data || "");
@@ -605,5 +628,35 @@ export class RelatoriosComponent {
     }, column.label.length);
 
     return Math.min(Math.max(maxRowLength + 2, 14), 42);
+  }
+
+  private getSistemaNome(sistemaId: unknown, sistemasMap: Map<string, string>): string {
+    if (typeof sistemaId !== "string") {
+      return "";
+    }
+
+    const id = sistemaId.trim();
+    if (!id) {
+      return "";
+    }
+
+    return sistemasMap.get(id) || id;
+  }
+
+  private getSistemasRelacionadosLabel(
+    sistemasRelacionados: unknown,
+    sistemasMap: Map<string, string>
+  ): string {
+    if (!Array.isArray(sistemasRelacionados)) {
+      return "";
+    }
+
+    return [...new Set(
+      sistemasRelacionados
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => sistemasMap.get(item) || item)
+    )].join(", ");
   }
 }

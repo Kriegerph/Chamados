@@ -2,7 +2,7 @@
   <header class="page-header">
     <div>
       <h2 class="page-title">Dashboard Executivo</h2>
-      <p class="page-subtitle">Indicadores de chamados e distribuição operacional.</p>
+      <p class="page-subtitle">Indicadores de chamados e distribuicao operacional.</p>
     </div>
 
     <div class="chart-controls">
@@ -94,8 +94,8 @@
         <article class="card chart-card">
           <div class="card-title-row">
             <div>
-              <h3 class="chart-title">Totais por mês ({{ vm.anoMensalSelecionado }})</h3>
-              <p class="card-subtitle">Total do período: {{ vm.totalPeriodoGraficoMensal }}</p>
+              <h3 class="chart-title">Totais por mes ({{ vm.anoMensalSelecionado }})</h3>
+              <p class="card-subtitle">Total do periodo: {{ vm.totalPeriodoGraficoMensal }}</p>
             </div>
 
             <div class="chart-controls chart-controls-inline">
@@ -116,12 +116,12 @@
           <div class="card-title-row">
             <div>
               <h3 class="chart-title">Top 5 Empresas</h3>
-              <p class="card-subtitle">Ranking por período em {{ vm.anoSelecionadoLabel | lowercase }}</p>
+              <p class="card-subtitle">Ranking por periodo em {{ vm.anoSelecionadoLabel | lowercase }}</p>
             </div>
 
             <div class="chart-controls chart-controls-inline">
               <label>
-                Período
+                Periodo
                 <select [(ngModel)]="topEmpresasPeriodo" (change)="onTopEmpresasPeriodoChange()">
                   <option *ngFor="let periodo of periodosTopEmpresas" [ngValue]="periodo.value">
                     {{ periodo.label }}
@@ -133,7 +133,7 @@
 
           <canvas #clientsChart></canvas>
           <div class="empty-state" *ngIf="vm.topEmpresas.length === 0">
-            {{ vm.topEmpresasPeriodo === "hoje" ? "Nenhum chamado registrado hoje." : "Nenhum chamado encontrado para o per&#237;odo selecionado." }}
+            {{ vm.topEmpresasPeriodo === "hoje" ? "Nenhum chamado registrado hoje." : "Nenhum chamado encontrado para o periodo selecionado." }}
           </div>
         </article>
       </div>
@@ -142,7 +142,7 @@
         <div class="card-title-row card-title-row-wrap">
           <div>
             <h3 class="chart-title">Chamados por dia ({{ vm.graficoDiario.mesLabel }}/{{ vm.graficoDiario.ano }})</h3>
-            <p class="card-subtitle">Total do mês: {{ vm.graficoDiario.totalMes }}</p>
+            <p class="card-subtitle">Total do mes: {{ vm.graficoDiario.totalMes }}</p>
           </div>
 
           <div class="chart-controls chart-controls-inline">
@@ -155,7 +155,7 @@
               </select>
             </label>
             <label>
-              Mês
+              Mes
               <select [(ngModel)]="mesDiarioSelecionado" (change)="onGraficoDiarioFiltroChange()">
                 <option *ngFor="let mes of meses; let i = index" [ngValue]="i + 1">
                   {{ mes }}
@@ -167,9 +167,126 @@
 
         <canvas #dailyChart></canvas>
         <div class="empty-state daily-empty" *ngIf="vm.graficoDiario.semChamados">
-          Sem chamados neste mês.
+          Sem chamados neste mes.
         </div>
       </article>
+
+      <section class="dashboard-systems-section">
+        <div class="card-title-row card-title-row-wrap dashboard-section-header">
+          <div>
+            <h3 class="chart-title">Analise por Sistemas</h3>
+            <p class="card-subtitle">
+              {{ vm.analiseSistemas.filtroLabel }}. Todos os graficos consideram apenas o sistema principal do chamado.
+            </p>
+          </div>
+
+          <div class="dashboard-section-chips">
+            <span class="status-chip neutral">Concluidos: {{ vm.analiseSistemas.totalConcluidos }}</span>
+            <span class="status-chip neutral">Com sistema principal: {{ vm.analiseSistemas.totalChamadosComSistema }}</span>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="card chart-card">
+            <div class="card-title-row">
+              <div>
+                <h3 class="chart-title">Top sistemas por volume</h3>
+                <p class="card-subtitle">Ranking por quantidade de chamados usando apenas o contexto principal.</p>
+              </div>
+            </div>
+
+            <canvas #topSystemsChart></canvas>
+            <div class="empty-state" *ngIf="vm.analiseSistemas.topSistemas.length === 0">
+              Nenhum sistema encontrado para o periodo selecionado.
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <div class="card-title-row">
+              <div>
+                <h3 class="chart-title">Tempo medio por sistema</h3>
+                <p class="card-subtitle">Calculado apenas com o sistema principal e chamados com tempo registrado.</p>
+              </div>
+            </div>
+
+            <canvas #avgSystemsChart></canvas>
+            <div class="empty-state" *ngIf="vm.analiseSistemas.tempoMedioSistemas.length === 0">
+              Nenhum chamado concluido com tempo de atendimento disponivel.
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="card chart-card">
+            <div class="card-title-row">
+              <div>
+                <h3 class="chart-title">Distribuicao por sistema</h3>
+                <p class="card-subtitle">Participacao percentual considerando somente o sistema principal.</p>
+              </div>
+            </div>
+
+            <div class="systems-distribution-layout" *ngIf="!vm.analiseSistemas.distribuicao.semDados; else semDistribuicao">
+              <div class="systems-distribution-chart-wrap">
+                <canvas #systemsDistributionChart></canvas>
+              </div>
+
+              <div class="systems-distribution-legend">
+                <div
+                  class="systems-distribution-legend-item"
+                  *ngFor="let item of getDistribuicaoLegenda(vm.analiseSistemas.distribuicao)"
+                >
+                  <span class="systems-distribution-color" [style.background]="item.cor"></span>
+                  <div class="systems-distribution-legend-main">
+                    <span class="systems-distribution-legend-name">{{ item.nome }}</span>
+                    <span class="systems-distribution-legend-value">{{ item.percentual }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #semDistribuicao>
+              <div class="systems-distribution-chart-wrap">
+                <canvas #systemsDistributionChart></canvas>
+              </div>
+            </ng-template>
+
+            <div class="empty-state" *ngIf="vm.analiseSistemas.distribuicao.semDados">
+              Nenhum sistema encontrado para montar a distribuicao.
+            </div>
+          </article>
+
+          <article class="card chart-card systems-critical-card">
+            <div class="card-title-row">
+              <div>
+                <h3 class="chart-title">Sistemas criticos</h3>
+                <p class="card-subtitle">Ordenacao por volume + tempo medio do sistema principal.</p>
+              </div>
+            </div>
+
+            <div class="systems-critical-list" *ngIf="vm.analiseSistemas.sistemasCriticos.length > 0; else semCriticos">
+              <div
+                class="systems-critical-item"
+                *ngFor="let item of vm.analiseSistemas.sistemasCriticos; let i = index"
+              >
+                <div class="systems-critical-rank">#{{ i + 1 }}</div>
+                <div class="systems-critical-main">
+                  <div class="systems-critical-name">{{ item.nome }}</div>
+                  <div class="systems-critical-meta">
+                    {{ item.totalChamados }} chamados &bull; {{ formatTempoMedio(item.tempoMedioMinutos) }}
+                  </div>
+                </div>
+                <div class="systems-critical-side">
+                  <span class="status-chip neutral">{{ formatPercentual(item.percentual) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #semCriticos>
+              <div class="empty-state">Nenhum sistema critico calculado para o periodo.</div>
+            </ng-template>
+          </article>
+        </div>
+      </section>
     </ng-container>
   </ng-container>
 </section>
