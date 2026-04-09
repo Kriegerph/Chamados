@@ -1,3 +1,13 @@
+@import '@ckeditor/ckeditor5-ui/dist/index.css';
+@import '@ckeditor/ckeditor5-engine/dist/index.css';
+@import '@ckeditor/ckeditor5-editor-classic/dist/index.css';
+@import '@ckeditor/ckeditor5-essentials/dist/index.css';
+@import '@ckeditor/ckeditor5-basic-styles/dist/index.css';
+@import '@ckeditor/ckeditor5-font/dist/index.css';
+@import '@ckeditor/ckeditor5-list/dist/index.css';
+@import '@ckeditor/ckeditor5-paragraph/dist/index.css';
+@import '@ckeditor/ckeditor5-undo/dist/index.css';
+
 .anotacoes-page {
   display: flex;
   flex-direction: column;
@@ -68,7 +78,16 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.anotacoes-list-card {
   overflow: hidden;
+}
+
+.anotacoes-editor-card {
+  position: relative;
+  overflow: visible;
+  z-index: 20;
 }
 
 .anotacoes-list-card:hover,
@@ -172,91 +191,207 @@
 .editor-shell {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: #ffffff;
-  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  position: relative;
+  overflow: visible;
   display: flex;
   flex: 1;
   min-height: 0;
   flex-direction: column;
-}
-
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   padding: 12px;
-  border-bottom: 1px solid #dbe3ee;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  gap: 12px;
 }
 
-.editor-toolbar-group {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.toolbar-btn {
-  min-width: 38px;
-  height: 34px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #ffffff;
-  color: var(--text-main);
-  padding: 0 12px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.toolbar-btn:hover {
-  border-color: #93c5fd;
-  background: #eff6ff;
-  transform: translateY(-1px);
-}
-
-.toolbar-btn-size {
-  min-width: 44px;
-}
-
-.toolbar-btn-color {
-  min-width: 34px;
-  padding: 0;
-  font-size: 16px;
-}
-
-.toolbar-btn-wide {
-  min-width: 84px;
-}
-
-.editor-content {
+.editor-host {
+  display: block;
   flex: 1;
-  min-height: 260px;
-  padding: 16px;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-toolbar {
+  border: 1px solid #dbe3ee;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  position: relative;
+  overflow: visible;
+  z-index: 5;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-toolbar .ck-toolbar__items {
+  flex-wrap: wrap;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-dropdown {
+  position: relative;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-dropdown .ck-dropdown__panel,
+.anotacoes-editor-card .editor-host .ck.ck-balloon-panel {
+  z-index: 1400;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-dropdown__panel {
+  min-width: 168px;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown > .ck-button {
+  min-width: 88px;
+  justify-content: space-between;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-button__label {
+  min-width: 2.5ch;
+  text-align: center;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-input.ck.ck-input {
+  min-width: 140px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-list {
+  max-height: 208px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  padding: 6px;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-list__item {
+  display: block;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-fontsize-option.ck-button {
+  width: 100%;
+  min-height: 34px;
+  justify-content: flex-start;
+  padding: 0 10px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.anotacoes-editor-card
+  .editor-host
+  .ck-custom-font-size-dropdown
+  .ck-fontsize-option
+  .ck-button__label {
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.anotacoes-editor-card
+  .editor-host
+  .ck-custom-font-size-dropdown
+  .ck-fontsize-option:hover:not(.ck-disabled) {
+  background: #eff6ff;
+}
+
+.anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown .ck-fontsize-option.ck-on {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.anotacoes-editor-card
+  .editor-host
+  .ck-custom-font-size-dropdown
+  .ck-fontsize-option-reset.ck-button {
+  margin-top: 4px;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0;
+  padding-top: 10px;
+}
+
+.anotacoes-editor-card .editor-host .ck-editor__main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
+  flex: 1;
+  min-height: 320px;
+  min-width: 0;
+  max-width: 100%;
+  max-height: 460px;
+  padding: 0 18px;
+  border: 1px solid #dbe3ee;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  color: var(--text-main);
   font-size: 14px;
   line-height: 1.7;
-  color: var(--text-main);
-  outline: none;
+  overflow-x: hidden;
   overflow-y: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.editor-content:empty::before {
-  content: attr(data-placeholder);
-  color: var(--text-soft);
+.anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline.ck-focused {
+  border-color: #93c5fd;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.editor-content ul,
-.editor-content ol {
-  padding-left: 22px;
+.anotacoes-editor-card .editor-host .ck-content ul,
+.anotacoes-editor-card .editor-host .ck-content ol {
+  padding-left: 24px;
 }
 
-.editor-content p,
-.editor-content div {
-  margin: 0 0 10px;
+.anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline *,
+.anotacoes-editor-card .editor-host .ck-content,
+.anotacoes-editor-card .editor-host .ck-content p,
+.anotacoes-editor-card .editor-host .ck-content li,
+.anotacoes-editor-card .editor-host .ck-content span,
+.anotacoes-editor-card .editor-host .ck-content a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .anotacoes-actions {
@@ -275,13 +410,13 @@
   .anotacoes-page {
     height: calc(100dvh - var(--header-height) - 56px);
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .anotacoes-layout {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 }
 
@@ -307,12 +442,15 @@
 
   .anotacoes-form,
   .anotacoes-form > .field,
-  .editor-shell {
+  .editor-shell,
+  .editor-host,
+  .anotacoes-editor-card .editor-host .ck.ck-editor {
     min-height: unset;
   }
 
-  .editor-content {
-    min-height: 380px;
+  .anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
+    min-height: 360px;
+    max-height: 520px;
   }
 }
 
@@ -325,17 +463,13 @@
   .anotacoes-hero-actions {
     justify-content: space-between;
   }
-
-  .toolbar-btn-wide {
-    min-width: 72px;
-  }
-
-  .editor-content {
-    min-height: 300px;
-  }
 }
 
 @media (max-width: 560px) {
+  .anotacoes-editor-card .editor-host .ck-custom-font-size-dropdown > .ck-button {
+    min-width: 74px;
+  }
+
   .anotacoes-actions .btn {
     flex: 1 1 auto;
     min-width: 0;
@@ -348,6 +482,10 @@
 }
 
 @media (max-width: 420px) {
+  .anotacoes-editor-card .editor-host .ck-custom-font-size-input.ck.ck-input {
+    min-width: 112px;
+  }
+
   .anotacoes-actions .btn {
     width: 100%;
   }

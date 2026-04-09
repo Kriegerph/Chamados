@@ -1,7 +1,7 @@
-@import "./styles/theme.css";
-@import "./styles/cards.css";
-@import "./styles/forms.css";
-@import "./styles/dashboard.css";
+@import './styles/theme.css';
+@import './styles/cards.css';
+@import './styles/forms.css';
+@import './styles/dashboard.css';
 
 .auth-wrap {
   min-height: 100vh;

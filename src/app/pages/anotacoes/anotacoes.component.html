@@ -2,15 +2,15 @@
   <article class="card anotacoes-hero">
     <div class="anotacoes-hero-copy">
       <span class="anotacoes-kicker">Produtividade</span>
-      <h2 class="page-title anotacoes-title">Anota&ccedil;&otilde;es</h2>
+      <h2 class="page-title anotacoes-title">Anotacoes</h2>
       <p class="page-subtitle anotacoes-subtitle">
-        Salve observa&ccedil;&otilde;es do usu&aacute;rio com formata&ccedil;&atilde;o b&aacute;sica e edi&ccedil;&atilde;o r&aacute;pida.
+        Salve observacoes do usuario com formatacao rica, selecao parcial e edicao mais previsivel.
       </p>
     </div>
 
     <div class="anotacoes-hero-actions">
       <span class="status-chip">Total: {{ vm.total }}</span>
-      <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anota&ccedil;&atilde;o</button>
+      <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anotacao</button>
     </div>
   </article>
 
@@ -18,8 +18,8 @@
     <article class="card anotacoes-list-card">
       <div class="card-title-row">
         <div>
-          <h3 class="card-title">Lista de anota&ccedil;&otilde;es</h3>
-          <p class="card-subtitle">Selecione uma anota&ccedil;&atilde;o para continuar a edi&ccedil;&atilde;o.</p>
+          <h3 class="card-title">Lista de anotacoes</h3>
+          <p class="card-subtitle">Selecione uma anotacao para continuar a edicao.</p>
         </div>
       </div>
 
@@ -29,7 +29,7 @@
           type="text"
           [ngModel]="filtroTitulo"
           (ngModelChange)="atualizarFiltroTitulo($event)"
-          placeholder="Buscar anota&ccedil;&atilde;o por t&iacute;tulo..."
+          placeholder="Buscar anotacao por titulo..."
           autocomplete="off"
         />
       </label>
@@ -38,12 +38,10 @@
       <div class="skeleton anotacoes-skeleton" *ngIf="vm.carregando && vm.total === 0"></div>
 
       <div class="anotacoes-list" *ngIf="!vm.erro && (!vm.carregando || vm.total > 0)">
-        <div class="empty-state" *ngIf="vm.total === 0">
-          Nenhuma anota&ccedil;&atilde;o salva.
-        </div>
+        <div class="empty-state" *ngIf="vm.total === 0">Nenhuma anotacao salva.</div>
 
         <div class="empty-state" *ngIf="vm.total > 0 && vm.totalFiltrado === 0">
-          Nenhuma anota&ccedil;&atilde;o encontrada
+          Nenhuma anotacao encontrada
         </div>
 
         <button
@@ -53,7 +51,7 @@
           [class.selected]="item.id === anotacaoSelecionadaId"
           (click)="selecionarAnotacao(item)"
         >
-          <span class="anotacao-item-title">{{ item.titulo || "Sem titulo" }}</span>
+          <span class="anotacao-item-title">{{ item.titulo || 'Sem titulo' }}</span>
           <span class="anotacao-item-date" *ngIf="item.dataLabel">{{ item.dataLabel }}</span>
         </button>
       </div>
@@ -63,7 +61,7 @@
       <div class="card-title-row anotacoes-editor-header">
         <div>
           <h3 class="card-title">Editor</h3>
-          <p class="card-subtitle">Use a barra para aplicar negrito, listas, cor e tamanho da fonte.</p>
+          <p class="card-subtitle">CKEditor 5 com selecao parcial, listas, cores e fonte.</p>
         </div>
         <span class="status-chip neutral">{{ getStatusLabel() }}</span>
       </div>
@@ -84,90 +82,25 @@
           <span class="field-label">Conteudo</span>
 
           <div class="editor-shell">
-            <div class="editor-toolbar">
-              <div class="editor-toolbar-group">
-                <button
-                  class="toolbar-btn"
-                  type="button"
-                  *ngFor="let button of formatButtons"
-                  [title]="button.title"
-                  (mousedown)="onToolbarMouseDown($event)"
-                  (click)="aplicarFormatacao(button)"
-                >
-                  {{ button.label }}
-                </button>
-              </div>
-
-              <div class="editor-toolbar-group">
-                <button
-                  class="toolbar-btn toolbar-btn-size"
-                  type="button"
-                  *ngFor="let button of fontButtons"
-                  [title]="button.title"
-                  (mousedown)="onToolbarMouseDown($event)"
-                  (click)="aplicarFormatacao(button)"
-                >
-                  {{ button.label }}
-                </button>
-              </div>
-
-              <div class="editor-toolbar-group">
-                <button
-                  class="toolbar-btn toolbar-btn-color"
-                  type="button"
-                  *ngFor="let color of colorButtons"
-                  [title]="color.label"
-                  [style.color]="color.value"
-                  (mousedown)="onToolbarMouseDown($event)"
-                  (click)="aplicarCor(color.value)"
-                >
-                  A
-                </button>
-              </div>
-
-              <div class="editor-toolbar-group">
-                <button
-                  class="toolbar-btn toolbar-btn-wide"
-                  type="button"
-                  *ngFor="let button of listButtons"
-                  [title]="button.title"
-                  (mousedown)="onToolbarMouseDown($event)"
-                  (click)="aplicarFormatacao(button)"
-                >
-                  {{ button.label }}
-                </button>
-                <button
-                  class="toolbar-btn toolbar-btn-wide"
-                  type="button"
-                  title="Inserir quebra de linha"
-                  (mousedown)="onToolbarMouseDown($event)"
-                  (click)="inserirQuebraDeLinha()"
-                >
-                  Enter
-                </button>
-              </div>
-            </div>
-
-            <div
-              #editor
-              class="editor-content"
-              contenteditable="true"
-              spellcheck="true"
-              data-placeholder="Escreva sua anotacao aqui..."
-              (input)="onEditorInput()"
-              (focus)="capturarSelecao()"
-              (keyup)="capturarSelecao()"
-              (mouseup)="capturarSelecao()"
-              (paste)="onEditorPaste($event)"
-            ></div>
+            <ckeditor
+              class="editor-host"
+              name="conteudoAnotacao"
+              [editor]="Editor"
+              [config]="editorConfig"
+              [(ngModel)]="conteudoHtml"
+            ></ckeditor>
           </div>
         </div>
 
         <div class="anotacoes-actions">
           <button class="btn secondary" type="button" (click)="abrirNovaAnotacao()">
-            Nova anota&ccedil;&atilde;o
+            Nova anotacao
           </button>
-          <button class="btn primary" type="submit" [disabled]="salvando || excluindo || vm.carregando">
+          <button
+            class="btn primary"
+            type="submit"
+            [disabled]="salvando || excluindo || vm.carregando"
+          >
             {{ getSalvarLabel() }}
           </button>
           <button
