@@ -1,201 +1,359 @@
-<section class="page-section" *ngIf="vm$ | async as vm">
-  <header class="page-header">
+<section class="page-section abertos-page" *ngIf="vm$ | async as vm">
+  <div class="page-header">
     <div>
       <h2 class="page-title">Chamados Abertos</h2>
-      <p class="page-subtitle">Registre novos chamados e acompanhe os atendimentos em aberto.</p>
+      <p class="page-subtitle">
+        Acompanhe os atendimentos em aberto e registre novos chamados sem disputar espaco com a
+        listagem.
+      </p>
     </div>
-    <span class="status-chip warning">Em aberto: {{ vm.abertos.length }}</span>
-  </header>
-
-  <div class="grid-2" *ngIf="vm.carregando">
-    <div class="skeleton" style="min-height: 360px;"></div>
-    <div class="skeleton" style="min-height: 360px;"></div>
+    <div class="abertos-header-actions">
+      <span class="status-chip warning">{{ vm.abertos.length }} em aberto</span>
+      <button
+        class="btn primary abertos-create-trigger"
+        type="button"
+        (click)="abrirModalCriacao()"
+      >
+        <span aria-hidden="true">+</span>
+        <span>Novo chamado</span>
+      </button>
+    </div>
   </div>
 
-  <div class="grid-2" *ngIf="!vm.carregando">
-    <article class="card">
-      <div class="card-title-row">
+  <article class="card abertos-list-card" *ngIf="vm.carregando">
+    <div class="skeleton" style="min-height: 420px"></div>
+  </article>
+
+  <article class="card abertos-list-card" *ngIf="!vm.carregando">
+    <div class="card-title-row abertos-list-header">
+      <div>
+        <h3 class="card-title">Chamados em aberto</h3>
+        <p class="card-subtitle">
+          Tabela em largura total com acoes rapidas, tooltip no motivo e leitura mais estavel.
+        </p>
+      </div>
+      <span class="status-chip neutral">
+        {{ vm.abertos.length }} ativo{{ vm.abertos.length === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+    <div class="abertos-list-empty empty-state" *ngIf="!vm.erro && vm.abertos.length === 0">
+      Nenhum chamado em aberto no momento. Assim que um novo atendimento for registrado, ele aparece
+      aqui.
+    </div>
+
+    <div class="table-wrap abertos-table-wrap" *ngIf="!vm.erro && vm.abertos.length > 0">
+      <table class="table abertos-table">
+        <colgroup>
+          <col class="col-data" />
+          <col class="col-cliente" />
+          <col class="col-motivo" />
+          <col class="col-acoes" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="col-data">Data</th>
+            <th class="col-cliente">Empresa / Funcionario</th>
+            <th class="col-motivo">Motivo</th>
+            <th class="col-acoes">Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of vm.abertos">
+            <td class="col-data">{{ item.data }}</td>
+            <td class="col-cliente">
+              <div class="chamado-principal" [attr.title]="item.principalLabel || null">
+                {{ item.principalLabel }}
+              </div>
+              <div
+                class="chamado-secundario"
+                *ngIf="!!item.secondaryLabel"
+                [attr.title]="item.secondaryLabel || null"
+              >
+                {{ item.secondaryLabel }}
+              </div>
+            </td>
+            <td class="col-motivo">
+              <div class="motivo-texto" [attr.title]="item.motivo || null">
+                {{ item.motivo || '-' }}
+              </div>
+            </td>
+            <td class="col-acoes">
+              <div class="btn-group action-buttons">
+                <button
+                  class="btn abertos-action-btn abertos-action-btn-neutral"
+                  type="button"
+                  (click)="abrirModalEditar(item)"
+                >
+                  Editar
+                </button>
+                <button
+                  class="btn abertos-action-btn abertos-action-btn-danger"
+                  type="button"
+                  (click)="excluirChamado(item)"
+                >
+                  Excluir
+                </button>
+                <button
+                  class="btn primary abertos-action-btn"
+                  type="button"
+                  (click)="abrirModalFinalizar(item)"
+                >
+                  Finalizar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <div class="modal" *ngIf="criandoChamado" (click)="fecharModalCriacao()">
+    <div class="modal-content abertos-create-modal" (click)="$event.stopPropagation()">
+      <div class="abertos-create-header">
         <div>
-          <h3 class="card-title">Novo chamado</h3>
-          <p class="card-subtitle">Preencha os dados para registrar atendimento.</p>
+          <h3 class="card-title">Registrar chamado</h3>
+          <p class="card-subtitle">
+            Modal de criacao com layout controlado, botao sempre visivel e scroll interno apenas
+            quando necessario.
+          </p>
         </div>
+        <button class="btn abertos-modal-close" type="button" (click)="fecharModalCriacao()">
+          <span aria-hidden="true">X</span>
+        </button>
       </div>
 
-      <form class="form" (ngSubmit)="salvar()">
-        <label>
-          <span>Tipo de cadastro</span>
-          <select name="modoCadastro" [(ngModel)]="modoCadastro" (change)="onModoChange()">
-            <option value="novo">Chamado novo</option>
-            <option value="antigo">Chamado antigo</option>
-          </select>
-        </label>
+      <form class="form abertos-form abertos-create-form" (ngSubmit)="salvar()">
+        <div class="abertos-create-body">
+          <div class="abertos-form-shell">
+            <div class="abertos-form-main">
+              <section class="abertos-form-block">
+                <div class="abertos-form-block-head">
+                  <span class="abertos-form-block-kicker">Dados basicos</span>
+                  <h4>Informacoes do chamado</h4>
+                </div>
 
-        <label>
-          <span>Motivo</span>
-          <input name="motivo" type="text" [(ngModel)]="motivo" placeholder="Motivo do chamado" />
-        </label>
+                <div class="abertos-form-grid">
+                  <label>
+                    <span>Tipo de cadastro</span>
+                    <select
+                      name="modoCadastro"
+                      [(ngModel)]="modoCadastro"
+                      (change)="onModoChange()"
+                    >
+                      <option value="novo">Chamado novo</option>
+                      <option value="antigo">Chamado antigo</option>
+                    </select>
+                  </label>
 
-        <label>
-          <span>Empresa</span>
-          <select name="empresaId" [(ngModel)]="empresaId" (ngModelChange)="onEmpresaChange($event)">
-            <option value="">Selecione uma empresa</option>
-            <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
-              {{ empresa.nomeEmpresa }}
-            </option>
-            <option value="__nova_empresa__">+ Nova empresa</option>
-          </select>
-        </label>
+                  <label class="abertos-date-field">
+                    <span>Data</span>
+                    <input name="data" type="date" [(ngModel)]="data" />
+                  </label>
 
-        <label>
-          <span>Funcionario</span>
-          <select
-            name="funcionarioId"
-            [(ngModel)]="funcionarioId"
-            [disabled]="!empresaId || carregandoFuncionariosFormulario"
-          >
-            <option value="">
-              {{
-                !empresaId
-                  ? "Selecione a empresa primeiro"
-                  : carregandoFuncionariosFormulario
-                    ? "Carregando funcionarios..."
-                    : "Selecione um funcionario"
-              }}
-            </option>
-            <option *ngFor="let funcionario of funcionariosFormulario" [value]="funcionario.id">
-              {{ getFuncionarioOptionLabel(funcionario) }}
-            </option>
-          </select>
-        </label>
+                  <label class="abertos-grid-half">
+                    <span>Empresa</span>
+                    <select
+                      name="empresaId"
+                      [(ngModel)]="empresaId"
+                      (ngModelChange)="onEmpresaChange($event)"
+                    >
+                      <option value="">Selecione uma empresa</option>
+                      <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+                        {{ empresa.nomeEmpresa }}
+                      </option>
+                      <option value="__nova_empresa__">+ Nova empresa</option>
+                    </select>
+                    <div
+                      class="helper-text abertos-inline-helper abertos-inline-helper-placeholder"
+                      aria-hidden="true"
+                    >
+                      &nbsp;
+                    </div>
+                  </label>
 
-        <label>
-          <span>Data</span>
-          <input name="data" type="date" [(ngModel)]="data" />
-        </label>
+                  <label
+                    class="abertos-grid-half abertos-dependent-field"
+                    [class.is-disabled]="!empresaId"
+                  >
+                    <span>Funcionario</span>
+                    <select
+                      name="funcionarioId"
+                      [(ngModel)]="funcionarioId"
+                      [disabled]="!empresaId || carregandoFuncionariosFormulario"
+                    >
+                      <option value="">
+                        {{
+                          !empresaId
+                            ? 'Selecione a empresa primeiro'
+                            : carregandoFuncionariosFormulario
+                              ? 'Carregando funcionarios...'
+                              : 'Selecione um funcionario'
+                        }}
+                      </option>
+                      <option
+                        *ngFor="let funcionario of funcionariosFormulario"
+                        [value]="funcionario.id"
+                      >
+                        {{ getFuncionarioOptionLabel(funcionario) }}
+                      </option>
+                    </select>
+                    <div class="helper-text abertos-inline-helper">
+                      {{
+                        !empresaId
+                          ? 'Liberado apos escolher a empresa.'
+                          : carregandoFuncionariosFormulario
+                            ? 'Carregando funcionarios...'
+                            : 'Lista carregada automaticamente.'
+                      }}
+                    </div>
+                  </label>
+                </div>
+              </section>
 
-        <label *ngIf="modoCadastro === 'antigo'">
-          <span>Como foi resolvido</span>
-          <textarea
-            name="resolucao"
-            rows="3"
-            [(ngModel)]="resolucao"
-            placeholder="Descreva a resolucao"
-          ></textarea>
-        </label>
+              <section class="abertos-form-block abertos-form-block-highlight">
+                <div class="abertos-form-block-head">
+                  <span class="abertos-form-block-kicker">Campo principal</span>
+                  <h4>Motivo do chamado</h4>
+                </div>
 
-        <label *ngIf="modoCadastro === 'antigo'">
-          <span>Sistema do problema</span>
-          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
-          <select
-            name="cadastroContextoSistemaId"
-            [(ngModel)]="cadastroContextoSistemaId"
-            (ngModelChange)="onCadastroContextoSistemaChange()"
-          >
-            <option value="">
-              {{
-                getSistemasEmpresaOptions(empresaId, vm.sistemas).length === 0
-                  ? "Empresa sem sistemas vinculados"
-                  : "Selecione o sistema principal"
-              }}
-            </option>
-            <option
-              *ngFor="let sistema of getSistemasEmpresaOptions(empresaId, vm.sistemas)"
-              [value]="sistema.id"
-            >
-              {{ sistema.nome }}
-            </option>
-          </select>
-        </label>
+                <label class="abertos-field-wide abertos-motivo-field">
+                  <span>Motivo</span>
+                  <input
+                    name="motivo"
+                    type="text"
+                    [(ngModel)]="motivo"
+                    placeholder="Descreva o motivo do chamado"
+                  />
+                </label>
+              </section>
 
-        <div class="field" *ngIf="modoCadastro === 'antigo'">
-          <span class="field-label">Sistemas envolvidos</span>
-          <div class="helper-text">
-            Opcional. O sistema principal e removido automaticamente desta lista.
+              <section
+                class="abertos-form-block abertos-form-block-compact"
+                *ngIf="modoCadastro === 'antigo'"
+              >
+                <div class="abertos-form-block-head">
+                  <span class="abertos-form-block-kicker">Chamado antigo</span>
+                  <h4>Contexto e resolucao</h4>
+                </div>
+
+                <div class="abertos-form-grid">
+                  <label>
+                    <span>Sistema principal</span>
+                    <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+                    <select
+                      name="cadastroContextoSistemaId"
+                      [(ngModel)]="cadastroContextoSistemaId"
+                      (ngModelChange)="onCadastroContextoSistemaChange()"
+                    >
+                      <option value="">
+                        {{
+                          getSistemasEmpresaOptions(empresaId, vm.sistemas).length === 0
+                            ? 'Empresa sem sistemas vinculados'
+                            : 'Selecione o sistema principal'
+                        }}
+                      </option>
+                      <option
+                        *ngFor="let sistema of getSistemasEmpresaOptions(empresaId, vm.sistemas)"
+                        [value]="sistema.id"
+                      >
+                        {{ sistema.nome }}
+                      </option>
+                    </select>
+                  </label>
+
+                  <label class="abertos-resolucao-field">
+                    <span>Como foi resolvido</span>
+                    <textarea
+                      name="resolucao"
+                      rows="3"
+                      [(ngModel)]="resolucao"
+                      placeholder="Descreva a resolucao"
+                    ></textarea>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <aside class="abertos-form-side">
+              <div class="abertos-form-side-head">
+                <span class="abertos-form-block-kicker">Painel lateral</span>
+                <h4>Sistemas envolvidos</h4>
+                <p>
+                  Selecione apenas sistemas complementares ao principal. O scroll fica restrito a
+                  este painel.
+                </p>
+              </div>
+
+              <ng-container *ngIf="modoCadastro === 'antigo'; else sistemasCadastroIndisponiveis">
+                <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+
+                <div
+                  class="abertos-form-side-scroll"
+                  *ngIf="
+                    getSistemasRelacionadosOptions(
+                      empresaId,
+                      vm.sistemas,
+                      cadastroContextoSistemaId
+                    ).length > 0;
+                    else semSistemasCadastro
+                  "
+                >
+                  <label
+                    class="abertos-sistema-checkbox"
+                    *ngFor="
+                      let sistema of getSistemasRelacionadosOptions(
+                        empresaId,
+                        vm.sistemas,
+                        cadastroContextoSistemaId
+                      )
+                    "
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="isCadastroSistemaRelacionadoSelecionado(sistema.id)"
+                      (change)="
+                        alternarCadastroSistemaRelacionado(sistema.id, $any($event.target).checked)
+                      "
+                    />
+                    <span>{{ sistema.nome }}</span>
+                  </label>
+                </div>
+              </ng-container>
+
+              <ng-template #sistemasCadastroIndisponiveis>
+                <div class="empty-state abertos-form-side-empty">
+                  Sistemas envolvidos ficam disponiveis quando o tipo for chamado antigo.
+                </div>
+              </ng-template>
+
+              <ng-template #semSistemasCadastro>
+                <div class="empty-state abertos-form-side-empty">
+                  {{
+                    !empresaId
+                      ? 'Selecione uma empresa para carregar os sistemas vinculados.'
+                      : getSistemasEmpresaOptions(empresaId, vm.sistemas).length === 0
+                        ? 'Essa empresa nao possui sistemas vinculados.'
+                        : 'Nenhum sistema adicional disponivel para selecao.'
+                  }}
+                </div>
+              </ng-template>
+            </aside>
           </div>
-          <div
-            class="abertos-sistemas-list"
-            *ngIf="getSistemasRelacionadosOptions(empresaId, vm.sistemas, cadastroContextoSistemaId).length > 0; else semSistemasCadastro"
-          >
-            <label
-              class="abertos-sistema-checkbox"
-              *ngFor="let sistema of getSistemasRelacionadosOptions(empresaId, vm.sistemas, cadastroContextoSistemaId)"
-            >
-              <input
-                type="checkbox"
-                [checked]="isCadastroSistemaRelacionadoSelecionado(sistema.id)"
-                (change)="alternarCadastroSistemaRelacionado(sistema.id, $any($event.target).checked)"
-              />
-              <span>{{ sistema.nome }}</span>
-            </label>
-          </div>
-          <ng-template #semSistemasCadastro>
-            <div class="helper-text">Nenhum sistema adicional disponivel para esta empresa.</div>
-          </ng-template>
         </div>
 
-        <button class="btn primary" type="submit">Salvar chamado</button>
+        <div class="abertos-form-actions abertos-create-actions">
+          <button class="btn" type="button" (click)="fecharModalCriacao()">Cancelar</button>
+          <button class="btn primary abertos-submit-btn" type="submit">
+            <span class="abertos-submit-icon" aria-hidden="true">+</span>
+            <span>Salvar chamado</span>
+          </button>
+        </div>
       </form>
-    </article>
-
-    <article class="card">
-      <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Lista de chamados</h3>
-          <p class="card-subtitle">Visualize, edite ou finalize chamados abertos.</p>
-        </div>
-      </div>
-
-      <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
-
-      <div class="table-wrap" *ngIf="!vm.erro">
-        <table class="table abertos-table">
-          <colgroup>
-            <col class="col-data" />
-            <col class="col-cliente" />
-            <col class="col-motivo" />
-            <col class="col-acoes" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="col-data">Data</th>
-              <th class="col-cliente">Empresa / Funcionario</th>
-              <th class="col-motivo">Motivo</th>
-              <th class="col-acoes">Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="vm.abertos.length === 0">
-              <td colspan="4">Nenhum chamado aberto.</td>
-            </tr>
-            <tr *ngFor="let item of vm.abertos">
-              <td class="col-data">{{ item.data }}</td>
-              <td class="col-cliente">
-                <div class="chamado-principal">{{ item.principalLabel }}</div>
-                <div class="chamado-secundario" *ngIf="!!item.secondaryLabel">
-                  {{ item.secondaryLabel }}
-                </div>
-              </td>
-              <td class="col-motivo">
-                <div class="motivo-texto">{{ item.motivo || "-" }}</div>
-              </td>
-              <td class="col-acoes">
-                <div class="btn-group action-buttons">
-                  <button class="btn secondary" type="button" (click)="abrirModalEditar(item)">
-                    Editar
-                  </button>
-                  <button class="btn danger" type="button" (click)="excluirChamado(item)">
-                    Excluir
-                  </button>
-                  <button class="btn primary" type="button" (click)="abrirModalFinalizar(item)">
-                    Finalizar
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </article>
+    </div>
   </div>
 
   <div class="modal" *ngIf="modalAberto">
@@ -203,9 +361,9 @@
       <h3>Finalizar chamado</h3>
       <p class="helper-text">
         {{
-          finalizarOrigem === "whatsapp"
-            ? "Preencha motivo e resolucao para concluir o chamado."
-            : "Informe como foi resolvido:"
+          finalizarOrigem === 'whatsapp'
+            ? 'Preencha motivo e resolucao para concluir o chamado.'
+            : 'Informe como foi resolvido:'
         }}
       </p>
       <div class="form">
@@ -239,8 +397,8 @@
             <option value="">
               {{
                 getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
-                  ? "Empresa sem sistemas vinculados"
-                  : "Selecione o sistema principal"
+                  ? 'Empresa sem sistemas vinculados'
+                  : 'Selecione o sistema principal'
               }}
             </option>
             <option
@@ -259,16 +417,35 @@
           </div>
           <div
             class="abertos-sistemas-list"
-            *ngIf="getSistemasRelacionadosOptions(finalizarEmpresaId, vm.sistemas, finalizarContextoSistemaId).length > 0; else semSistemasFinalizar"
+            *ngIf="
+              getSistemasRelacionadosOptions(
+                finalizarEmpresaId,
+                vm.sistemas,
+                finalizarContextoSistemaId
+              ).length > 0;
+              else semSistemasFinalizar
+            "
           >
             <label
               class="abertos-sistema-checkbox"
-              *ngFor="let sistema of getSistemasRelacionadosOptions(finalizarEmpresaId, vm.sistemas, finalizarContextoSistemaId)"
+              *ngFor="
+                let sistema of getSistemasRelacionadosOptions(
+                  finalizarEmpresaId,
+                  vm.sistemas,
+                  finalizarContextoSistemaId
+                )
+              "
             >
               <input
                 type="checkbox"
                 [checked]="isSistemaRelacionadoSelecionado(sistema.id)"
-                (change)="alternarSistemaRelacionado(sistema.id, $any($event.target).checked, finalizarEmpresaId)"
+                (change)="
+                  alternarSistemaRelacionado(
+                    sistema.id,
+                    $any($event.target).checked,
+                    finalizarEmpresaId
+                  )
+                "
               />
               <span>{{ sistema.nome }}</span>
             </label>
@@ -280,7 +457,9 @@
       </div>
       <div class="modal-actions">
         <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
-        <button class="btn primary" type="button" (click)="confirmarFinalizacao()">Confirmar</button>
+        <button class="btn primary" type="button" (click)="confirmarFinalizacao()">
+          Confirmar
+        </button>
       </div>
     </div>
   </div>
@@ -298,7 +477,9 @@
 
             <label>
               <span>Empresa</span>
-              <div class="helper-text">Atual: {{ editEmpresaNomeOriginal || "Sem empresa vinculada" }}</div>
+              <div class="helper-text">
+                Atual: {{ editEmpresaNomeOriginal || 'Sem empresa vinculada' }}
+              </div>
               <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
                 Cliente historico: {{ editClienteNomeOriginal }}
               </div>
@@ -316,7 +497,9 @@
 
             <label>
               <span>Funcionario</span>
-              <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionario vinculado" }}</div>
+              <div class="helper-text">
+                Atual: {{ editFuncionarioNomeOriginal || 'Sem funcionario vinculado' }}
+              </div>
               <select
                 name="editFuncionarioId"
                 [(ngModel)]="editFuncionarioId"
@@ -325,10 +508,10 @@
                 <option value="">
                   {{
                     !editEmpresaId
-                      ? "Selecione a empresa primeiro"
+                      ? 'Selecione a empresa primeiro'
                       : editCarregandoFuncionarios
-                        ? "Carregando funcionarios..."
-                        : "Selecione um funcionario"
+                        ? 'Carregando funcionarios...'
+                        : 'Selecione um funcionario'
                   }}
                 </option>
                 <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
@@ -371,8 +554,8 @@
                   <option value="">
                     {{
                       getSistemasEmpresaOptions(editEmpresaId, vm.sistemas).length === 0
-                        ? "Empresa sem sistemas vinculados"
-                        : "Selecione o sistema principal"
+                        ? 'Empresa sem sistemas vinculados'
+                        : 'Selecione o sistema principal'
                     }}
                   </option>
                   <option
@@ -391,16 +574,36 @@
                 </div>
                 <div
                   class="abertos-sistemas-list"
-                  *ngIf="getSistemasRelacionadosOptions(editEmpresaId, vm.sistemas, editContextoSistemaId).length > 0; else semSistemasEditar"
+                  *ngIf="
+                    getSistemasRelacionadosOptions(
+                      editEmpresaId,
+                      vm.sistemas,
+                      editContextoSistemaId
+                    ).length > 0;
+                    else semSistemasEditar
+                  "
                 >
                   <label
                     class="abertos-sistema-checkbox"
-                    *ngFor="let sistema of getSistemasRelacionadosOptions(editEmpresaId, vm.sistemas, editContextoSistemaId)"
+                    *ngFor="
+                      let sistema of getSistemasRelacionadosOptions(
+                        editEmpresaId,
+                        vm.sistemas,
+                        editContextoSistemaId
+                      )
+                    "
                   >
                     <input
                       type="checkbox"
                       [checked]="isSistemaRelacionadoSelecionado(sistema.id, true)"
-                      (change)="alternarSistemaRelacionado(sistema.id, $any($event.target).checked, editEmpresaId, true)"
+                      (change)="
+                        alternarSistemaRelacionado(
+                          sistema.id,
+                          $any($event.target).checked,
+                          editEmpresaId,
+                          true
+                        )
+                      "
                     />
                     <span>{{ sistema.nome }}</span>
                   </label>

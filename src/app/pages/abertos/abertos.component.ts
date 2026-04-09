@@ -44,6 +44,7 @@ type SistemaOptionView = Sistema & {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AbertosComponent {
+  criandoChamado = false;
   modoCadastro: "novo" | "antigo" = "novo";
   motivo = "";
   empresaId = "";
@@ -104,6 +105,15 @@ export class AbertosComponent {
         this.buildViewModel(chamadosState, clientesState, empresasState, sistemasState)
       )
     );
+  }
+
+  abrirModalCriacao() {
+    this.resetFormularioCadastro();
+    this.criandoChamado = true;
+  }
+
+  fecharModalCriacao() {
+    this.criandoChamado = false;
   }
 
   onModoChange() {
@@ -193,14 +203,8 @@ export class AbertosComponent {
       }
       this.runInZone(() => {
         this.toast.show("Chamado salvo com sucesso.", "success");
-        this.motivo = "";
-        this.empresaId = "";
-        this.funcionarioId = "";
-        this.funcionariosFormulario = [];
-        this.resolucao = "";
-        this.cadastroContextoSistemaId = "";
-        this.cadastroSistemasRelacionados = [];
-        this.data = this.getToday();
+        this.resetFormularioCadastro();
+        this.fecharModalCriacao();
       });
     } catch (err: any) {
       this.toast.show(`Erro ao salvar: ${err.message}`, "error");
@@ -286,6 +290,7 @@ export class AbertosComponent {
     this.editFuncionarioId = "";
     this.editFuncionarioNomeOriginal = "";
     this.editFuncionarios = [];
+    this.forcarAtualizacaoFormulario();
 
     this.editEmpresaId = item.empresaId || this.getEmpresaIdByNome(item.empresa || "");
     this.editEmpresaNomeOriginal = item.empresa || "";
@@ -305,9 +310,12 @@ export class AbertosComponent {
             this.editFuncionarios.find(
               (funcionario) => funcionario.nomeFuncionario === this.editFuncionarioNomeOriginal
             )?.id || "";
+          this.forcarAtualizacaoFormulario();
         });
       }
     }
+
+    this.forcarAtualizacaoFormulario();
   }
 
   cancelarEdicao() {
@@ -511,6 +519,19 @@ export class AbertosComponent {
     return local.toISOString().slice(0, 10);
   }
 
+  private resetFormularioCadastro() {
+    this.modoCadastro = "novo";
+    this.motivo = "";
+    this.empresaId = "";
+    this.funcionarioId = "";
+    this.data = this.getToday();
+    this.resolucao = "";
+    this.cadastroContextoSistemaId = "";
+    this.cadastroSistemasRelacionados = [];
+    this.funcionariosFormulario = [];
+    this.carregandoFuncionariosFormulario = false;
+  }
+
   private sortByDataDesc(items: Chamado[]): Chamado[] {
     return [...items].sort((a, b) => {
       const dataCmp = (b.data || "").localeCompare(a.data || "");
@@ -704,6 +725,7 @@ export class AbertosComponent {
       this.cadastroContextoSistemaId = "";
       this.cadastroSistemasRelacionados = [];
       this.funcionariosFormulario = [];
+      this.funcionariosFormulario = [...this.funcionariosFormulario];
       this.carregandoFuncionariosFormulario = !!empresaId;
       this.forcarAtualizacaoFormulario();
     });
@@ -711,6 +733,7 @@ export class AbertosComponent {
 
   private finalizarCarregamentoFuncionariosFormulario(funcionarios: Funcionario[]) {
     this.runInZone(() => {
+      this.funcionariosFormulario = [];
       this.funcionariosFormulario = [...funcionarios];
       this.carregandoFuncionariosFormulario = false;
       this.forcarAtualizacaoFormulario();
@@ -724,6 +747,7 @@ export class AbertosComponent {
       this.editContextoSistemaId = "";
       this.editSistemasRelacionados = [];
       this.editFuncionarios = [];
+      this.editFuncionarios = [...this.editFuncionarios];
       this.editCarregandoFuncionarios = !!empresaId;
       this.forcarAtualizacaoFormulario();
     });
@@ -731,6 +755,7 @@ export class AbertosComponent {
 
   private finalizarCarregamentoFuncionariosEdicao(funcionarios: Funcionario[]) {
     this.runInZone(() => {
+      this.editFuncionarios = [];
       this.editFuncionarios = [...funcionarios];
       this.editCarregandoFuncionarios = false;
       this.forcarAtualizacaoFormulario();
