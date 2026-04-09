@@ -2,15 +2,15 @@
   <article class="card anotacoes-hero">
     <div class="anotacoes-hero-copy">
       <span class="anotacoes-kicker">Produtividade</span>
-      <h2 class="page-title anotacoes-title">Anotacoes</h2>
+      <h2 class="page-title anotacoes-title">Anotações</h2>
       <p class="page-subtitle anotacoes-subtitle">
-        Salve observacoes do usuario com formatacao rica, selecao parcial e edicao mais previsivel.
+        Salve observações do usuário com formatação rica, seleção parcial e edição mais previsível.
       </p>
     </div>
 
     <div class="anotacoes-hero-actions">
       <span class="status-chip">Total: {{ vm.total }}</span>
-      <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anotacao</button>
+      <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anotação</button>
     </div>
   </article>
 
@@ -18,8 +18,8 @@
     <article class="card anotacoes-list-card">
       <div class="card-title-row">
         <div>
-          <h3 class="card-title">Lista de anotacoes</h3>
-          <p class="card-subtitle">Selecione uma anotacao para continuar a edicao.</p>
+          <h3 class="card-title">Lista de anotações</h3>
+          <p class="card-subtitle">Selecione uma anotação para continuar a edição.</p>
         </div>
       </div>
 
@@ -29,7 +29,7 @@
           type="text"
           [ngModel]="filtroTitulo"
           (ngModelChange)="atualizarFiltroTitulo($event)"
-          placeholder="Buscar anotacao por titulo..."
+          placeholder="Buscar anotação por título..."
           autocomplete="off"
         />
       </label>
@@ -38,10 +38,10 @@
       <div class="skeleton anotacoes-skeleton" *ngIf="vm.carregando && vm.total === 0"></div>
 
       <div class="anotacoes-list" *ngIf="!vm.erro && (!vm.carregando || vm.total > 0)">
-        <div class="empty-state" *ngIf="vm.total === 0">Nenhuma anotacao salva.</div>
+        <div class="empty-state" *ngIf="vm.total === 0">Nenhuma anotação salva.</div>
 
         <div class="empty-state" *ngIf="vm.total > 0 && vm.totalFiltrado === 0">
-          Nenhuma anotacao encontrada
+          Nenhuma anotação encontrada
         </div>
 
         <button
@@ -51,7 +51,7 @@
           [class.selected]="item.id === anotacaoSelecionadaId"
           (click)="selecionarAnotacao(item)"
         >
-          <span class="anotacao-item-title">{{ item.titulo || 'Sem titulo' }}</span>
+          <span class="anotacao-item-title">{{ item.titulo || 'Sem título' }}</span>
           <span class="anotacao-item-date" *ngIf="item.dataLabel">{{ item.dataLabel }}</span>
         </button>
       </div>
@@ -61,41 +61,45 @@
       <div class="card-title-row anotacoes-editor-header">
         <div>
           <h3 class="card-title">Editor</h3>
-          <p class="card-subtitle">CKEditor 5 com selecao parcial, listas, cores e fonte.</p>
+          <p class="card-subtitle">CKEditor 5 com seleção parcial, listas, cores e fonte.</p>
         </div>
-        <span class="status-chip neutral">{{ getStatusLabel() }}</span>
+        <div class="anotacoes-editor-header-actions">
+          <span class="status-chip neutral">{{ getStatusLabel() }}</span>
+          <button class="btn secondary" type="button" (click)="abrirNovaAnotacao()">
+            Nova anotação
+          </button>
+        </div>
       </div>
 
       <form class="form anotacoes-form" (ngSubmit)="salvarAnotacao()">
-        <label>
-          <span>Titulo</span>
-          <input
-            name="tituloAnotacao"
-            type="text"
-            [(ngModel)]="titulo"
-            placeholder="Digite um titulo"
-            required
-          />
-        </label>
+        <div class="anotacoes-form-body">
+          <label>
+            <span>Título</span>
+            <input
+              name="tituloAnotacao"
+              type="text"
+              [(ngModel)]="titulo"
+              placeholder="Digite um título"
+              required
+            />
+          </label>
 
-        <div class="field">
-          <span class="field-label">Conteudo</span>
+          <div class="field anotacoes-editor-field">
+            <span class="field-label">Conteúdo</span>
 
-          <div class="editor-shell">
-            <ckeditor
-              class="editor-host"
-              name="conteudoAnotacao"
-              [editor]="Editor"
-              [config]="editorConfig"
-              [(ngModel)]="conteudoHtml"
-            ></ckeditor>
+            <div class="editor-shell">
+              <ckeditor
+                class="editor-host"
+                name="conteudoAnotacao"
+                [editor]="Editor"
+                [config]="editorConfig"
+                [(ngModel)]="conteudoHtml"
+              ></ckeditor>
+            </div>
           </div>
         </div>
 
         <div class="anotacoes-actions">
-          <button class="btn secondary" type="button" (click)="abrirNovaAnotacao()">
-            Nova anotacao
-          </button>
           <button
             class="btn primary"
             type="submit"

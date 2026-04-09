@@ -208,7 +208,7 @@ export class EmpresasComponent {
 
   async excluirEmpresa(item: EmpresaItemView) {
     if (!item.id) return;
-    const ok = window.confirm("Tem certeza que deseja excluir esta empresa e seus funcionarios?");
+    const ok = window.confirm("Tem certeza que deseja excluir esta empresa e seus funcionários?");
     if (!ok) return;
 
     try {
@@ -216,7 +216,7 @@ export class EmpresasComponent {
       if (this.empresaSelecionadaIdSubject.value === item.id) {
         this.selecionarEmpresa(null);
       }
-      this.toast.show("Empresa excluida.", "success");
+      this.toast.show("Empresa excluída.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir empresa: ${err.message}`, "error");
     }
@@ -230,7 +230,7 @@ export class EmpresasComponent {
       return;
     }
     if (!nomeFuncionario) {
-      this.toast.show("Informe o nome do funcionario.", "error");
+      this.toast.show("Informe o nome do funcionário.", "error");
       return;
     }
 
@@ -242,11 +242,11 @@ export class EmpresasComponent {
       });
       await this.carregarFuncionarios(empresaId);
       this.runInZone(() => {
-        this.toast.show("Funcionario cadastrado.", "success");
+        this.toast.show("Funcionário cadastrado.", "success");
         this.cancelarCadastroFuncionario();
       });
     } catch (err: any) {
-      this.toast.show(`Erro ao cadastrar funcionario: ${err.message}`, "error");
+      this.toast.show(`Erro ao cadastrar funcionário: ${err.message}`, "error");
     }
   }
 
@@ -282,7 +282,7 @@ export class EmpresasComponent {
     if (!this.editFuncionarioId || !this.editFuncionarioEmpresaId) return;
     const nomeFuncionario = this.editFuncionario.nomeFuncionario.trim();
     if (!nomeFuncionario) {
-      this.toast.show("Informe o nome do funcionario.", "error");
+      this.toast.show("Informe o nome do funcionário.", "error");
       return;
     }
 
@@ -298,26 +298,26 @@ export class EmpresasComponent {
       );
       await this.carregarFuncionarios(this.editFuncionarioEmpresaId);
       this.runInZone(() => {
-        this.toast.show("Funcionario atualizado.", "success");
+        this.toast.show("Funcionário atualizado.", "success");
         this.cancelarEdicaoFuncionario();
       });
     } catch (err: any) {
-      this.toast.show(`Erro ao atualizar funcionario: ${err.message}`, "error");
+      this.toast.show(`Erro ao atualizar funcionário: ${err.message}`, "error");
     }
   }
 
   async excluirFuncionario(item: Funcionario) {
     const empresaId = this.empresaSelecionadaIdSubject.value;
     if (!empresaId || !item.id) return;
-    const ok = window.confirm("Tem certeza que deseja excluir este funcionario?");
+    const ok = window.confirm("Tem certeza que deseja excluir este funcionário?");
     if (!ok) return;
 
     try {
       await this.empresasService.deleteFuncionario(empresaId, item.id);
       await this.carregarFuncionarios(empresaId);
-      this.toast.show("Funcionario excluido.", "success");
+      this.toast.show("Funcionário excluído.", "success");
     } catch (err: any) {
-      this.toast.show(`Erro ao excluir funcionario: ${err.message}`, "error");
+      this.toast.show(`Erro ao excluir funcionário: ${err.message}`, "error");
     }
   }
 
@@ -362,7 +362,7 @@ export class EmpresasComponent {
       this.emitFuncionariosState({
         status: "error",
         data: [],
-        error: err?.message || "Erro ao carregar funcionarios."
+        error: err?.message || "Erro ao carregar funcionários."
       });
     }
   }

@@ -245,7 +245,7 @@ export class ConcluidosComponent {
   formatTempoAtendimento(item: Chamado): string {
     const minutos = item.tempoAtendimentoMinutos;
     if (typeof minutos !== "number" || Number.isNaN(minutos)) {
-      return "Tempo nao registrado";
+      return "Tempo não registrado";
     }
 
     const totalMinutos = Math.max(0, Math.floor(minutos));
@@ -334,12 +334,12 @@ export class ConcluidosComponent {
       this.editFuncionarioNomeOriginal;
 
     if (!motivo || !data || !resolucao) {
-      this.toast.show("Preencha motivo, data e resolucao.", "error");
+      this.toast.show("Preencha motivo, data e resolução.", "error");
       return;
     }
 
     if (!this.editEmpresaId || !empresa || !this.editFuncionarioId || !funcionario) {
-      this.toast.show("Preencha empresa e funcionario.", "error");
+      this.toast.show("Preencha empresa e funcionário.", "error");
       return;
     }
 
@@ -379,7 +379,7 @@ export class ConcluidosComponent {
     if (!ok) return;
     try {
       await this.chamadosService.deleteChamado(item.id);
-      this.toast.show("Chamado excluido.", "success");
+      this.toast.show("Chamado excluído.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir: ${err.message}`, "error");
     }
@@ -546,7 +546,7 @@ export class ConcluidosComponent {
         if (!opcoesPorChave.has(chave)) {
           opcoesPorChave.set(chave, {
             valor: chave,
-            nome: nomeEmpresa || "Empresa nao informada",
+            nome: nomeEmpresa || "Empresa não informada",
             empresaId
           });
         }
@@ -672,7 +672,7 @@ export class ConcluidosComponent {
       const nome = clientesMap.get(item.clienteId)?.nome;
       if (nome) return nome;
     }
-    return item.cliente || "Cliente nao informado";
+    return item.cliente || "Cliente não informado";
   }
 
   private buildSistemaResumo(
@@ -737,7 +737,7 @@ export class ConcluidosComponent {
       );
     } catch (err: any) {
       this.runInZone(() => {
-        this.toast.show(`Erro ao carregar funcionarios: ${err.message}`, "error");
+        this.toast.show(`Erro ao carregar funcionários: ${err.message}`, "error");
         this.finalizarCarregamentoFuncionariosEdicao([]);
       });
     }

@@ -4,7 +4,7 @@
       <span class="empresas-kicker">Cadastros</span>
       <h2 class="page-title empresas-title">Empresas</h2>
       <p class="page-subtitle empresas-subtitle">
-        Gerencie empresas atendidas e os funcionarios que abrem chamados.
+        Gerencie empresas atendidas e os funcionários que abrem chamados.
       </p>
     </div>
 
@@ -23,7 +23,7 @@
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Lista de empresas</h3>
-          <p class="card-subtitle">Clique no card para abrir ou recolher os funcionarios vinculados.</p>
+          <p class="card-subtitle">Clique no card para abrir ou recolher os funcionários vinculados.</p>
         </div>
       </div>
 
@@ -107,7 +107,7 @@
               <div class="empresa-expand-panel" *ngIf="item.id === vm.empresaSelecionada?.id">
                 <div class="card-title-row empresas-funcionarios-header">
                   <div>
-                    <h3 class="card-title">Funcionarios</h3>
+                    <h3 class="card-title">Funcionários</h3>
                     <p class="card-subtitle">Gerencie os vinculados sem sair desta empresa.</p>
                   </div>
                   <button
@@ -115,7 +115,7 @@
                     type="button"
                     (click)="abrirCadastroFuncionario(); $event.stopPropagation()"
                   >
-                    Adicionar funcionario
+                    Adicionar funcionário
                   </button>
                 </div>
 
@@ -124,7 +124,7 @@
 
                 <div class="empresa-funcionarios-list" *ngIf="!vm.funcionariosCarregando && !vm.funcionariosErro">
                   <div class="empty-state" *ngIf="vm.funcionarios.length === 0">
-                    Nenhum funcionario cadastrado.
+                    Nenhum funcionário cadastrado.
                   </div>
 
                   <div
@@ -134,7 +134,7 @@
                     <div class="empresa-funcionario-main">
                       <div class="empresa-funcionario-name">{{ funcionario.nomeFuncionario }}</div>
                       <div class="empresa-funcionario-detail">
-                        {{ funcionario.telefone || "Telefone nao informado" }}
+                        {{ funcionario.telefone || "Telefone não informado" }}
                       </div>
                     </div>
 
@@ -180,14 +180,14 @@
   <div class="modal empresas-modal" *ngIf="cadastrandoEmpresa">
     <div class="modal-content empresas-modal-panel">
       <h3>Nova empresa</h3>
-      <p class="card-subtitle empresas-modal-subtitle">Cadastre uma empresa para vincular chamados e funcionarios.</p>
+      <p class="card-subtitle empresas-modal-subtitle">Cadastre uma empresa para vincular chamados e funcionários.</p>
       <form class="form" (ngSubmit)="cadastrarEmpresa()">
         <label>
           <span>Nome da empresa</span>
           <input name="nomeEmpresa" type="text" [(ngModel)]="nomeEmpresa" required />
         </label>
         <label>
-          <span>Observacoes</span>
+          <span>Observações</span>
           <textarea
             name="observacoesEmpresa"
             rows="3"
@@ -235,7 +235,7 @@
           <input name="editEmpresaNome" type="text" [(ngModel)]="editEmpresaNome" required />
         </label>
         <label>
-          <span>Observacoes</span>
+          <span>Observações</span>
           <textarea name="editEmpresaObservacoes" rows="3" [(ngModel)]="editEmpresaObservacoes"></textarea>
         </label>
 
@@ -270,11 +270,11 @@
 
   <div class="modal empresas-modal" *ngIf="editandoFuncionario && editFuncionario">
     <div class="modal-content empresas-modal-panel">
-      <h3>Editar funcionario</h3>
-      <p class="card-subtitle empresas-modal-subtitle">Ajuste os dados do funcionario selecionado.</p>
+      <h3>Editar funcionário</h3>
+      <p class="card-subtitle empresas-modal-subtitle">Ajuste os dados do funcionário selecionado.</p>
       <form class="form" (ngSubmit)="salvarEdicaoFuncionario()">
         <label>
-          <span>Nome do funcionario</span>
+          <span>Nome do funcionário</span>
           <input
             name="editFuncionarioNome"
             type="text"
@@ -300,7 +300,7 @@
           <span>Criar chamado automaticamente via WhatsApp</span>
         </label>
         <div class="helper-text">
-          Desmarcado: mensagens desse funcionario serao ignoradas sem erro.
+          Desmarcado: mensagens desse funcionário serão ignoradas sem erro.
         </div>
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarEdicaoFuncionario()">Cancelar</button>
@@ -312,7 +312,7 @@
 
   <div class="modal empresas-modal" *ngIf="cadastrandoFuncionario && funcionario">
     <div class="modal-content empresas-modal-panel">
-      <h3>Novo funcionario</h3>
+      <h3>Novo funcionário</h3>
       <p class="card-subtitle empresas-modal-subtitle" *ngIf="vm.empresaSelecionada">
         Vinculado a {{ vm.empresaSelecionada.nomeEmpresa }}
       </p>
@@ -344,11 +344,11 @@
           <span>Criar chamado automaticamente via WhatsApp</span>
         </label>
         <div class="helper-text">
-          Desmarcado: mensagens desse funcionario serao ignoradas sem erro.
+          Desmarcado: mensagens desse funcionário serão ignoradas sem erro.
         </div>
         <div class="modal-actions">
           <button class="btn" type="button" (click)="cancelarCadastroFuncionario()">Cancelar</button>
-          <button class="btn primary" type="submit">Salvar funcionario</button>
+          <button class="btn primary" type="submit">Salvar funcionário</button>
         </div>
       </form>
     </div>

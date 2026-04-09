@@ -3,7 +3,7 @@
     <div>
       <h2 class="page-title">Chamados Abertos</h2>
       <p class="page-subtitle">
-        Acompanhe os atendimentos em aberto e registre novos chamados sem disputar espaco com a
+        Acompanhe os atendimentos em aberto e registre novos chamados sem disputar espaço com a
         listagem.
       </p>
     </div>
@@ -29,7 +29,7 @@
       <div>
         <h3 class="card-title">Chamados em aberto</h3>
         <p class="card-subtitle">
-          Tabela em largura total com acoes rapidas, tooltip no motivo e leitura mais estavel.
+          Tabela em largura total com ações rápidas, tooltip no motivo e leitura mais estável.
         </p>
       </div>
       <span class="status-chip neutral">
@@ -55,9 +55,9 @@
         <thead>
           <tr>
             <th class="col-data">Data</th>
-            <th class="col-cliente">Empresa / Funcionario</th>
+            <th class="col-cliente">Empresa / Funcionário</th>
             <th class="col-motivo">Motivo</th>
-            <th class="col-acoes">Acoes</th>
+            <th class="col-acoes">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -117,8 +117,8 @@
         <div>
           <h3 class="card-title">Registrar chamado</h3>
           <p class="card-subtitle">
-            Modal de criacao com layout controlado, botao sempre visivel e scroll interno apenas
-            quando necessario.
+            Modal de criação com layout controlado, botão sempre visível e scroll interno apenas
+            quando necessário.
           </p>
         </div>
         <button class="btn abertos-modal-close" type="button" (click)="fecharModalCriacao()">
@@ -132,8 +132,8 @@
             <div class="abertos-form-main">
               <section class="abertos-form-block">
                 <div class="abertos-form-block-head">
-                  <span class="abertos-form-block-kicker">Dados basicos</span>
-                  <h4>Informacoes do chamado</h4>
+                  <span class="abertos-form-block-kicker">Dados básicos</span>
+                  <h4>Informações do chamado</h4>
                 </div>
 
                 <div class="abertos-form-grid">
@@ -179,7 +179,7 @@
                     class="abertos-grid-half abertos-dependent-field"
                     [class.is-disabled]="!empresaId"
                   >
-                    <span>Funcionario</span>
+                    <span>Funcionário</span>
                     <select
                       name="funcionarioId"
                       [(ngModel)]="funcionarioId"
@@ -190,8 +190,8 @@
                           !empresaId
                             ? 'Selecione a empresa primeiro'
                             : carregandoFuncionariosFormulario
-                              ? 'Carregando funcionarios...'
-                              : 'Selecione um funcionario'
+                              ? 'Carregando funcionários...'
+                              : 'Selecione um funcionário'
                         }}
                       </option>
                       <option
@@ -204,9 +204,9 @@
                     <div class="helper-text abertos-inline-helper">
                       {{
                         !empresaId
-                          ? 'Liberado apos escolher a empresa.'
+                          ? 'Liberado após escolher a empresa.'
                           : carregandoFuncionariosFormulario
-                            ? 'Carregando funcionarios...'
+                            ? 'Carregando funcionários...'
                             : 'Lista carregada automaticamente.'
                       }}
                     </div>
@@ -237,7 +237,7 @@
               >
                 <div class="abertos-form-block-head">
                   <span class="abertos-form-block-kicker">Chamado antigo</span>
-                  <h4>Contexto e resolucao</h4>
+                  <h4>Contexto e resolução</h4>
                 </div>
 
                 <div class="abertos-form-grid">
@@ -271,7 +271,7 @@
                       name="resolucao"
                       rows="3"
                       [(ngModel)]="resolucao"
-                      placeholder="Descreva a resolucao"
+                      placeholder="Descreva a resolução"
                     ></textarea>
                   </label>
                 </div>
@@ -326,7 +326,7 @@
 
               <ng-template #sistemasCadastroIndisponiveis>
                 <div class="empty-state abertos-form-side-empty">
-                  Sistemas envolvidos ficam disponiveis quando o tipo for chamado antigo.
+                  Sistemas envolvidos ficam disponíveis quando o tipo for chamado antigo.
                 </div>
               </ng-template>
 
@@ -336,8 +336,8 @@
                     !empresaId
                       ? 'Selecione uma empresa para carregar os sistemas vinculados.'
                       : getSistemasEmpresaOptions(empresaId, vm.sistemas).length === 0
-                        ? 'Essa empresa nao possui sistemas vinculados.'
-                        : 'Nenhum sistema adicional disponivel para selecao.'
+                        ? 'Essa empresa não possui sistemas vinculados.'
+                        : 'Nenhum sistema adicional disponível para seleção.'
                   }}
                 </div>
               </ng-template>
@@ -362,7 +362,7 @@
       <p class="helper-text">
         {{
           finalizarOrigem === 'whatsapp'
-            ? 'Preencha motivo e resolucao para concluir o chamado.'
+            ? 'Preencha motivo e resolução para concluir o chamado.'
             : 'Informe como foi resolvido:'
         }}
       </p>
@@ -377,12 +377,12 @@
           />
         </label>
         <label>
-          <span>Resolucao</span>
+          <span>Resolução</span>
           <textarea
             rows="4"
             [(ngModel)]="resolucaoFinalizar"
             name="resolucaoFinalizar"
-            placeholder="Descreva a resolucao"
+            placeholder="Descreva a resolução"
           ></textarea>
         </label>
 
@@ -413,7 +413,7 @@
         <div class="field">
           <span class="field-label">Sistemas envolvidos</span>
           <div class="helper-text">
-            Opcional. Apenas sistemas vinculados a empresa do chamado podem ser selecionados.
+            Opcional. Apenas sistemas vinculados à empresa do chamado podem ser selecionados.
           </div>
           <div
             class="abertos-sistemas-list"
@@ -451,7 +451,7 @@
             </label>
           </div>
           <ng-template #semSistemasFinalizar>
-            <div class="helper-text">Nenhum sistema disponivel para esta empresa.</div>
+            <div class="helper-text">Nenhum sistema disponível para esta empresa.</div>
           </ng-template>
         </div>
       </div>
@@ -481,7 +481,7 @@
                 Atual: {{ editEmpresaNomeOriginal || 'Sem empresa vinculada' }}
               </div>
               <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
-                Cliente historico: {{ editClienteNomeOriginal }}
+                Cliente histórico: {{ editClienteNomeOriginal }}
               </div>
               <select
                 name="editEmpresaId"
@@ -496,9 +496,9 @@
             </label>
 
             <label>
-              <span>Funcionario</span>
+              <span>Funcionário</span>
               <div class="helper-text">
-                Atual: {{ editFuncionarioNomeOriginal || 'Sem funcionario vinculado' }}
+                Atual: {{ editFuncionarioNomeOriginal || 'Sem funcionário vinculado' }}
               </div>
               <select
                 name="editFuncionarioId"
@@ -510,8 +510,8 @@
                     !editEmpresaId
                       ? 'Selecione a empresa primeiro'
                       : editCarregandoFuncionarios
-                        ? 'Carregando funcionarios...'
-                        : 'Selecione um funcionario'
+                        ? 'Carregando funcionários...'
+                        : 'Selecione um funcionário'
                   }}
                 </option>
                 <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
@@ -526,7 +526,7 @@
             </label>
 
             <label *ngIf="editStatus === 'concluido'">
-              <span>Descricao da resolucao</span>
+              <span>Descrição da resolução</span>
               <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
             </label>
           </div>
@@ -538,7 +538,7 @@
                 Defina o sistema principal e os sistemas envolvidos no chamado.
               </p>
               <p *ngIf="editStatus !== 'concluido'">
-                Sistemas sao definidos quando o chamado e concluido.
+                Sistemas são definidos quando o chamado é concluído.
               </p>
             </div>
 
@@ -570,7 +570,7 @@
               <div class="field chamado-edit-sistemas-field">
                 <span class="field-label">Sistemas envolvidos</span>
                 <div class="helper-text">
-                  Opcional. O sistema principal nao pode ser duplicado nos relacionados.
+                  Opcional. O sistema principal não pode ser duplicado nos relacionados.
                 </div>
                 <div
                   class="abertos-sistemas-list"
@@ -609,14 +609,14 @@
                   </label>
                 </div>
                 <ng-template #semSistemasEditar>
-                  <div class="helper-text">Nenhum sistema disponivel para esta empresa.</div>
+                  <div class="helper-text">Nenhum sistema disponível para esta empresa.</div>
                 </ng-template>
               </div>
             </ng-container>
 
             <ng-template #sistemasIndisponiveisEdicao>
               <div class="empty-state chamado-edit-empty">
-                Este chamado ainda esta aberto. Os sistemas serao definidos na finalizacao.
+                Este chamado ainda está aberto. Os sistemas serão definidos na finalização.
               </div>
             </ng-template>
           </div>

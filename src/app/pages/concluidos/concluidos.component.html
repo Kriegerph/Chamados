@@ -1,8 +1,8 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
   <header class="page-header">
     <div>
-      <h2 class="page-title">Chamados Concluidos</h2>
-      <p class="page-subtitle">Filtre e acompanhe o historico de chamados finalizados.</p>
+      <h2 class="page-title">Chamados Concluídos</h2>
+      <p class="page-subtitle">Filtre e acompanhe o histórico de chamados finalizados.</p>
     </div>
     <label class="field concluidos-limitador">
       <span class="field-label">Exibir</span>
@@ -35,7 +35,7 @@
         </label>
 
         <label class="filter-field filter-field--small filter-field--mes" for="filtroMes">
-          <span class="field-label">Mes</span>
+          <span class="field-label">Mês</span>
           <select
             id="filtroMes"
             name="filtroMes"
@@ -51,7 +51,7 @@
         </label>
 
         <label class="filter-field filter-field--data" for="filtroData">
-          <span class="field-label">Data especifica</span>
+          <span class="field-label">Data específica</span>
           <input
             id="filtroData"
             type="date"
@@ -85,7 +85,7 @@
             name="filtroTexto"
             [(ngModel)]="filtrosDraft.texto"
             (ngModelChange)="onFiltroDraftChange()"
-            placeholder="Motivo, resolucao ou descricao"
+            placeholder="Motivo, resolução ou descrição"
           />
         </label>
 
@@ -99,7 +99,7 @@
     <div class="concluidos-list">
       <div *ngIf="!!vm.erro" class="empty-state">{{ vm.erro }}</div>
       <div *ngIf="!vm.erro && vm.grupos.length === 0" class="empty-state">
-        Nenhum chamado concluido.
+        Nenhum chamado concluído.
       </div>
 
       <div *ngFor="let grupo of vm.grupos" class="concluido-group">
@@ -126,13 +126,13 @@
 
           <div class="item-body">
             <div class="item-label">Motivo</div>
-            <p class="motivo-texto">{{ item.motivo || "Motivo nao informado" }}</p>
+            <p class="motivo-texto">{{ item.motivo || "Motivo não informado" }}</p>
           </div>
 
           <div class="item-resolucao">
-            <div class="item-label">Descricao da resolucao</div>
+            <div class="item-label">Descrição da resolução</div>
             <div class="resolucao-box">
-              <p>{{ item.resolucao || "Sem resolucao informada." }}</p>
+              <p>{{ item.resolucao || "Sem resolução informada." }}</p>
             </div>
           </div>
 
@@ -170,10 +170,10 @@
 
     <div class="concluidos-pagination-wrap" *ngIf="!vm.erro && vm.totalItems > 0">
       <div class="concluidos-pagination-meta">
-        Exibindo {{ vm.inicioIntervalo }}-{{ vm.fimIntervalo }} de {{ vm.totalItems }} concluidos
+        Exibindo {{ vm.inicioIntervalo }}-{{ vm.fimIntervalo }} de {{ vm.totalItems }} concluídos
       </div>
 
-      <nav class="concluidos-pagination" aria-label="Paginacao de chamados concluidos">
+      <nav class="concluidos-pagination" aria-label="Paginação de chamados concluídos">
         <button
           class="btn pagination-btn"
           type="button"
@@ -211,7 +211,7 @@
           (click)="irParaProximaPagina(vm.totalPages)"
           [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
         >
-          Proximo
+          Próximo
         </button>
         <button
           class="btn pagination-btn"
@@ -219,7 +219,7 @@
           (click)="irParaUltimaPagina(vm.totalPages)"
           [disabled]="vm.totalPages === 0 || vm.currentPage >= vm.totalPages"
         >
-          Ultimo
+          Último
         </button>
       </nav>
     </div>
@@ -240,7 +240,7 @@
               <span>Empresa</span>
               <div class="helper-text">Atual: {{ editEmpresaNomeOriginal || "Sem empresa vinculada" }}</div>
               <div class="helper-text" *ngIf="!editUsaEmpresa && !!editClienteNomeOriginal">
-                Cliente historico: {{ editClienteNomeOriginal }}
+                Cliente histórico: {{ editClienteNomeOriginal }}
               </div>
               <select
                 name="editEmpresaId"
@@ -255,8 +255,8 @@
             </label>
 
             <label>
-              <span>Funcionario</span>
-              <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionario vinculado" }}</div>
+              <span>Funcionário</span>
+              <div class="helper-text">Atual: {{ editFuncionarioNomeOriginal || "Sem funcionário vinculado" }}</div>
               <select
                 name="editFuncionarioId"
                 [(ngModel)]="editFuncionarioId"
@@ -267,8 +267,8 @@
                     !editEmpresaId
                       ? "Selecione a empresa primeiro"
                       : editCarregandoFuncionarios
-                        ? "Carregando funcionarios..."
-                        : "Selecione um funcionario"
+                        ? "Carregando funcionários..."
+                        : "Selecione um funcionário"
                   }}
                 </option>
                 <option *ngFor="let funcionario of editFuncionarios" [value]="funcionario.id">
@@ -283,7 +283,7 @@
             </label>
 
             <label>
-              <span>Descricao da resolucao</span>
+              <span>Descrição da resolução</span>
               <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
             </label>
           </div>
@@ -340,7 +340,7 @@
                 </label>
               </div>
               <ng-template #semSistemasConcluidos>
-                <div class="helper-text">Nenhum sistema disponivel para esta empresa.</div>
+                <div class="helper-text">Nenhum sistema disponível para esta empresa.</div>
               </ng-template>
             </div>
           </div>

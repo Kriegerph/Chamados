@@ -1,9 +1,9 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
   <header class="page-header">
     <div>
-      <h2 class="page-title">Relatorios</h2>
+      <h2 class="page-title">Relatórios</h2>
       <p class="page-subtitle">
-        Gere relatorios exportaveis em Excel com filtros aplicados diretamente no frontend.
+        Gere relatórios exportáveis em Excel com filtros aplicados diretamente no frontend.
       </p>
     </div>
     <span class="status-chip">Linhas: {{ vm.dataset.rows.length }}</span>
@@ -20,7 +20,7 @@
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Filtros gerais</h3>
-          <p class="card-subtitle">Selecione os dados que serao considerados na exportacao.</p>
+          <p class="card-subtitle">Selecione os dados que serão considerados na exportação.</p>
         </div>
       </div>
 
@@ -31,7 +31,7 @@
           <div class="empresas-selector-header">
             <div>
               <span class="field-label">Empresas</span>
-              <div class="helper-text">Empresas marcadas entram no relatorio.</div>
+              <div class="helper-text">Empresas marcadas entram no relatório.</div>
             </div>
 
             <div class="btn-group empresas-selector-actions">
@@ -102,9 +102,9 @@
             [(ngModel)]="filtros.status"
             (ngModelChange)="onFiltroChange()"
           >
-            <option value="ambos">Abertos e concluidos</option>
+            <option value="ambos">Abertos e concluídos</option>
             <option value="aberto">Abertos</option>
-            <option value="concluido">Concluidos</option>
+            <option value="concluido">Concluídos</option>
           </select>
         </label>
 
@@ -131,7 +131,7 @@
     <article class="card relatorios-card">
       <div class="card-title-row">
         <div>
-          <h3 class="card-title">Tipo de relatorio</h3>
+          <h3 class="card-title">Tipo de relatório</h3>
           <p class="card-subtitle">Escolha como os dados devem ser organizados no Excel.</p>
         </div>
       </div>
@@ -158,8 +158,8 @@
     <article class="card relatorios-card relatorios-export-card">
       <div class="card-title-row">
         <div>
-          <h3 class="card-title">Exportacao</h3>
-          <p class="card-subtitle">Os filtros sao aplicados antes de gerar o arquivo Excel.</p>
+          <h3 class="card-title">Exportação</h3>
+          <p class="card-subtitle">Os filtros são aplicados antes de gerar o arquivo Excel.</p>
         </div>
       </div>
 
@@ -183,7 +183,7 @@
       </div>
 
       <div class="export-summary">
-        <div class="export-summary-label">Relatorio selecionado</div>
+        <div class="export-summary-label">Relatório selecionado</div>
         <div class="export-summary-value">{{ getTipoRelatorioTitulo() }}</div>
       </div>
 
@@ -200,14 +200,14 @@
         Exportar para Excel
       </button>
 
-      <div class="helper-text">Arquivo: relatorio-chamados-YYYY-MM-DD.xlsx</div>
+      <div class="helper-text">Arquivo gerado em formato .xlsx com a data atual.</div>
     </article>
   </div>
 
   <article class="card" *ngIf="!vm.carregando && !vm.erro">
     <div class="card-title-row">
       <div>
-        <h3 class="card-title">Previa do relatorio</h3>
+        <h3 class="card-title">Prévia do relatório</h3>
         <p class="card-subtitle">
           Exibindo {{ getPreviewRows(vm.dataset.rows).length }} de {{ vm.dataset.rows.length }} linhas.
         </p>

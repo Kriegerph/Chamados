@@ -104,7 +104,7 @@ export class AnotacoesService {
   private getUidOrThrow(): string {
     const uid = this.auth.getUid();
     if (!uid) {
-      throw new Error("Faca login.");
+      throw new Error("Faça login.");
     }
     return uid;
   }
@@ -124,7 +124,7 @@ export class AnotacoesService {
       this.emitState({
         status: "error",
         data: [],
-        error: authState.error || "Falha ao resolver autenticacao."
+        error: authState.error || "Falha ao resolver autenticação."
       });
       return;
     }
@@ -167,7 +167,7 @@ export class AnotacoesService {
         });
       },
       (error) => {
-        console.error("Erro ao escutar anotacoes", error);
+        console.error("Erro ao escutar anotações", error);
         this.emitState({
           status: "error",
           data: [],
@@ -254,6 +254,6 @@ export class AnotacoesService {
     if (error instanceof Error && error.message) {
       return error.message;
     }
-    return "Erro ao carregar anotacoes.";
+    return "Erro ao carregar anotações.";
   }
 }

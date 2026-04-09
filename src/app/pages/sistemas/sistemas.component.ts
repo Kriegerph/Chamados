@@ -92,7 +92,7 @@ export class SistemasComponent {
 
     try {
       await this.sistemasService.deleteSistema(item);
-      this.toast.show("Sistema excluido.", "success");
+      this.toast.show("Sistema excluído.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao excluir sistema: ${err?.message || err}`, "error");
     } finally {

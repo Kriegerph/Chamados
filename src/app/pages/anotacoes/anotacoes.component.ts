@@ -69,7 +69,7 @@ class CustomFontSizeToolbar extends Plugin {
     const command = editor.commands.get('fontSize');
 
     if (!command) {
-      throw new Error('Comando fontSize indisponivel.');
+      throw new Error('Comando fontSize indisponível.');
     }
 
     let lastSelection: ModelSelection | null = editor.model.createSelection(
@@ -131,7 +131,7 @@ class CustomFontSizeToolbar extends Plugin {
         model: new UIModel({
           commandName: 'fontSize',
           commandParam: undefined,
-          label: 'Padrao',
+          label: 'Padrão',
           class: 'ck-fontsize-option ck-fontsize-option-reset',
           role: 'menuitemradio',
           withText: true,
@@ -308,7 +308,7 @@ export class AnotacoesComponent {
       ],
       shouldNotGroupWhenFull: true,
     },
-    placeholder: 'Escreva sua anotacao aqui...',
+    placeholder: 'Escreva sua anotação aqui...',
     fontSize: {
       options: [...FONT_SIZE_OPTIONS, 'default'],
       supportAllValues: true,
@@ -380,12 +380,12 @@ export class AnotacoesComponent {
     const conteudo = this.normalizeEditorHtml(this.conteudoHtml);
 
     if (!titulo) {
-      this.toast.show('Informe o titulo da anotacao.', 'error');
+      this.toast.show('Informe o título da anotação.', 'error');
       return;
     }
 
     if (!this.hasMeaningfulContent(conteudo)) {
-      this.toast.show('Informe o conteudo da anotacao.', 'error');
+      this.toast.show('Informe o conteúdo da anotação.', 'error');
       return;
     }
 
@@ -397,7 +397,7 @@ export class AnotacoesComponent {
           titulo,
           conteudo,
         });
-        this.toast.show('Anotacao atualizada.', 'success');
+        this.toast.show('Anotação atualizada.', 'success');
       } else {
         const anotacaoId = await this.anotacoesService.createAnotacao({
           titulo,
@@ -405,13 +405,13 @@ export class AnotacoesComponent {
         });
         this.anotacaoSelecionadaId = anotacaoId;
         this.modoNovaAnotacao = false;
-        this.toast.show('Anotacao criada.', 'success');
+        this.toast.show('Anotação criada.', 'success');
       }
 
       this.titulo = titulo;
       this.conteudoHtml = conteudo;
     } catch (err: any) {
-      this.toast.show(`Erro ao salvar anotacao: ${err?.message || err}`, 'error');
+      this.toast.show(`Erro ao salvar anotação: ${err?.message || err}`, 'error');
     } finally {
       this.salvando = false;
     }
@@ -420,7 +420,7 @@ export class AnotacoesComponent {
   async excluirAnotacao() {
     if (!this.anotacaoSelecionadaId || this.modoNovaAnotacao || this.excluindo) return;
 
-    const confirmacao = window.confirm('Tem certeza que deseja excluir esta anotacao?');
+    const confirmacao = window.confirm('Tem certeza que deseja excluir esta anotação?');
     if (!confirmacao) return;
 
     this.excluindo = true;
@@ -428,10 +428,10 @@ export class AnotacoesComponent {
 
     try {
       await this.anotacoesService.deleteAnotacao(this.anotacaoSelecionadaId);
-      this.toast.show('Anotacao excluida.', 'success');
+      this.toast.show('Anotação excluída.', 'success');
     } catch (err: any) {
       this.resetarParaNovoQuandoSelecaoSumir = false;
-      this.toast.show(`Erro ao excluir anotacao: ${err?.message || err}`, 'error');
+      this.toast.show(`Erro ao excluir anotação: ${err?.message || err}`, 'error');
     } finally {
       this.excluindo = false;
     }
@@ -440,14 +440,14 @@ export class AnotacoesComponent {
   getSalvarLabel(): string {
     if (this.salvando) return 'Salvando...';
     return this.modoNovaAnotacao || !this.anotacaoSelecionadaId
-      ? 'Salvar anotacao'
-      : 'Atualizar anotacao';
+      ? 'Salvar anotação'
+      : 'Atualizar anotação';
   }
 
   getStatusLabel(): string {
     return this.modoNovaAnotacao || !this.anotacaoSelecionadaId
-      ? 'Nova anotacao'
-      : 'Editando anotacao';
+      ? 'Nova anotação'
+      : 'Editando anotação';
   }
 
   podeExibirExcluir(): boolean {
@@ -455,7 +455,7 @@ export class AnotacoesComponent {
   }
 
   getExcluirLabel(): string {
-    return this.excluindo ? 'Excluindo...' : 'Excluir anotacao';
+    return this.excluindo ? 'Excluindo...' : 'Excluir anotação';
   }
 
   atualizarFiltroTitulo(valor: string) {

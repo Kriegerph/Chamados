@@ -524,8 +524,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       semDados: concluidos.length === 0 || base.length === 0,
       filtroLabel:
         anoSelecionado === ANO_TODOS
-          ? "Concluidos de todos os anos"
-          : `Concluidos de ${anoSelecionado}`
+          ? "Concluídos de todos os anos"
+          : `Concluídos de ${anoSelecionado}`
     };
   }
 
@@ -935,7 +935,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         labels,
         datasets: [
           {
-            label: "Tempo medio (min)",
+            label: "Tempo médio (min)",
             data: values,
             borderRadius: 6,
             backgroundColor: palette.warning,
@@ -950,7 +950,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => `Tempo medio: ${this.formatTempoMedio(Number(context.raw) || 0)}`
+              label: (context) => `Tempo médio: ${this.formatTempoMedio(Number(context.raw) || 0)}`
             }
           }
         },

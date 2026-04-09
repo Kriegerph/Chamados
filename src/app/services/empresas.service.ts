@@ -196,7 +196,7 @@ export class EmpresasService {
   private getUidOrThrow(): string {
     const uid = this.auth.getUid();
     if (!uid) {
-      throw new Error("Faca login.");
+      throw new Error("Faça login.");
     }
     return uid;
   }
@@ -242,7 +242,7 @@ export class EmpresasService {
       this.emitState({
         status: "error",
         data: [],
-        error: authState.error || "Falha ao resolver autenticacao."
+        error: authState.error || "Falha ao resolver autenticação."
       });
       return;
     }

@@ -81,18 +81,18 @@ export class RelatoriosComponent {
   readonly tipoRelatorioOptions: TipoRelatorioOption[] = [
     {
       valor: "detalhado-chamados",
-      titulo: "Relatorio detalhado de chamados",
-      descricao: "Exporta um chamado por linha com empresa, motivo, data, resolucao, tempo e status."
+      titulo: "Relatório detalhado de chamados",
+      descricao: "Exporta um chamado por linha com empresa, motivo, data, resolução, tempo e status."
     },
     {
       valor: "tempo-por-empresa",
-      titulo: "Relatorio de tempo por empresa",
-      descricao: "Agrupa chamados por empresa com totais de chamados, tempo total e tempo medio."
+      titulo: "Relatório de tempo por empresa",
+      descricao: "Agrupa chamados por empresa com totais de chamados, tempo total e tempo médio."
     },
     {
       valor: "ranking-empresas",
       titulo: "Ranking de empresas por chamados",
-      descricao: "Ordena as empresas do maior para o menor volume de chamados no periodo filtrado."
+      descricao: "Ordena as empresas do maior para o menor volume de chamados no período filtrado."
     }
   ];
 
@@ -198,7 +198,7 @@ export class RelatoriosComponent {
 
       XLSX.utils.book_append_sheet(workbook, worksheet, vm.dataset.sheetName);
       XLSX.writeFile(workbook, this.buildFileName());
-      this.toast.show("Relatorio exportado com sucesso.", "success");
+      this.toast.show("Relatório exportado com sucesso.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao exportar: ${err.message || err}`, "error");
     }
@@ -227,7 +227,7 @@ export class RelatoriosComponent {
   getTipoRelatorioTitulo(): string {
     return (
       this.tipoRelatorioOptions.find((item) => item.valor === this.tipoRelatorio)?.titulo ??
-      "Relatorio"
+      "Relatório"
     );
   }
 
@@ -365,12 +365,12 @@ export class RelatoriosComponent {
       sheetName: "Chamados",
       columns: [
         { key: "empresa", label: "Empresa" },
-        { key: "funcionario", label: "Funcionario" },
+        { key: "funcionario", label: "Funcionário" },
         { key: "motivo", label: "Motivo" },
         { key: "dataChamado", label: "Data do Chamado" },
         { key: "sistemaPrincipal", label: "Sistema principal" },
         { key: "sistemasRelacionados", label: "Sistemas relacionados" },
-        { key: "resolucao", label: "Resolucao" },
+        { key: "resolucao", label: "Resolução" },
         { key: "tempoAtendimento", label: "Tempo de Atendimento" },
         { key: "status", label: "Status" }
       ],
@@ -445,7 +445,7 @@ export class RelatoriosComponent {
         { key: "empresa", label: "Nome da Empresa" },
         { key: "totalChamados", label: "Total de Chamados", align: "right" },
         { key: "tempoTotalAtendimento", label: "Tempo Total de Atendimento", align: "right" },
-        { key: "tempoMedioPorChamado", label: "Tempo Medio por Chamado", align: "right" }
+        { key: "tempoMedioPorChamado", label: "Tempo Médio por Chamado", align: "right" }
       ],
       rows
     };
@@ -481,7 +481,7 @@ export class RelatoriosComponent {
       columns: [
         { key: "empresa", label: "Empresa" },
         { key: "quantidadeChamados", label: "Quantidade de Chamados", align: "right" },
-        { key: "percentualTotal", label: "Percentual em Relacao ao Total", align: "right" }
+        { key: "percentualTotal", label: "Percentual em Relação ao Total", align: "right" }
       ],
       rows
     };
@@ -489,10 +489,10 @@ export class RelatoriosComponent {
 
   private getMensagemResultado(filtros: RelatoriosFiltros): string | null {
     if (filtros.empresaIds.length === 0) {
-      return "Selecione pelo menos uma empresa para gerar o relatorio.";
+      return "Selecione pelo menos uma empresa para gerar o relatório.";
     }
     if (filtros.dataInicial && filtros.dataFinal && filtros.dataInicial > filtros.dataFinal) {
-      return "Periodo invalido. Ajuste a data inicial e final.";
+      return "Período inválido. Ajuste a data inicial e final.";
     }
     return null;
   }
@@ -504,7 +504,7 @@ export class RelatoriosComponent {
       if (nome) return nome;
     }
     if (item.clienteNome) return item.clienteNome;
-    return item.cliente || "Empresa nao informada";
+    return item.cliente || "Empresa não informada";
   }
 
   private sortEmpresas(items: Empresa[]): Empresa[] {
@@ -537,7 +537,7 @@ export class RelatoriosComponent {
   }
 
   private formatStatus(status: StatusChamado): string {
-    return status === "concluido" ? "Concluido" : "Aberto";
+    return status === "concluido" ? "Concluído" : "Aberto";
   }
 
   private formatTempoMinutos(value?: number | null, emptyText = ""): string {

@@ -70,7 +70,7 @@ export class SistemasService {
 
     const sistemaId = this.buildSistemaId(nomeNormalizado);
     if (!sistemaId) {
-      throw new Error("Nao foi possivel gerar um ID valido para o sistema.");
+      throw new Error("Não foi possível gerar um ID válido para o sistema.");
     }
 
     const sistemas = await this.listAllSistemas(uid);
@@ -80,11 +80,11 @@ export class SistemasService {
     const conflitoId = sistemas.some((item) => item.id === sistemaId);
 
     if (conflitoNome) {
-      throw new Error("Ja existe um sistema com este nome.");
+      throw new Error("Já existe um sistema com este nome.");
     }
 
     if (conflitoId) {
-      throw new Error("Ja existe um sistema com este ID.");
+      throw new Error("Já existe um sistema com este ID.");
     }
 
     await setDoc(doc(this.firebase.db, "users", uid, "sistemas", sistemaId), {
@@ -104,12 +104,12 @@ export class SistemasService {
 
     const sistemaId = sistema.id?.trim();
     if (!sistemaId) {
-      throw new Error("Sistema invalido.");
+      throw new Error("Sistema inválido.");
     }
 
     const emUso = await this.isSistemaInUse(sistemaId, sistema.nome || sistemaId);
     if (emUso) {
-      throw new Error("Este sistema esta em uso e nao pode ser excluido");
+      throw new Error("Este sistema está em uso e não pode ser excluído.");
     }
 
     await deleteDoc(doc(this.firebase.db, "users", uid, "sistemas", sistemaId));
@@ -135,7 +135,7 @@ export class SistemasService {
   private getUidOrThrow(): string {
     const uid = this.auth.getUid();
     if (!uid) {
-      throw new Error("Faca login.");
+      throw new Error("Faça login.");
     }
     return uid;
   }
@@ -279,7 +279,7 @@ export class SistemasService {
       this.emitState({
         status: "error",
         data: [],
-        error: authState.error || "Falha ao resolver autenticacao."
+        error: authState.error || "Falha ao resolver autenticação."
       });
       return;
     }
