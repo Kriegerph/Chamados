@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  NgZone,
+  ViewChild
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Timestamp } from "firebase/firestore";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
@@ -102,6 +109,8 @@ const MESES_ABREV = [
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConcluidosComponent {
+  @ViewChild("chamadosListTop") private chamadosListTop?: ElementRef<HTMLElement>;
+
   filtrosDraft: ConcluidosFiltros = this.cloneFiltros(FILTROS_INICIAIS);
   anosDisponiveis: string[] = [];
   pageSize = 10;
@@ -118,6 +127,8 @@ export class ConcluidosComponent {
   editContextoSistemaId = "";
   editSistemasRelacionados: string[] = [];
   editData = "";
+  editTempoChamado = "";
+  editTempoNaoRegistrado = false;
   editResolucao = "";
   editUsaEmpresa = false;
   editFuncionarios: Funcionario[] = [];
@@ -189,6 +200,7 @@ export class ConcluidosComponent {
     this.filtrosAplicados = this.cloneFiltros(this.filtrosDraft);
     this.currentPageSubject.next(1);
     this.filtrosAplicadosSubject.next(this.cloneFiltros(this.filtrosAplicados));
+    this.scrollParaTopoDaListagem();
   }
 
   limparFiltros() {
@@ -196,11 +208,13 @@ export class ConcluidosComponent {
     this.filtrosAplicados = this.cloneFiltros(FILTROS_INICIAIS);
     this.currentPageSubject.next(1);
     this.filtrosAplicadosSubject.next(this.cloneFiltros(this.filtrosAplicados));
+    this.scrollParaTopoDaListagem();
   }
 
   onPageSizeChange() {
     this.currentPageSubject.next(1);
     this.pageSizeSubject.next(this.pageSize);
+    this.scrollParaTopoDaListagem();
   }
 
   irParaPrimeiraPagina(totalPages: number) {
@@ -218,6 +232,7 @@ export class ConcluidosComponent {
     const paginaClamped = Math.min(Math.max(page, 1), totalPages);
     if (paginaClamped === this.currentPageSubject.value) return;
     this.currentPageSubject.next(paginaClamped);
+    this.scrollParaTopoDaListagem();
   }
 
   irParaProximaPagina(totalPages: number) {
@@ -232,6 +247,19 @@ export class ConcluidosComponent {
 
   trackByPageButton(index: number, item: PaginationButton): string {
     return `${item}-${index}`;
+  }
+
+  private scrollParaTopoDaListagem() {
+    const target = this.chamadosListTop?.nativeElement;
+    if (!target) return;
+
+    requestAnimationFrame(() => {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest"
+      });
+    });
   }
 
   formatHora(item: Chamado): string {
@@ -263,6 +291,11 @@ export class ConcluidosComponent {
     this.editId = item.id ?? null;
     this.editMotivo = item.motivo || "";
     this.editData = item.data || "";
+    const tempoAtendimentoMinutos = this.getTempoAtendimentoMinutos(item);
+    this.editTempoNaoRegistrado = tempoAtendimentoMinutos == null;
+    this.editTempoChamado = tempoAtendimentoMinutos == null
+      ? ""
+      : this.formatTempoChamado(tempoAtendimentoMinutos);
     this.editResolucao = item.resolucao || "";
     this.editUsaEmpresa = this.isChamadoEmpresa(item);
     this.editClienteNomeOriginal = this.editUsaEmpresa ? "" : item.clienteLabel;
@@ -307,6 +340,8 @@ export class ConcluidosComponent {
     this.editContextoSistemaId = "";
     this.editSistemasRelacionados = [];
     this.editData = "";
+    this.editTempoChamado = "";
+    this.editTempoNaoRegistrado = false;
     this.editResolucao = "";
     this.editUsaEmpresa = false;
     this.editFuncionarios = [];
@@ -327,6 +362,9 @@ export class ConcluidosComponent {
     if (!this.editId) return;
     const motivo = this.editMotivo.trim();
     const data = this.editData;
+    const tempoAtendimentoMinutos = this.editTempoNaoRegistrado
+      ? undefined
+      : this.getTempoChamadoMinutos(this.editTempoChamado);
     const resolucao = this.editResolucao.trim();
     const empresa = this.getEmpresaNomeById(this.editEmpresaId) || this.editEmpresaNomeOriginal;
     const funcionario =
@@ -340,6 +378,10 @@ export class ConcluidosComponent {
 
     if (!this.editEmpresaId || !empresa || !this.editFuncionarioId || !funcionario) {
       this.toast.show("Preencha empresa e funcionário.", "error");
+      return;
+    }
+
+    if (tempoAtendimentoMinutos === undefined && !this.editTempoNaoRegistrado) {
       return;
     }
 
@@ -362,6 +404,10 @@ export class ConcluidosComponent {
       if (this.editUsaEmpresa) {
         payload.cliente = empresa;
         payload.clienteNome = empresa;
+      }
+      if (!this.editTempoNaoRegistrado) {
+        payload.tempoAtendimento = tempoAtendimentoMinutos ?? null;
+        payload.tempoAtendimentoMinutos = tempoAtendimentoMinutos ?? null;
       }
       await this.chamadosService.updateChamado(this.editId, payload);
       this.runInZone(() => {
@@ -657,6 +703,46 @@ export class ConcluidosComponent {
     return 0;
   }
 
+  private getTempoChamadoMinutos(value: string): number | null | undefined {
+    const tempo = value.trim();
+    if (!tempo) {
+      return null;
+    }
+
+    const match = /^(\d{2}):([0-5]\d)$/.exec(tempo);
+    if (!match) {
+      this.toast.show("Informe o tempo do chamado no formato HH:mm.", "error");
+      return undefined;
+    }
+
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  private getTempoAtendimentoMinutos(item: Chamado): number | null {
+    const valor = item.tempoAtendimentoMinutos ?? item.tempoAtendimento ?? null;
+    return typeof valor === "number" && Number.isFinite(valor)
+      ? Math.max(0, Math.floor(valor))
+      : null;
+  }
+
+  private formatTempoChamado(minutos: number): string {
+    const totalMinutos = Math.max(0, Math.floor(minutos));
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    return `${horas.toString().padStart(2, "0")}:${minutosRestantes.toString().padStart(2, "0")}`;
+  }
+
+  private sanitizeTempoChamadoInput(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    if (digits.length <= 2) {
+      return digits;
+    }
+    if (Number(digits[2]) > 5) {
+      return digits.slice(0, 2);
+    }
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  }
+
   private getClienteLabelFromMap(
     item: Chamado,
     clientesMap: Map<string, Cliente>,
@@ -762,6 +848,11 @@ export class ConcluidosComponent {
 
   getFuncionarioOptionLabel(funcionario: Funcionario): string {
     return funcionario.nomeFuncionario || "";
+  }
+
+  onEditTempoChamadoChange(value: string) {
+    if (this.editTempoNaoRegistrado) return;
+    this.editTempoChamado = this.sanitizeTempoChamadoInput(value);
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {

@@ -69,9 +69,13 @@ export class ChamadosService {
     funcionarioId: string;
     funcionario: string;
     data: string;
+    tempoAtendimentoMinutos?: number | null;
   }) {
     const uid = this.getUidOrThrow();
     const dataInicioAtendimento = Timestamp.now();
+    const tempoAtendimentoMinutos = this.normalizeTempoAtendimentoMinutos(
+      data.tempoAtendimentoMinutos
+    );
     const payload: Omit<Chamado, "id"> = {
       motivo: data.motivo,
       cliente: data.empresa,
@@ -89,8 +93,8 @@ export class ChamadosService {
       concluidoEm: null,
       dataInicioAtendimento,
       dataFimAtendimento: null,
-      tempoAtendimento: null,
-      tempoAtendimentoMinutos: null,
+      tempoAtendimento: tempoAtendimentoMinutos,
+      tempoAtendimentoMinutos,
       tipoCadastro: "novo"
     };
     const ref = await addDoc(this.getChamadosCol(uid), payload);
@@ -111,9 +115,13 @@ export class ChamadosService {
     resolucao: string;
     contextoSistemaId: string;
     sistemasRelacionados?: string[];
+    tempoAtendimentoMinutos?: number | null;
   }) {
     const uid = this.getUidOrThrow();
     const dataInicioAtendimento = Timestamp.now();
+    const tempoAtendimentoMinutos = this.normalizeTempoAtendimentoMinutos(
+      data.tempoAtendimentoMinutos
+    );
     const payload: Omit<Chamado, "id"> = {
       motivo: data.motivo,
       cliente: data.empresa,
@@ -136,8 +144,8 @@ export class ChamadosService {
       concluidoEm: serverTimestamp() as any,
       dataInicioAtendimento,
       dataFimAtendimento: dataInicioAtendimento,
-      tempoAtendimento: 0,
-      tempoAtendimentoMinutos: 0,
+      tempoAtendimento: tempoAtendimentoMinutos,
+      tempoAtendimentoMinutos,
       tipoCadastro: "antigo"
     };
     const ref = await addDoc(this.getChamadosCol(uid), payload);

@@ -1,5 +1,11 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener
+} from "@angular/core";
 import { NavigationEnd, Router, RouterOutlet } from "@angular/router";
 import { User } from "firebase/auth";
 import { filter, map, Observable, startWith, tap } from "rxjs";
@@ -43,7 +49,8 @@ export class LayoutComponent {
     private readonly toast: ToastService,
     private readonly auth: AuthService,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly host: ElementRef<HTMLElement>
   ) {
     this.toast$ = this.toast.toast$ as Observable<ToastViewModel | null>;
     this.user$ = this.auth.authState$;
@@ -52,8 +59,9 @@ export class LayoutComponent {
         startWith(new NavigationEnd(0, this.router.url, this.router.url)),
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         map((event) => event.urlAfterRedirects),
-        tap(() => {
+        tap((url) => {
           if (this.mobileMode) this.sidebarOpen = false;
+          this.scrollChamadosParaTopo(url);
         }),
         map((url) => this.resolvePageTitle(url))
       );
@@ -94,5 +102,31 @@ export class LayoutComponent {
   private resolvePageTitle(url: string): string {
     const firstSegment = url.replace(/^\//, "").split("/")[0];
     return this.titleByRoute[firstSegment] ?? "Painel";
+  }
+
+  private scrollChamadosParaTopo(url: string) {
+    const firstSegment = url.replace(/^\//, "").split("/")[0];
+    if (firstSegment !== "abertos" && firstSegment !== "concluidos") return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const target = this.host.nativeElement.querySelector<HTMLElement>(
+          ".page-enter .page-section"
+        );
+        if (!target) return;
+
+        const headerOffset = this.getHeaderOffset();
+        const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - headerOffset);
+        window.scrollTo({
+          top,
+          behavior: "smooth"
+        });
+      });
+    });
+  }
+
+  private getHeaderOffset(): number {
+    const topbar = this.host.nativeElement.querySelector<HTMLElement>(".topbar");
+    return topbar ? topbar.offsetHeight + 16 : 0;
   }
 }

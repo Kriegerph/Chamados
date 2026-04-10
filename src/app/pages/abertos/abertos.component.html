@@ -211,6 +211,20 @@
                       }}
                     </div>
                   </label>
+
+                  <label class="abertos-tempo-field">
+                    <span>Tempo do chamado</span>
+                    <input
+                      name="tempoChamado"
+                      type="text"
+                      inputmode="numeric"
+                      maxlength="5"
+                      [ngModel]="tempoChamado"
+                      (ngModelChange)="onTempoChamadoChange($event)"
+                      placeholder="HH:mm"
+                      pattern="\d{2}:[0-5]\d"
+                    />
+                  </label>
                 </div>
               </section>
 
@@ -523,6 +537,21 @@
             <label>
               <span>Data</span>
               <input name="editData" type="date" [(ngModel)]="editData" />
+            </label>
+
+            <label class="abertos-tempo-field">
+              <span>Tempo do chamado</span>
+              <input
+                name="editTempoChamado"
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                [ngModel]="editTempoChamado"
+                (ngModelChange)="onEditTempoChamadoChange($event)"
+                [readonly]="editTempoNaoRegistrado"
+                [placeholder]="editTempoNaoRegistrado ? 'Tempo não registrado' : 'HH:mm'"
+                pattern="\d{2}:[0-5]\d"
+              />
             </label>
 
             <label *ngIf="editStatus === 'concluido'">

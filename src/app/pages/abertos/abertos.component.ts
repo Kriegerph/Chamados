@@ -50,6 +50,7 @@ export class AbertosComponent {
   empresaId = "";
   funcionarioId = "";
   data = "";
+  tempoChamado = "";
   resolucao = "";
   cadastroContextoSistemaId = "";
   cadastroSistemasRelacionados: string[] = [];
@@ -69,6 +70,8 @@ export class AbertosComponent {
   editId: string | null = null;
   editMotivo = "";
   editData = "";
+  editTempoChamado = "";
+  editTempoNaoRegistrado = false;
   editResolucao = "";
   editStatus: "aberto" | "concluido" = "aberto";
   editUsaEmpresa = false;
@@ -155,6 +158,7 @@ export class AbertosComponent {
     const funcionarioId = this.funcionarioId;
     const funcionario = this.getFuncionarioNomeById(funcionarioId, this.funcionariosFormulario);
     const data = this.data;
+    const tempoAtendimentoMinutos = this.getTempoChamadoMinutos(this.tempoChamado);
     const resolucao = this.resolucao.trim();
     const contextoSistemaId = this.cadastroContextoSistemaId.trim();
     const sistemasRelacionados = this.sanitizeSistemaIds(
@@ -178,6 +182,10 @@ export class AbertosComponent {
       return;
     }
 
+    if (tempoAtendimentoMinutos === undefined) {
+      return;
+    }
+
     try {
       if (this.modoCadastro === "novo") {
         await this.chamadosService.addChamadoNovo({
@@ -186,7 +194,8 @@ export class AbertosComponent {
           empresa,
           funcionarioId,
           funcionario,
-          data
+          data,
+          tempoAtendimentoMinutos
         });
       } else {
         await this.chamadosService.addChamadoAntigo({
@@ -198,7 +207,8 @@ export class AbertosComponent {
           data,
           resolucao,
           contextoSistemaId,
-          sistemasRelacionados
+          sistemasRelacionados,
+          tempoAtendimentoMinutos
         });
       }
       this.runInZone(() => {
@@ -275,12 +285,17 @@ export class AbertosComponent {
       this.toast.show(`Erro ao finalizar: ${err.message}`, "error");
     }
   }
-
+                                   
   async abrirModalEditar(item: AbertoItemView) {
     this.editando = true;
     this.editId = item.id ?? null;
     this.editMotivo = item.motivo || "";
     this.editData = item.data || "";
+    const tempoAtendimentoMinutos = this.getTempoAtendimentoMinutos(item);
+    this.editTempoNaoRegistrado = tempoAtendimentoMinutos == null;
+    this.editTempoChamado = tempoAtendimentoMinutos == null
+      ? ""
+      : this.formatTempoChamado(tempoAtendimentoMinutos);
     this.editResolucao = item.resolucao || "";
     this.editStatus = item.status;
     this.editUsaEmpresa = this.isChamadoEmpresa(item);
@@ -323,6 +338,8 @@ export class AbertosComponent {
     this.editId = null;
     this.editMotivo = "";
     this.editData = "";
+    this.editTempoChamado = "";
+    this.editTempoNaoRegistrado = false;
     this.editResolucao = "";
     this.editClienteNomeOriginal = "";
     this.editEmpresaId = "";
@@ -350,6 +367,9 @@ export class AbertosComponent {
     if (!this.editId) return;
     const motivo = this.editMotivo.trim();
     const data = this.editData;
+    const tempoAtendimentoMinutos = this.editTempoNaoRegistrado
+      ? undefined
+      : this.getTempoChamadoMinutos(this.editTempoChamado);
     const resolucao = this.editResolucao.trim();
     const empresa = this.getEmpresaNomeById(this.editEmpresaId) || this.editEmpresaNomeOriginal;
     const funcionario =
@@ -362,6 +382,9 @@ export class AbertosComponent {
     }
     if (this.editStatus === "concluido" && !resolucao) {
       this.toast.show("Informe como foi resolvido.", "error");
+      return;
+    }
+    if (tempoAtendimentoMinutos === undefined && !this.editTempoNaoRegistrado) {
       return;
     }
 
@@ -377,6 +400,10 @@ export class AbertosComponent {
       if (this.editUsaEmpresa) {
         payload.cliente = empresa;
         payload.clienteNome = empresa;
+      }
+      if (!this.editTempoNaoRegistrado) {
+        payload.tempoAtendimento = tempoAtendimentoMinutos ?? null;
+        payload.tempoAtendimentoMinutos = tempoAtendimentoMinutos ?? null;
       }
       if (this.editStatus === "concluido") {
         payload.resolucao = resolucao;
@@ -525,6 +552,7 @@ export class AbertosComponent {
     this.empresaId = "";
     this.funcionarioId = "";
     this.data = this.getToday();
+    this.tempoChamado = "";
     this.resolucao = "";
     this.cadastroContextoSistemaId = "";
     this.cadastroSistemasRelacionados = [];
@@ -549,6 +577,46 @@ export class AbertosComponent {
     return 0;
   }
 
+  private getTempoChamadoMinutos(value: string): number | null | undefined {
+    const tempo = value.trim();
+    if (!tempo) {
+      return null;
+    }
+
+    const match = /^(\d{2}):([0-5]\d)$/.exec(tempo);
+    if (!match) {
+      this.toast.show("Informe o tempo do chamado no formato HH:mm.", "error");
+      return undefined;
+    }
+
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  private getTempoAtendimentoMinutos(item: Chamado): number | null {
+    const valor = item.tempoAtendimentoMinutos ?? item.tempoAtendimento ?? null;
+    return typeof valor === "number" && Number.isFinite(valor)
+      ? Math.max(0, Math.floor(valor))
+      : null;
+  }
+
+  private formatTempoChamado(minutos: number): string {
+    const totalMinutos = Math.max(0, Math.floor(minutos));
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    return `${horas.toString().padStart(2, "0")}:${minutosRestantes.toString().padStart(2, "0")}`;
+  }
+
+  private sanitizeTempoChamadoInput(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    if (digits.length <= 2) {
+      return digits;
+    }
+    if (Number(digits[2]) > 5) {
+      return digits.slice(0, 2);
+    }
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  }
+
   private getEmpresaNomeById(id: string): string {
     if (!id) return "";
     return this.empresasService.getEmpresasSnapshot().find((item) => item.id === id)?.nomeEmpresa ?? "";
@@ -568,6 +636,15 @@ export class AbertosComponent {
 
   getFuncionarioOptionLabel(funcionario: Funcionario): string {
     return funcionario.nomeFuncionario || "";
+  }
+
+  onTempoChamadoChange(value: string) {
+    this.tempoChamado = this.sanitizeTempoChamadoInput(value);
+  }
+
+  onEditTempoChamadoChange(value: string) {
+    if (this.editTempoNaoRegistrado) return;
+    this.editTempoChamado = this.sanitizeTempoChamadoInput(value);
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {
