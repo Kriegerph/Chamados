@@ -72,6 +72,7 @@ export class AbertosComponent {
   editData = "";
   editTempoChamado = "";
   editTempoNaoRegistrado = false;
+  editTipoCadastro: "novo" | "antigo" = "novo";
   editResolucao = "";
   editStatus: "aberto" | "concluido" = "aberto";
   editUsaEmpresa = false;
@@ -121,6 +122,7 @@ export class AbertosComponent {
 
   onModoChange() {
     if (this.modoCadastro === "novo") {
+      this.tempoChamado = "";
       this.resolucao = "";
       this.cadastroContextoSistemaId = "";
       this.cadastroSistemasRelacionados = [];
@@ -158,7 +160,9 @@ export class AbertosComponent {
     const funcionarioId = this.funcionarioId;
     const funcionario = this.getFuncionarioNomeById(funcionarioId, this.funcionariosFormulario);
     const data = this.data;
-    const tempoAtendimentoMinutos = this.getTempoChamadoMinutos(this.tempoChamado);
+    const tempoAtendimentoMinutos = this.shouldShowTempoCampoCadastro()
+      ? this.getTempoChamadoMinutos(this.tempoChamado)
+      : null;
     const resolucao = this.resolucao.trim();
     const contextoSistemaId = this.cadastroContextoSistemaId.trim();
     const sistemasRelacionados = this.sanitizeSistemaIds(
@@ -296,6 +300,7 @@ export class AbertosComponent {
     this.editTempoChamado = tempoAtendimentoMinutos == null
       ? ""
       : this.formatTempoChamado(tempoAtendimentoMinutos);
+    this.editTipoCadastro = item.tipoCadastro === "antigo" ? "antigo" : "novo";
     this.editResolucao = item.resolucao || "";
     this.editStatus = item.status;
     this.editUsaEmpresa = this.isChamadoEmpresa(item);
@@ -340,6 +345,7 @@ export class AbertosComponent {
     this.editData = "";
     this.editTempoChamado = "";
     this.editTempoNaoRegistrado = false;
+    this.editTipoCadastro = "novo";
     this.editResolucao = "";
     this.editClienteNomeOriginal = "";
     this.editEmpresaId = "";
@@ -367,9 +373,12 @@ export class AbertosComponent {
     if (!this.editId) return;
     const motivo = this.editMotivo.trim();
     const data = this.editData;
-    const tempoAtendimentoMinutos = this.editTempoNaoRegistrado
+    const permiteEdicaoManualTempo = this.canEditarTempoManualmente();
+    const tempoAtendimentoMinutos = !permiteEdicaoManualTempo
       ? undefined
-      : this.getTempoChamadoMinutos(this.editTempoChamado);
+      : this.editTempoNaoRegistrado
+        ? undefined
+        : this.getTempoChamadoMinutos(this.editTempoChamado);
     const resolucao = this.editResolucao.trim();
     const empresa = this.getEmpresaNomeById(this.editEmpresaId) || this.editEmpresaNomeOriginal;
     const funcionario =
@@ -384,7 +393,11 @@ export class AbertosComponent {
       this.toast.show("Informe como foi resolvido.", "error");
       return;
     }
-    if (tempoAtendimentoMinutos === undefined && !this.editTempoNaoRegistrado) {
+    if (
+      permiteEdicaoManualTempo &&
+      tempoAtendimentoMinutos === undefined &&
+      !this.editTempoNaoRegistrado
+    ) {
       return;
     }
 
@@ -401,7 +414,7 @@ export class AbertosComponent {
         payload.cliente = empresa;
         payload.clienteNome = empresa;
       }
-      if (!this.editTempoNaoRegistrado) {
+      if (permiteEdicaoManualTempo && !this.editTempoNaoRegistrado) {
         payload.tempoAtendimento = tempoAtendimentoMinutos ?? null;
         payload.tempoAtendimentoMinutos = tempoAtendimentoMinutos ?? null;
       }
@@ -639,12 +652,21 @@ export class AbertosComponent {
   }
 
   onTempoChamadoChange(value: string) {
+    if (!this.shouldShowTempoCampoCadastro()) return;
     this.tempoChamado = this.sanitizeTempoChamadoInput(value);
   }
 
   onEditTempoChamadoChange(value: string) {
-    if (this.editTempoNaoRegistrado) return;
+    if (!this.canEditarTempoManualmente() || this.editTempoNaoRegistrado) return;
     this.editTempoChamado = this.sanitizeTempoChamadoInput(value);
+  }
+
+  shouldShowTempoCampoCadastro(): boolean {
+    return this.modoCadastro === "antigo";
+  }
+
+  canEditarTempoManualmente(): boolean {
+    return this.editStatus === "concluido" && this.editTipoCadastro === "antigo";
   }
 
   private sortClientes(items: Cliente[]): Cliente[] {

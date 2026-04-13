@@ -212,7 +212,10 @@
                     </div>
                   </label>
 
-                  <label class="abertos-tempo-field">
+                  <label
+                    class="abertos-tempo-field"
+                    *ngIf="shouldShowTempoCampoCadastro()"
+                  >
                     <span>Tempo do chamado</span>
                     <input
                       name="tempoChamado"
@@ -483,13 +486,16 @@
       <h3>Editar chamado</h3>
       <form class="form chamado-edit-form" (ngSubmit)="salvarEdicao()">
         <div class="chamado-edit-grid">
-          <div class="chamado-edit-col chamado-edit-col-main">
-            <label>
+          <div
+            class="chamado-edit-col chamado-edit-col-main"
+            [class.chamado-edit-col-main-sem-tempo]="!canEditarTempoManualmente()"
+          >
+            <label class="chamado-edit-field chamado-edit-field-motivo">
               <span>Motivo</span>
               <input name="editMotivo" type="text" [(ngModel)]="editMotivo" />
             </label>
 
-            <label>
+            <label class="chamado-edit-field chamado-edit-field-empresa">
               <span>Empresa</span>
               <div class="helper-text">
                 Atual: {{ editEmpresaNomeOriginal || 'Sem empresa vinculada' }}
@@ -534,12 +540,15 @@
               </select>
             </label>
 
-            <label>
+            <label class="chamado-edit-field chamado-edit-field-data">
               <span>Data</span>
               <input name="editData" type="date" [(ngModel)]="editData" />
             </label>
 
-            <label class="abertos-tempo-field">
+            <label
+              class="chamado-edit-field chamado-edit-field-tempo abertos-tempo-field"
+              *ngIf="canEditarTempoManualmente()"
+            >
               <span>Tempo do chamado</span>
               <input
                 name="editTempoChamado"
@@ -554,7 +563,10 @@
               />
             </label>
 
-            <label *ngIf="editStatus === 'concluido'">
+            <label
+              class="chamado-edit-field chamado-edit-field-resolucao"
+              *ngIf="editStatus === 'concluido'"
+            >
               <span>Descrição da resolução</span>
               <textarea name="editResolucao" rows="3" [(ngModel)]="editResolucao"></textarea>
             </label>
