@@ -51,9 +51,9 @@
             <div class="empresa-card-primary">
               <div class="empresa-name">{{ item.nomeEmpresa }}</div>
               <div class="empresa-card-subtitle">
-                {{ item.sistemasQuantidadeLabel }}
-                <span *ngIf="!!item.observacoes">• {{ item.observacoes }}</span>
+                {{ item.sistemasQuantidadeLabel }} • {{ item.chamadosQuantidadeLabel }}
               </div>
+              <div class="empresa-card-note" *ngIf="!!item.observacoes">{{ item.observacoes }}</div>
             </div>
 
             <div

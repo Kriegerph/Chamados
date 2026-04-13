@@ -2,9 +2,11 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
+import { Chamado } from "../../models/chamado.model";
 import { DataState } from "../../models/data-state.model";
 import { Empresa, Funcionario } from "../../models/empresa.model";
 import { Sistema } from "../../models/sistema.model";
+import { ChamadosService } from "../../services/chamados.service";
 import { EmpresasService } from "../../services/empresas.service";
 import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
@@ -17,6 +19,8 @@ type EmpresaItemView = Empresa & {
   sistemasExtras: number;
   sistemasTooltip: string;
   sistemasQuantidadeLabel: string;
+  totalChamados: number;
+  chamadosQuantidadeLabel: string;
 };
 
 type SistemaOptionView = Sistema & {
@@ -79,19 +83,27 @@ export class EmpresasComponent {
   readonly vm$: Observable<EmpresasViewModel>;
 
   constructor(
+    private readonly chamadosService: ChamadosService,
     private readonly empresasService: EmpresasService,
     private readonly sistemasService: SistemasService,
     private readonly toast: ToastService,
     private readonly zone: NgZone
   ) {
     this.vm$ = combineLatest([
+      this.chamadosService.todosState$,
       this.empresasService.empresasState$,
       this.sistemasService.sistemasState$,
       this.empresaSelecionadaIdSubject,
       this.funcionariosStateSubject
     ]).pipe(
-      map(([empresasState, sistemasState, empresaSelecionadaId, funcionariosState]) =>
-        this.buildViewModel(empresasState, sistemasState, empresaSelecionadaId, funcionariosState)
+      map(([chamadosState, empresasState, sistemasState, empresaSelecionadaId, funcionariosState]) =>
+        this.buildViewModel(
+          chamadosState,
+          empresasState,
+          sistemasState,
+          empresaSelecionadaId,
+          funcionariosState
+        )
       )
     );
   }
@@ -368,11 +380,13 @@ export class EmpresasComponent {
   }
 
   private buildViewModel(
+    chamadosState: DataState<Chamado[]>,
     empresasState: DataState<Empresa[]>,
     sistemasState: DataState<Sistema[]>,
     empresaSelecionadaId: string | null,
     funcionariosState: DataState<Funcionario[]>
   ): EmpresasViewModel {
+    const chamadosPorEmpresa = this.countChamadosPorEmpresa(chamadosState.data);
     const sistemas = this.sortSistemas(sistemasState.data)
       .filter((item): item is SistemaOptionView => !!item.id)
       .map((item) => ({
@@ -392,6 +406,10 @@ export class EmpresasComponent {
         sistemasExtras: Math.max(0, sistemasNomes.length - 2),
         sistemasTooltip: sistemasNomes.join(", "),
         sistemasQuantidadeLabel: this.buildEmpresaSistemasQuantidadeLabel(sistemasNomes.length),
+        totalChamados: chamadosPorEmpresa.get(item.id ?? "") ?? 0,
+        chamadosQuantidadeLabel: this.buildEmpresaChamadosQuantidadeLabel(
+          chamadosPorEmpresa.get(item.id ?? "") ?? 0
+        ),
         totalFuncionariosLabel: item.totalFuncionarios ?? 0
       };
     });
@@ -400,10 +418,11 @@ export class EmpresasComponent {
 
     return {
       carregando:
+        chamadosState.status === "loading" ||
         empresasState.status === "loading" ||
         sistemasState.status === "loading" ||
         (!!empresaSelecionadaId && funcionariosState.status === "loading"),
-      erro: empresasState.error,
+      erro: empresasState.error || chamadosState.error,
       empresas,
       empresaSelecionada,
       sistemas,
@@ -462,6 +481,29 @@ export class EmpresasComponent {
     }
 
     return `${total} sistemas vinculados`;
+  }
+
+  private buildEmpresaChamadosQuantidadeLabel(total: number): string {
+    if (total === 1) {
+      return "1 chamado";
+    }
+
+    return `${total} chamados`;
+  }
+
+  private countChamadosPorEmpresa(chamados: Chamado[]): Map<string, number> {
+    const totals = new Map<string, number>();
+
+    for (const chamado of chamados) {
+      const empresaId = typeof chamado.empresaId === "string" ? chamado.empresaId.trim() : "";
+      if (!empresaId) {
+        continue;
+      }
+
+      totals.set(empresaId, (totals.get(empresaId) ?? 0) + 1);
+    }
+
+    return totals;
   }
 
   private createEmptyFuncionarioForm(): FuncionarioFormModel {
