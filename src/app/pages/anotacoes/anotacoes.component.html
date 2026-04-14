@@ -89,11 +89,14 @@
 
             <div class="editor-shell">
               <ckeditor
+                *ngIf="editorVisivel"
                 class="editor-host"
                 name="conteudoAnotacao"
                 [editor]="Editor"
                 [config]="editorConfig"
                 [(ngModel)]="conteudoHtml"
+                (ready)="onEditorReady($event)"
+                (change)="onEditorChange()"
               ></ckeditor>
             </div>
           </div>

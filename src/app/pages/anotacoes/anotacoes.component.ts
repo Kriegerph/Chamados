@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectorRef,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  NgZone,
   ViewEncapsulation,
   inject,
 } from '@angular/core';
@@ -37,6 +39,7 @@ import { AnotacoesService } from '../../services/anotacoes.service';
 import { ToastService } from '../../services/toast.service';
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48];
+const EMPTY_EDITOR_HTML = '<p></p>';
 
 function parseCustomFontSize(value: string | null | undefined): number | null {
   const parsed = Number.parseInt((value || '').trim(), 10);
@@ -323,9 +326,10 @@ export class AnotacoesComponent {
     },
   };
   titulo = '';
-  conteudoHtml = '';
+  conteudoHtml = EMPTY_EDITOR_HTML;
   salvando = false;
   excluindo = false;
+  editorVisivel = true;
   modoNovaAnotacao = false;
   anotacaoSelecionadaId: string | null = null;
   filtroTitulo = '';
@@ -333,11 +337,21 @@ export class AnotacoesComponent {
   readonly vm$: Observable<AnotacoesViewModel>;
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly zone = inject(NgZone);
   private readonly filtroTituloSubject = new BehaviorSubject<string>('');
   private readonly dateFormatter = new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+  private editorInstance: any | null = null;
+  private editorReinitToken = 0;
+  private editorReinitScheduled = false;
+  private readonly onEditorDocumentChange = () => {
+    this.runInZone(() => {
+      this.cdr.markForCheck();
+    });
+  };
   private resetarParaNovoQuandoSelecaoSumir = false;
 
   constructor(
@@ -351,26 +365,45 @@ export class AnotacoesComponent {
 
     this.anotacoesService.anotacoesState$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((state) => this.syncSelection(state.data));
+      .subscribe((state) => this.runInZone(() => this.syncSelection(state.data)));
   }
 
   trackByAnotacao(_: number, item: AnotacaoListItem): string {
     return item.id ?? item.titulo;
   }
 
+  onEditorReady(editor: any) {
+    this.runInZone(() => {
+      this.detachEditorChangeListener();
+      this.editorInstance = editor;
+      editor?.model?.document?.on?.('change:data', this.onEditorDocumentChange);
+      this.cdr.markForCheck();
+    });
+  }
+
+  onEditorChange() {
+    this.runInZone(() => {
+      this.cdr.markForCheck();
+    });
+  }
+
   selecionarAnotacao(item: Anotacao) {
     if (!item.id) return;
-    this.modoNovaAnotacao = false;
-    this.anotacaoSelecionadaId = item.id;
-    this.titulo = item.titulo || '';
-    this.conteudoHtml = this.normalizeEditorHtml(item.conteudo || '');
+    this.aplicarEstadoEditor({
+      modoNovaAnotacao: false,
+      anotacaoSelecionadaId: item.id,
+      titulo: item.titulo || '',
+      conteudoHtml: this.toEditorModelHtml(item.conteudo),
+    });
   }
 
   abrirNovaAnotacao() {
-    this.modoNovaAnotacao = true;
-    this.anotacaoSelecionadaId = null;
-    this.titulo = '';
-    this.conteudoHtml = '';
+    this.aplicarEstadoEditor({
+      modoNovaAnotacao: true,
+      anotacaoSelecionadaId: null,
+      titulo: '',
+      conteudoHtml: EMPTY_EDITOR_HTML,
+    });
   }
 
   async salvarAnotacao() {
@@ -403,17 +436,26 @@ export class AnotacoesComponent {
           titulo,
           conteudo,
         });
-        this.anotacaoSelecionadaId = anotacaoId;
-        this.modoNovaAnotacao = false;
+        this.runInZone(() => {
+          this.anotacaoSelecionadaId = anotacaoId;
+          this.modoNovaAnotacao = false;
+          this.cdr.markForCheck();
+        });
         this.toast.show('Anotação criada.', 'success');
       }
 
-      this.titulo = titulo;
-      this.conteudoHtml = conteudo;
+      this.runInZone(() => {
+        this.titulo = titulo;
+        this.conteudoHtml = this.toEditorModelHtml(conteudo);
+        this.cdr.markForCheck();
+      });
     } catch (err: any) {
       this.toast.show(`Erro ao salvar anotação: ${err?.message || err}`, 'error');
     } finally {
-      this.salvando = false;
+      this.runInZone(() => {
+        this.salvando = false;
+        this.cdr.markForCheck();
+      });
     }
   }
 
@@ -433,7 +475,10 @@ export class AnotacoesComponent {
       this.resetarParaNovoQuandoSelecaoSumir = false;
       this.toast.show(`Erro ao excluir anotação: ${err?.message || err}`, 'error');
     } finally {
-      this.excluindo = false;
+      this.runInZone(() => {
+        this.excluindo = false;
+        this.cdr.markForCheck();
+      });
     }
   }
 
@@ -546,6 +591,69 @@ export class AnotacoesComponent {
       .replace(/\u200B/g, '')
       .replace(/&nbsp;/g, ' ')
       .trim();
+  }
+
+  private toEditorModelHtml(html?: string | null): string {
+    const normalized = this.normalizeEditorHtml(html || '');
+    return normalized || EMPTY_EDITOR_HTML;
+  }
+
+  private aplicarEstadoEditor(state: {
+    modoNovaAnotacao: boolean;
+    anotacaoSelecionadaId: string | null;
+    titulo: string;
+    conteudoHtml: string;
+  }) {
+    this.runInZone(() => {
+      this.modoNovaAnotacao = state.modoNovaAnotacao;
+      this.anotacaoSelecionadaId = state.anotacaoSelecionadaId;
+      this.titulo = state.titulo;
+      this.conteudoHtml = state.conteudoHtml;
+      this.cdr.markForCheck();
+      this.reinicializarEditor();
+    });
+  }
+
+  private reinicializarEditor() {
+    const reinitToken = ++this.editorReinitToken;
+    if (this.editorReinitScheduled) {
+      return;
+    }
+
+    this.editorReinitScheduled = true;
+
+    queueMicrotask(() => {
+      this.runInZone(() => {
+        this.editorReinitScheduled = false;
+        if (reinitToken !== this.editorReinitToken) {
+          return;
+        }
+
+        this.detachEditorChangeListener();
+        this.editorVisivel = false;
+        this.cdr.detectChanges();
+
+        queueMicrotask(() => {
+          this.runInZone(() => {
+            if (reinitToken !== this.editorReinitToken) {
+              return;
+            }
+
+            this.editorVisivel = true;
+            this.cdr.markForCheck();
+          });
+        });
+      });
+    });
+  }
+
+  private detachEditorChangeListener() {
+    this.editorInstance?.model?.document?.off?.('change:data', this.onEditorDocumentChange);
+    this.editorInstance = null;
+  }
+
+  private runInZone<T>(callback: () => T): T {
+    return NgZone.isInAngularZone() ? callback() : this.zone.run(callback);
   }
 
   private hasMeaningfulContent(html: string): boolean {

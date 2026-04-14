@@ -91,7 +91,7 @@
   position: relative;
   overflow: hidden;
   z-index: 20;
-  gap: 12px;
+  gap: 10px;
   padding: 20px;
 }
 
@@ -191,7 +191,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   overflow: hidden;
 }
 
@@ -200,7 +200,8 @@
   flex: 1;
   min-height: 0;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding-bottom: 28px;
 }
 
 .anotacoes-form-body > label {
@@ -208,9 +209,16 @@
 }
 
 .anotacoes-editor-field {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
+  gap: 0;
   overflow: hidden;
+}
+
+.anotacoes-editor-field .field-label {
+  margin-bottom: 4px;
 }
 
 .editor-shell {
@@ -220,18 +228,20 @@
   position: relative;
   overflow: hidden;
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
-  height: clamp(240px, 30dvh, 320px);
-  max-height: 100%;
+  height: 100%;
+  max-height: none;
   flex-direction: column;
-  padding: 10px;
-  gap: 10px;
+  margin-top: 0;
+  padding: 0 8px 8px;
+  gap: 0;
 }
 
 .editor-host {
-  display: block;
-  flex: 1;
+  display: flex;
+  flex: 1 1 0;
+  height: 100%;
   min-height: 0;
   position: relative;
   z-index: 1;
@@ -240,6 +250,7 @@
 .anotacoes-editor-card .editor-host .ck.ck-editor {
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -252,6 +263,7 @@
   position: relative;
   overflow: visible;
   z-index: 5;
+  margin: 0;
 }
 
 .anotacoes-editor-card .editor-host .ck.ck-toolbar .ck-toolbar__items {
@@ -371,6 +383,7 @@
 .anotacoes-editor-card .editor-host .ck-editor__main {
   display: flex;
   flex: 1;
+  height: 100%;
   min-height: 0;
   min-width: 0;
   max-width: 100%;
@@ -379,11 +392,12 @@
 
 .anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
   flex: 1;
+  height: 100%;
   min-height: 0;
   min-width: 0;
   max-width: 100%;
   max-height: none;
-  padding: 0 16px;
+  padding: 4px 16px 12px;
   border: 1px solid #dbe3ee;
   border-top: 0;
   border-radius: 0 0 12px 12px;
@@ -410,6 +424,14 @@
   padding-left: 24px;
 }
 
+.anotacoes-editor-card .editor-host .ck-content > :first-child {
+  margin-top: 0;
+}
+
+.anotacoes-editor-card .editor-host .ck-content > :last-child {
+  margin-bottom: 0;
+}
+
 .anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline *,
 .anotacoes-editor-card .editor-host .ck-content,
 .anotacoes-editor-card .editor-host .ck-content p,
@@ -429,9 +451,10 @@
   flex-wrap: nowrap;
   margin-top: 0;
   margin-bottom: 0;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid #e2e8f0;
   flex: 0 0 auto;
+  min-height: 50px;
 }
 
 @media (min-width: 1025px) {
@@ -478,7 +501,7 @@
   }
 
   .editor-shell {
-    height: clamp(280px, 42dvh, 420px);
+    min-height: clamp(280px, 42dvh, 420px);
     max-height: none;
   }
 

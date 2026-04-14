@@ -1,13 +1,15 @@
 .concluidos-limitador {
-  width: 136px;
-  min-width: 136px;
+  width: 152px;
+  min-width: 152px;
 }
 
 .concluidos-limitador select {
   width: 100%;
-  min-width: 0;
+  min-width: 84px;
   height: 36px;
-  padding-right: 36px;
+  padding: 0 32px 0 12px;
+  line-height: 34px;
+  vertical-align: middle;
   box-sizing: border-box;
 }
 
@@ -184,6 +186,11 @@
   font-size: 11px;
   font-weight: 700;
   padding: 4px 9px;
+}
+
+.badge-hora {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .badge-tipo.antigo {

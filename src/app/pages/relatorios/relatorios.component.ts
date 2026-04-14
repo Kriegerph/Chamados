@@ -31,6 +31,7 @@ type RelatorioColumn = {
   key: string;
   label: string;
   align?: "left" | "right";
+  width?: number;
 };
 
 type RelatorioRow = Record<string, string | number>;
@@ -81,18 +82,18 @@ export class RelatoriosComponent {
   readonly tipoRelatorioOptions: TipoRelatorioOption[] = [
     {
       valor: "detalhado-chamados",
-      titulo: "Relatório detalhado de chamados",
-      descricao: "Exporta um chamado por linha com empresa, motivo, data, resolução, tempo e status."
+      titulo: "Relat\u00f3rio detalhado de chamados",
+      descricao: "Exporta um chamado por linha com in\u00edcio, fim, empresa, sistema principal, motivo, descri\u00e7\u00e3o e tempo."
     },
     {
       valor: "tempo-por-empresa",
-      titulo: "Relatório de tempo por empresa",
-      descricao: "Agrupa chamados por empresa com totais de chamados, tempo total e tempo médio."
+      titulo: "Relat\u00f3rio de tempo por empresa",
+      descricao: "Agrupa chamados por empresa com totais de chamados, tempo total e tempo m\u00e9dio."
     },
     {
       valor: "ranking-empresas",
       titulo: "Ranking de empresas por chamados",
-      descricao: "Ordena as empresas do maior para o menor volume de chamados no período filtrado."
+      descricao: "Ordena as empresas do maior para o menor volume de chamados no per\u00edodo filtrado."
     }
   ];
 
@@ -198,7 +199,7 @@ export class RelatoriosComponent {
 
       XLSX.utils.book_append_sheet(workbook, worksheet, vm.dataset.sheetName);
       XLSX.writeFile(workbook, this.buildFileName());
-      this.toast.show("Relatório exportado com sucesso.", "success");
+      this.toast.show("Relat\u00f3rio exportado com sucesso.", "success");
     } catch (err: any) {
       this.toast.show(`Erro ao exportar: ${err.message || err}`, "error");
     }
@@ -227,7 +228,7 @@ export class RelatoriosComponent {
   getTipoRelatorioTitulo(): string {
     return (
       this.tipoRelatorioOptions.find((item) => item.valor === this.tipoRelatorio)?.titulo ??
-      "Relatório"
+      "Relat\u00f3rio"
     );
   }
 
@@ -365,29 +366,29 @@ export class RelatoriosComponent {
       sheetName: "Chamados",
       columns: [
         { key: "empresa", label: "Empresa" },
-        { key: "funcionario", label: "Funcionário" },
-        { key: "motivo", label: "Motivo" },
-        { key: "dataChamado", label: "Data do Chamado" },
+        { key: "funcionario", label: "Funcion\u00e1rio" },
         { key: "sistemaPrincipal", label: "Sistema principal" },
-        { key: "sistemasRelacionados", label: "Sistemas relacionados" },
-        { key: "resolucao", label: "Resolução" },
-        { key: "tempoAtendimento", label: "Tempo de Atendimento" },
-        { key: "status", label: "Status" }
+        { key: "motivo", label: "Motivo" },
+        { key: "resolucao", label: "Descri\u00e7\u00e3o / resolu\u00e7\u00e3o" },
+        { key: "tempoAtendimento", label: "Tempo total" },
+        { key: "dataHoraInicio", label: "Data/Hora in\u00edcio", width: 18 },
+        { key: "dataHoraFim", label: "Data/Hora fim", width: 18 }
       ],
       rows: chamados.map((item) => ({
+        dataHoraInicio: this.formatDataHoraRelatorio(this.getHorarioInicio(item)),
+        dataHoraFim: this.formatDataHoraRelatorio(this.getHorarioFim(item)),
         empresa: this.getEmpresaLabel(item, empresasMap),
         funcionario: item.funcionario || "",
-        motivo: item.motivo || "",
-        dataChamado: item.data || "",
         sistemaPrincipal: this.getSistemaNome(item.contextoSistemaId, sistemasMap),
-        sistemasRelacionados: this.getSistemasRelacionadosLabel(item.sistemasRelacionados, sistemasMap),
+        motivo: item.motivo || "",
         resolucao: item.resolucao || "",
-        tempoAtendimento: this.formatTempoMinutos(item.tempoAtendimentoMinutos, ""),
-        status: this.formatStatus(item.status)
+        tempoAtendimento: this.formatTempoMinutos(
+          item.tempoAtendimentoMinutos ?? item.tempoAtendimento ?? null,
+          ""
+        )
       }))
     };
   }
-
   private buildTempoPorEmpresaDataset(
     chamados: Chamado[],
     empresasMap: Map<string, Empresa>
@@ -445,7 +446,7 @@ export class RelatoriosComponent {
         { key: "empresa", label: "Nome da Empresa" },
         { key: "totalChamados", label: "Total de Chamados", align: "right" },
         { key: "tempoTotalAtendimento", label: "Tempo Total de Atendimento", align: "right" },
-        { key: "tempoMedioPorChamado", label: "Tempo Médio por Chamado", align: "right" }
+        { key: "tempoMedioPorChamado", label: "Tempo M\u00e9dio por Chamado", align: "right" }
       ],
       rows
     };
@@ -481,7 +482,7 @@ export class RelatoriosComponent {
       columns: [
         { key: "empresa", label: "Empresa" },
         { key: "quantidadeChamados", label: "Quantidade de Chamados", align: "right" },
-        { key: "percentualTotal", label: "Percentual em Relação ao Total", align: "right" }
+        { key: "percentualTotal", label: "Percentual em Rela\u00e7\u00e3o ao Total", align: "right" }
       ],
       rows
     };
@@ -489,10 +490,10 @@ export class RelatoriosComponent {
 
   private getMensagemResultado(filtros: RelatoriosFiltros): string | null {
     if (filtros.empresaIds.length === 0) {
-      return "Selecione pelo menos uma empresa para gerar o relatório.";
+      return "Selecione pelo menos uma empresa para gerar o relat\u00f3rio.";
     }
     if (filtros.dataInicial && filtros.dataFinal && filtros.dataInicial > filtros.dataFinal) {
-      return "Período inválido. Ajuste a data inicial e final.";
+      return "Per\u00edodo inv\u00e1lido. Ajuste a data inicial e final.";
     }
     return null;
   }
@@ -504,7 +505,7 @@ export class RelatoriosComponent {
       if (nome) return nome;
     }
     if (item.clienteNome) return item.clienteNome;
-    return item.cliente || "Empresa não informada";
+    return item.cliente || "Empresa n\u00e3o informada";
   }
 
   private sortEmpresas(items: Empresa[]): Empresa[] {
@@ -534,10 +535,6 @@ export class RelatoriosComponent {
       return value.toDate().getTime();
     }
     return 0;
-  }
-
-  private formatStatus(status: StatusChamado): string {
-    return status === "concluido" ? "Concluído" : "Aberto";
   }
 
   private formatTempoMinutos(value?: number | null, emptyText = ""): string {
@@ -627,36 +624,62 @@ export class RelatoriosComponent {
       return Math.max(maxLength, value.length);
     }, column.label.length);
 
-    return Math.min(Math.max(maxRowLength + 2, 14), 42);
+    const minWidth = column.width ?? 14;
+    return Math.min(Math.max(maxRowLength + 2, minWidth), 42);
   }
 
   private getSistemaNome(sistemaId: unknown, sistemasMap: Map<string, string>): string {
     if (typeof sistemaId !== "string") {
       return "";
     }
-
     const id = sistemaId.trim();
     if (!id) {
       return "";
     }
-
     return sistemasMap.get(id) || id;
   }
-
-  private getSistemasRelacionadosLabel(
-    sistemasRelacionados: unknown,
-    sistemasMap: Map<string, string>
-  ): string {
-    if (!Array.isArray(sistemasRelacionados)) {
+  private getHorarioInicio(item: Chamado): Date | null {
+    if (item.tipoCadastro === "antigo") {
+      const horarioFim = this.getHorarioFim(item);
+      const tempoInformado = item.tempoAtendimentoMinutos ?? item.tempoAtendimento ?? null;
+      if (!horarioFim || !this.hasTempoAtendimento(tempoInformado)) {
+        return null;
+      }
+      const tempoAtendimentoMinutos = this.getTempoAtendimentoMinutos(tempoInformado);
+      return new Date(horarioFim.getTime() - tempoAtendimentoMinutos * 60_000);
+    }
+    return this.getDateFromTimestamp(item.dataInicioAtendimento) ?? this.getDateFromTimestamp(item.criadoEm);
+  }
+  private getHorarioFim(item: Chamado): Date | null {
+    if (item.tipoCadastro === "antigo") {
+      return this.getDateFromTimestamp(item.criadoEm)
+        ?? this.getDateFromTimestamp(item.concluidoEm)
+        ?? this.getDateFromTimestamp(item.dataFechamento)
+        ?? this.getDateFromTimestamp(item.dataFimAtendimento);
+    }
+    if (item.status !== "concluido") {
+      return null;
+    }
+    return this.getDateFromTimestamp(item.dataFimAtendimento)
+      ?? this.getDateFromTimestamp(item.dataFechamento)
+      ?? this.getDateFromTimestamp(item.concluidoEm)
+      ?? this.getDateFromTimestamp(item.criadoEm);
+  }
+  private getDateFromTimestamp(value?: Timestamp | null): Date | null {
+    if (value && typeof value.toDate === "function") {
+      return value.toDate();
+    }
+    return null;
+  }
+  private formatDataHoraRelatorio(value: Date | null): string {
+    if (!value) {
       return "";
     }
-
-    return [...new Set(
-      sistemasRelacionados
-        .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .map((item) => sistemasMap.get(item) || item)
-    )].join(", ");
+    const dia = value.getDate().toString().padStart(2, "0");
+    const mes = (value.getMonth() + 1).toString().padStart(2, "0");
+    const ano = value.getFullYear();
+    const hora = value.getHours().toString().padStart(2, "0");
+    const minuto = value.getMinutes().toString().padStart(2, "0");
+    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
   }
 }

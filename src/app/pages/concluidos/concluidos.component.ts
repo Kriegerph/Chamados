@@ -262,12 +262,15 @@ export class ConcluidosComponent {
     });
   }
 
-  formatHora(item: Chamado): string {
-    if (item.concluidoEm && typeof (item.concluidoEm as any).toDate === "function") {
-      const dt = (item.concluidoEm as any).toDate() as Date;
-      return dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  formatIntervaloAtendimento(item: Chamado): string {
+    const fim = this.getHorarioFim(item);
+    const inicio = this.getHorarioInicio(item, fim);
+
+    if (!inicio && !fim) {
+      return "-- \u2192 --";
     }
-    return "-";
+
+    return `${this.formatHora(inicio)} \u2192 ${this.formatHora(fim)}`;
   }
 
   formatTempoAtendimento(item: Chamado): string {
@@ -723,6 +726,48 @@ export class ConcluidosComponent {
     return typeof valor === "number" && Number.isFinite(valor)
       ? Math.max(0, Math.floor(valor))
       : null;
+  }
+
+  private getHorarioInicio(item: Chamado, horarioFim: Date | null): Date | null {
+    if (item.tipoCadastro === "antigo") {
+      const tempoAtendimentoMinutos = this.getTempoAtendimentoMinutos(item);
+      if (!horarioFim || tempoAtendimentoMinutos == null) {
+        return null;
+      }
+
+      return new Date(horarioFim.getTime() - tempoAtendimentoMinutos * 60_000);
+    }
+
+    return this.getDateFromTimestamp(item.dataInicioAtendimento) ?? this.getDateFromTimestamp(item.criadoEm);
+  }
+
+  private getHorarioFim(item: Chamado): Date | null {
+    if (item.tipoCadastro === "antigo") {
+      return this.getDateFromTimestamp(item.criadoEm)
+        ?? this.getDateFromTimestamp(item.concluidoEm)
+        ?? this.getDateFromTimestamp(item.dataFechamento)
+        ?? this.getDateFromTimestamp(item.dataFimAtendimento);
+    }
+
+    return this.getDateFromTimestamp(item.dataFimAtendimento)
+      ?? this.getDateFromTimestamp(item.dataFechamento)
+      ?? this.getDateFromTimestamp(item.concluidoEm)
+      ?? this.getDateFromTimestamp(item.criadoEm);
+  }
+
+  private getDateFromTimestamp(value?: Timestamp | null): Date | null {
+    if (value && typeof value.toDate === "function") {
+      return value.toDate();
+    }
+    return null;
+  }
+
+  private formatHora(value: Date | null): string {
+    if (!value) {
+      return "--";
+    }
+
+    return `${value.getHours().toString().padStart(2, "0")}:${value.getMinutes().toString().padStart(2, "0")}`;
   }
 
   private formatTempoChamado(minutos: number): string {
