@@ -10,6 +10,10 @@ import { ChamadosService } from "../../services/chamados.service";
 import { EmpresasService } from "../../services/empresas.service";
 import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
+import {
+  isValidPhone12Digits,
+  normalizePhoneTo12Digits,
+} from "../../utils/phone.util";
 
 type EmpresaItemView = Empresa & {
   totalFuncionariosLabel: number;
@@ -237,6 +241,7 @@ export class EmpresasComponent {
   async cadastrarFuncionario() {
     const empresaId = this.empresaSelecionadaIdSubject.value;
     const nomeFuncionario = this.funcionario.nomeFuncionario.trim();
+    const telefone = normalizePhoneTo12Digits(this.funcionario.telefone);
     if (!empresaId) {
       this.toast.show("Selecione uma empresa primeiro.", "error");
       return;
@@ -245,11 +250,15 @@ export class EmpresasComponent {
       this.toast.show("Informe o nome do funcionário.", "error");
       return;
     }
+    if (!isValidPhone12Digits(this.funcionario.telefone)) {
+      this.toast.show("Telefone inválido. Informe DDD + 8 dígitos. O valor salvo deve gerar exatamente 12 dígitos com 55.", "error");
+      return;
+    }
 
     try {
       await this.empresasService.addFuncionario(empresaId, {
         nomeFuncionario,
-        telefone: this.funcionario.telefone,
+        telefone,
         criarChamadoAutomatico: this.funcionario.criarChamadoAutomatico
       });
       await this.carregarFuncionarios(empresaId);
@@ -293,8 +302,13 @@ export class EmpresasComponent {
   async salvarEdicaoFuncionario() {
     if (!this.editFuncionarioId || !this.editFuncionarioEmpresaId) return;
     const nomeFuncionario = this.editFuncionario.nomeFuncionario.trim();
+    const telefone = normalizePhoneTo12Digits(this.editFuncionario.telefone);
     if (!nomeFuncionario) {
       this.toast.show("Informe o nome do funcionário.", "error");
+      return;
+    }
+    if (!isValidPhone12Digits(this.editFuncionario.telefone)) {
+      this.toast.show("Telefone inválido. Informe DDD + 8 dígitos. O valor salvo deve gerar exatamente 12 dígitos com 55.", "error");
       return;
     }
 
@@ -304,7 +318,7 @@ export class EmpresasComponent {
         this.editFuncionarioId,
         {
           nomeFuncionario,
-          telefone: this.editFuncionario.telefone,
+          telefone,
           criarChamadoAutomatico: this.editFuncionario.criarChamadoAutomatico
         }
       );
@@ -354,6 +368,40 @@ export class EmpresasComponent {
     }
 
     this.sistemasEmpresaSelecionados = normalizados;
+  }
+
+  onTelefoneKeydown(event: KeyboardEvent) {
+    if (
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      [
+        "Backspace",
+        "Delete",
+        "Tab",
+        "Escape",
+        "Enter",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "Home",
+        "End"
+      ].includes(event.key)
+    ) {
+      return;
+    }
+
+    if (event.key.length === 1 && !/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onTelefonePaste(event: ClipboardEvent) {
+    const pastedText = event.clipboardData?.getData("text") ?? "";
+    if (pastedText && /\D/.test(pastedText)) {
+      event.preventDefault();
+    }
   }
 
   private async carregarFuncionarios(empresaId: string) {
@@ -517,7 +565,7 @@ export class EmpresasComponent {
   private createFuncionarioForm(funcionario?: Partial<Funcionario> | null): FuncionarioFormModel {
     return {
       nomeFuncionario: funcionario?.nomeFuncionario || "",
-      telefone: funcionario?.telefone || "",
+      telefone: String(funcionario?.telefone || ""),
       criarChamadoAutomatico:
         funcionario?.criarChamadoAutomatico ?? true
     };

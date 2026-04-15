@@ -287,10 +287,16 @@
           <input
             name="editFuncionarioTelefone"
             type="text"
+            inputmode="numeric"
             [(ngModel)]="editFuncionario.telefone"
-            placeholder="Opcional"
+            (keydown)="onTelefoneKeydown($event)"
+            (paste)="onTelefonePaste($event)"
+            placeholder="554791904429"
           />
         </label>
+        <div class="helper-text">
+          Telefone salvo no banco: 55 + DDD + 8 digitos (ex.: 554791904429).
+        </div>
         <label class="empresas-checkbox">
           <input
             name="editFuncionarioCriarChamadoAutomatico"
@@ -331,10 +337,16 @@
           <input
             name="funcionarioTelefone"
             type="text"
+            inputmode="numeric"
             [(ngModel)]="funcionario.telefone"
-            placeholder="Opcional"
+            (keydown)="onTelefoneKeydown($event)"
+            (paste)="onTelefonePaste($event)"
+            placeholder="554791904429"
           />
         </label>
+        <div class="helper-text">
+          Telefone salvo no banco: 55 + DDD + 8 digitos (ex.: 554791904429).
+        </div>
         <label class="empresas-checkbox">
           <input
             name="funcionarioCriarChamadoAutomatico"

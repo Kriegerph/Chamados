@@ -16,6 +16,7 @@ import {
 import { BehaviorSubject, map } from "rxjs";
 import { DataState } from "../models/data-state.model";
 import { Empresa, Funcionario } from "../models/empresa.model";
+import { normalizePhoneTo12Digits } from "../utils/phone.util";
 import { AuthService, AuthState } from "./auth.service";
 import { FirebaseService } from "./firebase.service";
 
@@ -95,7 +96,10 @@ export class EmpresasService {
     return snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       nomeFuncionario: String(docSnap.data()["nomeFuncionario"] || ""),
-      telefone: String(docSnap.data()["telefone"] || ""),
+      telefone: normalizePhoneTo12Digits(docSnap.data()["telefone"]) || String(docSnap.data()["telefone"] || ""),
+      telefoneBusca: normalizePhoneTo12Digits(
+        docSnap.data()["telefoneBusca"] || docSnap.data()["telefone"]
+      ),
       criarChamadoAutomatico: this.normalizeCriacaoAutomatica(
         docSnap.data()["criarChamadoAutomatico"]
       ),
@@ -114,9 +118,11 @@ export class EmpresasService {
     }
   ) {
     const uid = this.getUidOrThrow();
+    const telefone = normalizePhoneTo12Digits(data.telefone);
     const payload: Omit<Funcionario, "id"> = {
       nomeFuncionario: data.nomeFuncionario.trim(),
-      telefone: data.telefone?.trim() || "",
+      telefone,
+      telefoneBusca: telefone,
       criarChamadoAutomatico: this.normalizeCriacaoAutomatica(data.criarChamadoAutomatico),
       ativo: true,
       dataCadastro: serverTimestamp() as any,
@@ -144,9 +150,11 @@ export class EmpresasService {
       "funcionarios",
       funcionarioId
     );
+    const telefone = normalizePhoneTo12Digits(data.telefone);
     await updateDoc(ref, {
       nomeFuncionario: data.nomeFuncionario?.trim() || "",
-      telefone: data.telefone?.trim() || "",
+      telefone,
+      telefoneBusca: telefone,
       criarChamadoAutomatico: this.normalizeCriacaoAutomatica(data.criarChamadoAutomatico),
       cargo: deleteField(),
       email: deleteField(),

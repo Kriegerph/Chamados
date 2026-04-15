@@ -14,6 +14,7 @@ export interface Funcionario {
   id?: string;
   nomeFuncionario: string;
   telefone?: string;
+  telefoneBusca?: string;
   criarChamadoAutomatico?: boolean;
   ativo: boolean;
   dataCadastro?: Timestamp | null;
