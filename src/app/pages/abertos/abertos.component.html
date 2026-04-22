@@ -1,10 +1,9 @@
 <section class="page-section abertos-page" *ngIf="vm$ | async as vm">
   <div class="page-header">
     <div>
-      <h2 class="page-title">Chamados Abertos</h2>
+      <h2 class="page-title">Chamados em aberto e atendimentos ativos</h2>
       <p class="page-subtitle">
-        Acompanhe os atendimentos em aberto e registre novos chamados sem disputar espaço com a
-        listagem.
+        Monitore a fila atual, registre novos chamados e avance os atendimentos em andamento.
       </p>
     </div>
     <div class="abertos-header-actions">
@@ -379,8 +378,8 @@
       <p class="helper-text">
         {{
           finalizarOrigem === 'whatsapp'
-            ? 'Preencha motivo e resolução para concluir o chamado.'
-            : 'Informe como foi resolvido:'
+            ? 'Preencha motivo e resolução. Você pode vincular empresa e funcionário agora ou concluir como número desconhecido.'
+            : 'Informe como foi resolvido e ajuste o vínculo da empresa se necessário.'
         }}
       </p>
       <div class="form">
@@ -392,6 +391,49 @@
             name="motivoFinalizar"
             placeholder="Descreva o motivo do chamado"
           />
+        </label>
+        <label>
+          <span>Empresa</span>
+          <div class="helper-text">
+            Atual: {{ finalizarEmpresaNomeOriginal || 'Número desconhecido' }}
+          </div>
+          <select
+            name="finalizarEmpresaId"
+            [(ngModel)]="finalizarEmpresaId"
+            (ngModelChange)="onFinalizarEmpresaChange($event)"
+          >
+            <option value="">Manter como número desconhecido</option>
+            <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+              {{ empresa.nomeEmpresa }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>Funcionário</span>
+          <div class="helper-text">
+            Atual: {{ finalizarFuncionarioNomeOriginal || 'Sem funcionário vinculado' }}
+          </div>
+          <select
+            name="finalizarFuncionarioId"
+            [(ngModel)]="finalizarFuncionarioId"
+            [disabled]="!finalizarEmpresaId || finalizarCarregandoFuncionarios"
+          >
+            <option value="">
+              {{
+                !finalizarEmpresaId
+                  ? 'Mantenha sem vínculo ou selecione uma empresa'
+                  : finalizarCarregandoFuncionarios
+                    ? 'Carregando funcionários...'
+                    : 'Selecione um funcionário'
+              }}
+            </option>
+            <option
+              *ngFor="let funcionario of finalizarFuncionarios"
+              [value]="funcionario.id"
+            >
+              {{ getFuncionarioOptionLabel(funcionario) }}
+            </option>
+          </select>
         </label>
         <label>
           <span>Resolução</span>
@@ -410,10 +452,13 @@
             name="finalizarContextoSistemaId"
             [(ngModel)]="finalizarContextoSistemaId"
             (ngModelChange)="onContextoSistemaChange()"
+            [disabled]="!finalizarEmpresaId"
           >
             <option value="">
               {{
-                getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
+                !finalizarEmpresaId
+                  ? 'Finalize como número desconhecido ou selecione uma empresa'
+                  : getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
                   ? 'Empresa sem sistemas vinculados'
                   : 'Selecione o sistema principal'
               }}
@@ -430,7 +475,7 @@
         <div class="field">
           <span class="field-label">Sistemas envolvidos</span>
           <div class="helper-text">
-            Opcional. Apenas sistemas vinculados à empresa do chamado podem ser selecionados.
+            Opcional. Disponível apenas quando houver empresa vinculada ao chamado.
           </div>
           <div
             class="abertos-sistemas-list"
@@ -468,7 +513,13 @@
             </label>
           </div>
           <ng-template #semSistemasFinalizar>
-            <div class="helper-text">Nenhum sistema disponível para esta empresa.</div>
+            <div class="helper-text">
+              {{
+                !finalizarEmpresaId
+                  ? 'Sem empresa vinculada, não há sistemas para selecionar.'
+                  : 'Nenhum sistema disponível para esta empresa.'
+              }}
+            </div>
           </ng-template>
         </div>
       </div>

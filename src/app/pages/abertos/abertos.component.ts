@@ -60,11 +60,16 @@ export class AbertosComponent {
   modalAberto = false;
   finalizarId: string | null = null;
   finalizarEmpresaId = "";
+  finalizarEmpresaNomeOriginal = "";
+  finalizarFuncionarioId = "";
+  finalizarFuncionarioNomeOriginal = "";
   finalizarOrigem: OrigemChamado = "manual";
   motivoFinalizar = "";
   resolucaoFinalizar = "";
   finalizarContextoSistemaId = "";
   finalizarSistemasRelacionados: string[] = [];
+  finalizarFuncionarios: Funcionario[] = [];
+  finalizarCarregandoFuncionarios = false;
 
   editando = false;
   editId: string | null = null;
@@ -225,36 +230,78 @@ export class AbertosComponent {
     }
   }
 
-  abrirModalFinalizar(item: AbertoItemView) {
+  async abrirModalFinalizar(item: AbertoItemView) {
     this.finalizarId = item.id ?? null;
     this.finalizarEmpresaId = item.empresaId || this.getEmpresaIdByNome(item.empresa || "");
+    this.finalizarEmpresaNomeOriginal = item.empresa || "";
+    this.finalizarFuncionarioId = item.funcionarioId || "";
+    this.finalizarFuncionarioNomeOriginal = item.funcionario || "";
     this.finalizarOrigem = item.origem === "whatsapp" ? "whatsapp" : "manual";
     this.motivoFinalizar = this.finalizarOrigem === "whatsapp" ? item.motivo || "" : "";
     this.resolucaoFinalizar = "";
     this.finalizarContextoSistemaId = "";
     this.finalizarSistemasRelacionados = [];
+    this.finalizarFuncionarios = [];
+    this.finalizarCarregandoFuncionarios = false;
     this.modalAberto = true;
+
+    if (this.finalizarEmpresaId) {
+      await this.carregarFuncionariosFinalizacao(this.finalizarEmpresaId);
+      if (!this.finalizarFuncionarioId && this.finalizarFuncionarioNomeOriginal) {
+        this.runInZone(() => {
+          this.finalizarFuncionarioId =
+            this.finalizarFuncionarios.find(
+              (funcionario) =>
+                funcionario.nomeFuncionario === this.finalizarFuncionarioNomeOriginal
+            )?.id || "";
+          this.forcarAtualizacaoFormulario();
+        });
+      }
+    }
   }
 
   cancelarModal() {
     this.modalAberto = false;
     this.finalizarId = null;
     this.finalizarEmpresaId = "";
+    this.finalizarEmpresaNomeOriginal = "";
+    this.finalizarFuncionarioId = "";
+    this.finalizarFuncionarioNomeOriginal = "";
     this.finalizarOrigem = "manual";
     this.motivoFinalizar = "";
     this.resolucaoFinalizar = "";
     this.finalizarContextoSistemaId = "";
     this.finalizarSistemasRelacionados = [];
+    this.finalizarFuncionarios = [];
+    this.finalizarCarregandoFuncionarios = false;
+  }
+
+  async onFinalizarEmpresaChange(empresaId: string) {
+    this.iniciarCarregamentoFuncionariosFinalizacao(empresaId);
+
+    if (!empresaId) {
+      this.finalizarCarregamentoFuncionariosFinalizacao([]);
+      return;
+    }
+
+    await this.carregarFuncionariosFinalizacao(empresaId);
   }
 
   async confirmarFinalizacao() {
     const resolucao = this.resolucaoFinalizar.trim();
     const motivo = this.motivoFinalizar.trim();
-    const contextoSistemaId = this.finalizarContextoSistemaId.trim();
+    const empresaId = this.finalizarEmpresaId.trim();
+    const funcionarioId = this.finalizarFuncionarioId.trim();
+    const empresa = this.getEmpresaNomeById(empresaId);
+    const funcionario = this.getFuncionarioNomeById(
+      funcionarioId,
+      this.finalizarFuncionarios
+    );
+    const contextoSistemaId = empresaId ? this.finalizarContextoSistemaId.trim() : "";
     const sistemasRelacionados = this.sanitizeSistemaIds(
       this.finalizarSistemasRelacionados,
       contextoSistemaId,
-      this.finalizarEmpresaId
+      empresaId
     );
 
     if (this.finalizarOrigem === "whatsapp" && !motivo) {
@@ -267,7 +314,20 @@ export class AbertosComponent {
       return;
     }
 
-    if (!contextoSistemaId) {
+    const possuiVinculoParcial = (!!empresaId && !funcionarioId) || (!empresaId && !!funcionarioId);
+    if (
+      possuiVinculoParcial ||
+      (!!empresaId && !empresa) ||
+      (!!funcionarioId && !funcionario)
+    ) {
+      this.toast.show(
+        "Selecione empresa e funcionário para vincular o chamado ou finalize como número desconhecido.",
+        "error"
+      );
+      return;
+    }
+
+    if (empresaId && !contextoSistemaId) {
       this.toast.show("Selecione o sistema do problema.", "error");
       return;
     }
@@ -275,12 +335,30 @@ export class AbertosComponent {
     if (!this.finalizarId) return;
 
     try {
-      await this.chamadosService.finalizarChamado(this.finalizarId, {
+      const payload: {
+        resolucao: string;
+        motivo?: string;
+        contextoSistemaId: string;
+        sistemasRelacionados?: string[];
+        empresaId?: string;
+        empresa?: string;
+        funcionarioId?: string;
+        funcionario?: string;
+      } = {
         resolucao,
         motivo: this.finalizarOrigem === "whatsapp" ? motivo : undefined,
         contextoSistemaId,
         sistemasRelacionados
-      });
+      };
+
+      if (empresaId && empresa && funcionarioId && funcionario) {
+        payload.empresaId = empresaId;
+        payload.empresa = empresa;
+        payload.funcionarioId = funcionarioId;
+        payload.funcionario = funcionario;
+      }
+
+      await this.chamadosService.finalizarChamado(this.finalizarId, payload);
       this.runInZone(() => {
         this.toast.show("Chamado finalizado.", "success");
         this.cancelarModal();
@@ -535,6 +613,20 @@ export class AbertosComponent {
       this.runInZone(() => {
         this.toast.show(`Erro ao carregar funcionários: ${err.message}`, "error");
         this.finalizarCarregamentoFuncionariosFormulario([]);
+      });
+    }
+  }
+
+  private async carregarFuncionariosFinalizacao(empresaId: string) {
+    try {
+      const funcionarios = await this.empresasService.listFuncionarios(empresaId);
+      this.finalizarCarregamentoFuncionariosFinalizacao(
+        this.sortFuncionarios(funcionarios.filter((item) => item.ativo !== false))
+      );
+    } catch (err: any) {
+      this.runInZone(() => {
+        this.toast.show(`Erro ao carregar funcionários: ${err.message}`, "error");
+        this.finalizarCarregamentoFuncionariosFinalizacao([]);
       });
     }
   }
@@ -826,6 +918,28 @@ export class AbertosComponent {
       this.funcionariosFormulario = [];
       this.funcionariosFormulario = [...this.funcionariosFormulario];
       this.carregandoFuncionariosFormulario = !!empresaId;
+      this.forcarAtualizacaoFormulario();
+    });
+  }
+
+  private iniciarCarregamentoFuncionariosFinalizacao(empresaId: string) {
+    this.runInZone(() => {
+      this.finalizarEmpresaId = empresaId;
+      this.finalizarFuncionarioId = "";
+      this.finalizarContextoSistemaId = "";
+      this.finalizarSistemasRelacionados = [];
+      this.finalizarFuncionarios = [];
+      this.finalizarFuncionarios = [...this.finalizarFuncionarios];
+      this.finalizarCarregandoFuncionarios = !!empresaId;
+      this.forcarAtualizacaoFormulario();
+    });
+  }
+
+  private finalizarCarregamentoFuncionariosFinalizacao(funcionarios: Funcionario[]) {
+    this.runInZone(() => {
+      this.finalizarFuncionarios = [];
+      this.finalizarFuncionarios = [...funcionarios];
+      this.finalizarCarregandoFuncionarios = false;
       this.forcarAtualizacaoFormulario();
     });
   }

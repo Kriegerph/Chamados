@@ -14,6 +14,7 @@ export interface Chamado {
   empresaId?: string;
   funcionario?: string;
   funcionarioId?: string;
+  telefoneOrigem?: string;
   contextoSistemaId?: string;
   sistemasRelacionados?: string[];
   data: string;

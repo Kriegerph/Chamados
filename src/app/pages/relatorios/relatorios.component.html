@@ -1,22 +1,24 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
   <header class="page-header">
     <div>
-      <h2 class="page-title">Relatórios</h2>
+      <h2 class="page-title relatorios-page-title">Exportação e análise de chamados</h2>
       <p class="page-subtitle">
-        Gere relatórios exportáveis em Excel com filtros aplicados diretamente no frontend.
+        Aplique filtros, consolide dados e gere planilhas prontas para compartilhamento.
       </p>
     </div>
     <span class="status-chip">Linhas: {{ vm.dataset.rows.length }}</span>
   </header>
 
-  <div class="grid-3" *ngIf="vm.carregando">
-    <div class="skeleton" style="min-height: 260px;"></div>
-    <div class="skeleton" style="min-height: 260px;"></div>
-    <div class="skeleton" style="min-height: 260px;"></div>
+  <div class="relatorios-layout relatorios-layout-loading" *ngIf="vm.carregando">
+    <div class="skeleton" style="min-height: 560px;"></div>
+    <div class="relatorios-side-column">
+      <div class="skeleton" style="min-height: 260px;"></div>
+      <div class="skeleton" style="min-height: 284px;"></div>
+    </div>
   </div>
 
   <div class="relatorios-layout" *ngIf="!vm.carregando">
-    <article class="card relatorios-card">
+    <article class="card relatorios-card relatorios-card-filtros">
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Filtros gerais</h3>
@@ -73,7 +75,7 @@
           <div class="empty-state">Nenhuma empresa cadastrada.</div>
         </ng-template>
 
-        <div class="relatorios-date-grid">
+        <div class="relatorios-fields-grid">
           <label>
             <span>Data inicial</span>
             <input
@@ -93,32 +95,32 @@
               (ngModelChange)="onFiltroChange()"
             />
           </label>
+
+          <label>
+            <span>Status do chamado</span>
+            <select
+              name="status"
+              [(ngModel)]="filtros.status"
+              (ngModelChange)="onFiltroChange()"
+            >
+              <option value="ambos">Abertos e concluídos</option>
+              <option value="aberto">Abertos</option>
+              <option value="concluido">Concluídos</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Considerar tempo de atendimento</span>
+            <select
+              name="tempo"
+              [(ngModel)]="filtros.tempo"
+              (ngModelChange)="onFiltroChange()"
+            >
+              <option value="todos">Todos</option>
+              <option value="com-tempo">Apenas chamados com tempo registrado</option>
+            </select>
+          </label>
         </div>
-
-        <label>
-          <span>Status do chamado</span>
-          <select
-            name="status"
-            [(ngModel)]="filtros.status"
-            (ngModelChange)="onFiltroChange()"
-          >
-            <option value="ambos">Abertos e concluídos</option>
-            <option value="aberto">Abertos</option>
-            <option value="concluido">Concluídos</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Considerar tempo de atendimento</span>
-          <select
-            name="tempo"
-            [(ngModel)]="filtros.tempo"
-            (ngModelChange)="onFiltroChange()"
-          >
-            <option value="todos">Todos</option>
-            <option value="com-tempo">Apenas chamados com tempo registrado</option>
-          </select>
-        </label>
 
         <div class="relatorios-actions">
           <button class="btn secondary" type="button" (click)="limparFiltros()">
@@ -128,80 +130,82 @@
       </form>
     </article>
 
-    <article class="card relatorios-card">
-      <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Tipo de relatório</h3>
-          <p class="card-subtitle">Escolha como os dados devem ser organizados no Excel.</p>
+    <div class="relatorios-side-column">
+      <article class="card relatorios-card relatorios-card-tipos">
+        <div class="card-title-row relatorios-card-head-compact">
+          <div>
+            <h3 class="card-title">Tipo de relatório</h3>
+            <p class="card-subtitle">Escolha como os dados devem ser organizados no Excel.</p>
+          </div>
         </div>
-      </div>
 
-      <div class="relatorio-tipos">
-        <label
-          class="tipo-card"
-          *ngFor="let item of tipoRelatorioOptions; trackBy: trackByTipoRelatorio"
-          [class.active]="tipoRelatorio === item.valor"
+        <div class="relatorio-tipos">
+          <label
+            class="tipo-card"
+            *ngFor="let item of tipoRelatorioOptions; trackBy: trackByTipoRelatorio"
+            [class.active]="tipoRelatorio === item.valor"
+          >
+            <input
+              type="radio"
+              name="tipoRelatorio"
+              [value]="item.valor"
+              [(ngModel)]="tipoRelatorio"
+              (ngModelChange)="onTipoRelatorioChange()"
+            />
+            <span class="tipo-card-title">{{ item.titulo }}</span>
+            <span class="tipo-card-description">{{ item.descricao }}</span>
+          </label>
+        </div>
+      </article>
+
+      <article class="card relatorios-card relatorios-export-card">
+        <div class="card-title-row relatorios-card-head-compact">
+          <div>
+            <h3 class="card-title">Exportação</h3>
+            <p class="card-subtitle">Os filtros são aplicados antes de gerar o arquivo Excel.</p>
+          </div>
+        </div>
+
+        <div class="grid-2 relatorios-stats">
+          <div class="stat-mini">
+            <span class="stat-mini-label">Chamados filtrados</span>
+            <strong>{{ vm.totalChamadosFiltrados }}</strong>
+          </div>
+          <div class="stat-mini">
+            <span class="stat-mini-label">Empresas no resultado</span>
+            <strong>{{ vm.totalEmpresasFiltradas }}</strong>
+          </div>
+          <div class="stat-mini">
+            <span class="stat-mini-label">Chamados com tempo</span>
+            <strong>{{ vm.totalChamadosComTempo }}</strong>
+          </div>
+          <div class="stat-mini">
+            <span class="stat-mini-label">Tempo total</span>
+            <strong>{{ vm.tempoTotalLabel }}</strong>
+          </div>
+        </div>
+
+        <div class="export-summary">
+          <div class="export-summary-label">Relatório selecionado</div>
+          <div class="export-summary-value">{{ getTipoRelatorioTitulo() }}</div>
+        </div>
+
+        <div class="empty-state" *ngIf="!!vm.mensagemResultado">
+          {{ vm.mensagemResultado }}
+        </div>
+
+        <button
+          class="btn primary export-btn"
+          type="button"
+          (click)="exportarParaExcel()"
+          [disabled]="!!vm.erro || !!vm.mensagemResultado"
         >
-          <input
-            type="radio"
-            name="tipoRelatorio"
-            [value]="item.valor"
-            [(ngModel)]="tipoRelatorio"
-            (ngModelChange)="onTipoRelatorioChange()"
-          />
-          <span class="tipo-card-title">{{ item.titulo }}</span>
-          <span class="tipo-card-description">{{ item.descricao }}</span>
-        </label>
-      </div>
-    </article>
+          Exportar para Excel
+        </button>
 
-    <article class="card relatorios-card relatorios-export-card">
-      <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Exportação</h3>
-          <p class="card-subtitle">Os filtros são aplicados antes de gerar o arquivo Excel.</p>
-        </div>
-      </div>
-
-      <div class="grid-2 relatorios-stats">
-        <div class="stat-mini">
-          <span class="stat-mini-label">Chamados filtrados</span>
-          <strong>{{ vm.totalChamadosFiltrados }}</strong>
-        </div>
-        <div class="stat-mini">
-          <span class="stat-mini-label">Empresas no resultado</span>
-          <strong>{{ vm.totalEmpresasFiltradas }}</strong>
-        </div>
-        <div class="stat-mini">
-          <span class="stat-mini-label">Chamados com tempo</span>
-          <strong>{{ vm.totalChamadosComTempo }}</strong>
-        </div>
-        <div class="stat-mini">
-          <span class="stat-mini-label">Tempo total</span>
-          <strong>{{ vm.tempoTotalLabel }}</strong>
-        </div>
-      </div>
-
-      <div class="export-summary">
-        <div class="export-summary-label">Relatório selecionado</div>
-        <div class="export-summary-value">{{ getTipoRelatorioTitulo() }}</div>
-      </div>
-
-      <div class="empty-state" *ngIf="!!vm.mensagemResultado">
-        {{ vm.mensagemResultado }}
-      </div>
-
-      <button
-        class="btn primary export-btn"
-        type="button"
-        (click)="exportarParaExcel()"
-        [disabled]="!!vm.erro || !!vm.mensagemResultado"
-      >
-        Exportar para Excel
-      </button>
-
-      <div class="helper-text">Arquivo gerado em formato .xlsx com a data atual.</div>
-    </article>
+        <div class="helper-text">Arquivo gerado em formato .xlsx com a data atual.</div>
+      </article>
+    </div>
   </div>
 
   <article class="card" *ngIf="!vm.carregando && !vm.erro">

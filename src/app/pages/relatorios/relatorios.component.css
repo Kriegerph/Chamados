@@ -1,16 +1,64 @@
 .relatorios-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.94fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.relatorios-page-title {
+  margin-top: -2px;
+}
+
+.relatorios-layout-loading {
+  align-items: stretch;
 }
 
 .relatorios-card {
   min-width: 0;
 }
 
+.relatorios-card-filtros {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .relatorios-form {
+  display: grid;
   gap: 14px;
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.relatorios-side-column {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  min-width: 0;
+  height: 100%;
+}
+
+.relatorios-card-tipos,
+.relatorios-export-card {
+  display: grid;
+  align-content: start;
+}
+
+.relatorios-card-tipos {
+  gap: 10px;
+}
+
+.relatorios-card-head-compact {
+  margin-bottom: -2px;
+}
+
+.relatorios-card-head-compact .card-title {
+  line-height: 1.15;
+}
+
+.relatorios-card-head-compact .card-subtitle {
+  margin-top: 3px;
+  line-height: 1.35;
 }
 
 .empresas-selector {
@@ -36,7 +84,7 @@
 }
 
 .empresas-selector-list {
-  max-height: 320px;
+  max-height: 364px;
   overflow-y: auto;
   border: 1px solid #dbe3ee;
   border-radius: 12px;
@@ -88,15 +136,21 @@
   background: #f8fafc;
 }
 
-.relatorios-date-grid {
+.relatorios-fields-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+.relatorios-fields-grid label {
+  min-width: 0;
 }
 
 .relatorios-actions {
   display: flex;
   justify-content: flex-end;
+  margin-top: auto;
 }
 
 .relatorio-tipos {
@@ -151,7 +205,8 @@
 
 .relatorios-export-card {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+  align-content: start;
 }
 
 .relatorios-stats {
@@ -214,17 +269,13 @@
 
 @media (max-width: 1200px) {
   .relatorios-layout {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .relatorios-export-card {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 780px) {
   .relatorios-layout,
-  .relatorios-date-grid {
+  .relatorios-fields-grid {
     grid-template-columns: 1fr;
   }
 
@@ -235,5 +286,9 @@
 
   .empresas-selector-actions {
     justify-content: flex-start;
+  }
+
+  .relatorios-side-column {
+    grid-template-rows: auto;
   }
 }

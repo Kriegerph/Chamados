@@ -164,6 +164,10 @@ export class ChamadosService {
       motivo?: string;
       contextoSistemaId: string;
       sistemasRelacionados?: string[];
+      empresaId?: string;
+      empresa?: string;
+      funcionarioId?: string;
+      funcionario?: string;
     }
   ) {
     const uid = this.getUidOrThrow();
@@ -190,6 +194,15 @@ export class ChamadosService {
 
     if (typeof data.motivo === "string") {
       payload.motivo = data.motivo;
+    }
+
+    if (data.empresaId && data.empresa && data.funcionarioId && data.funcionario) {
+      payload.empresaId = data.empresaId;
+      payload.empresa = data.empresa;
+      payload.funcionarioId = data.funcionarioId;
+      payload.funcionario = data.funcionario;
+      payload.cliente = data.empresa;
+      payload.clienteNome = data.empresa;
     }
 
     if (dataInicioAtendimento) {
