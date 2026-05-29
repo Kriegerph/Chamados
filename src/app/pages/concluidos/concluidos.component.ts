@@ -38,6 +38,7 @@ type ConcluidosFiltros = {
   mes: string;
   data: string;
   empresaId: string;
+  clienteId: string;
   texto: string;
 };
 
@@ -54,6 +55,20 @@ type EmpresaFiltroOption = {
   empresaId: string;
 };
 
+type ClienteFiltroOption = {
+  valor: string;
+  nome: string;
+  funcionarioId: string;
+  empresaId: string;
+  empresaNome: string;
+};
+
+type ClienteFiltroGroup = {
+  empresaValor: string;
+  empresaNome: string;
+  items: ClienteFiltroOption[];
+};
+
 type SistemaOptionView = Sistema & {
   id: string;
 };
@@ -62,6 +77,7 @@ type ConcluidosViewModel = {
   carregando: boolean;
   erro: string | null;
   empresasFiltro: EmpresaFiltroOption[];
+  clientesFiltro: ClienteFiltroGroup[];
   empresas: Empresa[];
   sistemas: SistemaOptionView[];
   sistemasErro: string | null;
@@ -82,6 +98,7 @@ const FILTROS_INICIAIS: ConcluidosFiltros = {
   mes: "",
   data: "",
   empresaId: "",
+  clienteId: "",
   texto: ""
 };
 
@@ -191,9 +208,19 @@ export class ConcluidosComponent {
     this.onFiltroDraftChange();
   }
 
+  onEmpresaFiltroDraftChange() {
+    this.filtrosDraft.clienteId = "";
+    this.onFiltroDraftChange();
+  }
+
   onFiltroDraftChange() {
     if (this.currentPageSubject.value === 1) return;
     this.currentPageSubject.next(1);
+  }
+
+  getClientesFiltroGroups(grupos: ClienteFiltroGroup[]): ClienteFiltroGroup[] {
+    if (!this.filtrosDraft.empresaId) return grupos;
+    return grupos.filter((grupo) => grupo.empresaValor === this.filtrosDraft.empresaId);
   }
 
   aplicarFiltros() {
@@ -470,7 +497,8 @@ export class ConcluidosComponent {
 
     this.atualizarOpcoesData(concluidos);
     const empresasFiltro = this.buildEmpresasFiltro(concluidos, empresasMap);
-    const filtrados = this.filtrarConcluidos(concluidos, filtros, empresasFiltro);
+    const clientesFiltro = this.buildClientesFiltro(concluidos, empresasMap);
+    const filtrados = this.filtrarConcluidos(concluidos, filtros, empresasFiltro, clientesFiltro);
     const totalItems = filtrados.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 0;
     const paginaAtual = totalPages > 0 ? Math.min(Math.max(currentPage, 1), totalPages) : 1;
@@ -487,6 +515,7 @@ export class ConcluidosComponent {
         sistemasState.status === "loading",
       erro: chamadosState.error || clientesState.error || empresasState.error,
       empresasFiltro,
+      clientesFiltro,
       empresas,
       sistemas,
       sistemasErro: sistemasState.error,
@@ -528,13 +557,19 @@ export class ConcluidosComponent {
   private filtrarConcluidos(
     items: ConcluidoItemView[],
     filtros: ConcluidosFiltros,
-    empresasFiltro: EmpresaFiltroOption[]
+    empresasFiltro: EmpresaFiltroOption[],
+    clientesFiltro: ClienteFiltroGroup[]
   ): ConcluidoItemView[] {
     const textoBusca = this.normalizarTexto(filtros.texto.trim());
     const empresaFiltroSelecionada =
       empresasFiltro.find((item) => item.valor === filtros.empresaId) ?? null;
     const empresaFiltroNomeNormalizado = empresaFiltroSelecionada
       ? this.normalizarTexto(empresaFiltroSelecionada.nome)
+      : "";
+    const clienteFiltroSelecionado =
+      this.findClienteFiltroOption(clientesFiltro, filtros.clienteId);
+    const clienteFiltroNomeNormalizado = clienteFiltroSelecionado
+      ? this.normalizarTexto(clienteFiltroSelecionado.nome)
       : "";
 
     return items.filter((item) => {
@@ -558,6 +593,36 @@ export class ConcluidosComponent {
         } else if (empresaFiltroNomeNormalizado) {
           const nomeItem = this.normalizarTexto(item.clienteLabel || item.empresa || item.cliente || "");
           if (nomeItem !== empresaFiltroNomeNormalizado) return false;
+        } else {
+          return false;
+        }
+      }
+
+      if (filtros.clienteId && clienteFiltroSelecionado) {
+        if (clienteFiltroSelecionado.funcionarioId) {
+          if (
+            item.funcionarioId === clienteFiltroSelecionado.funcionarioId &&
+            item.empresaId === clienteFiltroSelecionado.empresaId
+          ) {
+            // Match direto por funcionarioId.
+          } else {
+            const nomeItem = this.normalizarTexto(item.funcionarioLabel || item.funcionario || "");
+            if (
+              !clienteFiltroNomeNormalizado ||
+              nomeItem !== clienteFiltroNomeNormalizado ||
+              item.empresaId !== clienteFiltroSelecionado.empresaId
+            ) {
+              return false;
+            }
+          }
+        } else if (clienteFiltroNomeNormalizado) {
+          const nomeItem = this.normalizarTexto(item.funcionarioLabel || item.funcionario || "");
+          if (
+            nomeItem !== clienteFiltroNomeNormalizado ||
+            item.empresaId !== clienteFiltroSelecionado.empresaId
+          ) {
+            return false;
+          }
         } else {
           return false;
         }
@@ -618,6 +683,67 @@ export class ConcluidosComponent {
     });
 
     return Array.from(opcoesPorChave.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+
+  private buildClientesFiltro(
+    items: ConcluidoItemView[],
+    empresasMap: Map<string, Empresa>
+  ): ClienteFiltroGroup[] {
+    const gruposPorChave = new Map<string, ClienteFiltroGroup>();
+    const opcoesPorGrupo = new Map<string, Set<string>>();
+
+    items.forEach((item) => {
+      const nomeFuncionario = item.funcionarioLabel || item.funcionario || "";
+      const nomeNormalizado = this.normalizarTexto(nomeFuncionario);
+      if (!nomeNormalizado) return;
+
+      const empresaId = item.empresaId || "";
+      const empresaNome =
+        item.empresa ||
+        (empresaId ? empresasMap.get(empresaId)?.nomeEmpresa || "" : "") ||
+        "Empresa nÃ£o informada";
+      const empresaValor = empresaId ? `id:${empresaId}` : `nome:${this.normalizarTexto(empresaNome)}`;
+      const grupoChave = empresaValor;
+      const opcaoChave = `nome:${grupoChave}:${nomeNormalizado}`;
+
+      if (!gruposPorChave.has(grupoChave)) {
+        gruposPorChave.set(grupoChave, {
+          empresaValor,
+          empresaNome,
+          items: []
+        });
+        opcoesPorGrupo.set(grupoChave, new Set<string>());
+      }
+
+      const opcoesGrupo = opcoesPorGrupo.get(grupoChave);
+      if (!opcoesGrupo || opcoesGrupo.has(opcaoChave)) {
+        return;
+      }
+      opcoesGrupo.add(opcaoChave);
+
+      gruposPorChave.get(grupoChave)?.items.push({
+        valor: opcaoChave,
+        nome: nomeFuncionario,
+        funcionarioId: "",
+        empresaId,
+        empresaNome
+      });
+    });
+
+    return Array.from(gruposPorChave.values())
+      .map((grupo) => ({
+        ...grupo,
+        items: grupo.items.sort((a, b) => a.nome.localeCompare(b.nome))
+      }))
+      .sort((a, b) => a.empresaNome.localeCompare(b.empresaNome));
+  }
+
+  private findClienteFiltroOption(
+    grupos: ClienteFiltroGroup[],
+    valor: string
+  ): ClienteFiltroOption | null {
+    if (!valor) return null;
+    return grupos.flatMap((grupo) => grupo.items).find((item) => item.valor === valor) ?? null;
   }
 
   private agruparPorData(items: ConcluidoItemView[]): GrupoConcluidos[] {

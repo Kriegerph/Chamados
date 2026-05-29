@@ -25,7 +25,7 @@
 
 .filters-toolbar {
   display: grid;
-  grid-template-columns: minmax(170px, 0.95fr) minmax(120px, 0.7fr) minmax(160px, 0.95fr) minmax(180px, 1fr) minmax(220px, 1.2fr) auto;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(115px, 0.65fr) minmax(150px, 0.85fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(210px, 1.2fr) auto;
   gap: 10px 8px;
   align-items: end;
 }

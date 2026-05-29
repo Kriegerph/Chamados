@@ -62,18 +62,38 @@
           />
         </label>
 
-        <label class="filter-field filter-field--cliente" for="filtroEmpresa">
+        <label class="filter-field filter-field--empresa" for="filtroEmpresa">
           <span class="field-label">Empresa</span>
           <select
             id="filtroEmpresa"
             name="filtroEmpresa"
             [(ngModel)]="filtrosDraft.empresaId"
-            (ngModelChange)="onFiltroDraftChange()"
+            (ngModelChange)="onEmpresaFiltroDraftChange()"
           >
             <option value="">Todas as empresas</option>
             <option *ngFor="let empresa of vm.empresasFiltro" [value]="empresa.valor">
               {{ empresa.nome }}
             </option>
+          </select>
+        </label>
+
+        <label class="filter-field filter-field--cliente" for="filtroCliente">
+          <span class="field-label">Cliente</span>
+          <select
+            id="filtroCliente"
+            name="filtroCliente"
+            [(ngModel)]="filtrosDraft.clienteId"
+            (ngModelChange)="onFiltroDraftChange()"
+          >
+            <option value="">Todos os clientes</option>
+            <optgroup
+              *ngFor="let grupo of getClientesFiltroGroups(vm.clientesFiltro)"
+              [label]="grupo.empresaNome"
+            >
+              <option *ngFor="let cliente of grupo.items" [value]="cliente.valor">
+                {{ cliente.nome }}
+              </option>
+            </optgroup>
           </select>
         </label>
 
