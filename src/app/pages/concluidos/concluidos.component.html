@@ -97,6 +97,21 @@
           </select>
         </label>
 
+        <label class="filter-field filter-field--sistema" for="filtroSistema">
+          <span class="field-label">Sistema principal</span>
+          <select
+            id="filtroSistema"
+            name="filtroSistema"
+            [(ngModel)]="filtrosDraft.sistemaId"
+            (ngModelChange)="onFiltroDraftChange()"
+          >
+            <option value="">Todos os sistemas</option>
+            <option *ngFor="let sistema of vm.sistemas" [value]="sistema.id">
+              {{ sistema.nome }}
+            </option>
+          </select>
+        </label>
+
         <label class="filter-field filter-field--texto" for="filtroTexto">
           <span class="field-label">Texto</span>
           <input

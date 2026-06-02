@@ -39,6 +39,7 @@ type ConcluidosFiltros = {
   data: string;
   empresaId: string;
   clienteId: string;
+  sistemaId: string;
   texto: string;
 };
 
@@ -99,6 +100,7 @@ const FILTROS_INICIAIS: ConcluidosFiltros = {
   data: "",
   empresaId: "",
   clienteId: "",
+  sistemaId: "",
   texto: ""
 };
 
@@ -626,6 +628,10 @@ export class ConcluidosComponent {
         } else {
           return false;
         }
+      }
+
+      if (filtros.sistemaId && item.contextoSistemaId?.trim() !== filtros.sistemaId) {
+        return false;
       }
 
       if (textoBusca) {
