@@ -1,16 +1,12 @@
 <section class="page-section afazer-page" *ngIf="vm$ | async as vm">
   <div class="afazer-summary">
     <article class="summary-card">
-      <span class="summary-label">Total</span>
-      <strong class="summary-value">{{ vm.total }}</strong>
-    </article>
-    <article class="summary-card">
       <span class="summary-label">Pendentes</span>
       <strong class="summary-value">{{ vm.pendentes }}</strong>
     </article>
     <article class="summary-card">
-      <span class="summary-label">Em andamento</span>
-      <strong class="summary-value">{{ vm.emAndamento }}</strong>
+      <span class="summary-label">Total</span>
+      <strong class="summary-value">{{ vm.total }}</strong>
     </article>
     <article class="summary-card">
       <span class="summary-label">Concluídas</span>
