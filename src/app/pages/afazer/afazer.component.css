@@ -1,0 +1,313 @@
+.afazer-page {
+  display: grid;
+  gap: 18px;
+}
+
+.afazer-header {
+  align-items: center;
+}
+
+.afazer-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.summary-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summary-value {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-main);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.afazer-list-card:hover {
+  transform: none;
+}
+
+.afazer-list-header {
+  align-items: center;
+}
+
+.afazer-list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.afazer-list {
+  display: grid;
+  gap: 8px;
+}
+
+.tarefa-item {
+  display: grid;
+  grid-template-columns: minmax(132px, 0.24fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.tarefa-status-panel {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.tarefa-status-label {
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tarefa-status-value {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.tarefa-prioridade-value {
+  width: fit-content;
+  min-height: 22px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status-text-pendente {
+  color: #92400e;
+}
+
+.status-text-andamento {
+  color: #1d4ed8;
+}
+
+.status-text-concluida {
+  color: #166534;
+}
+
+.prioridade-text-baixa {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.prioridade-text-media {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.prioridade-text-alta {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.tarefa-main {
+  min-width: 0;
+  align-self: center;
+}
+
+.tarefa-title-row {
+  display: block;
+}
+
+.tarefa-title-row h4 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.tarefa-descricao {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tarefa-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin-top: 7px;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tarefa-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.afazer-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.afazer-modal {
+  width: min(640px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.afazer-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.afazer-modal-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 20px;
+}
+
+.afazer-modal-header p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.modal-close {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  border-color: #bfdbfe;
+  color: var(--text-main);
+}
+
+.afazer-form {
+  padding: 20px 22px 22px;
+}
+
+.afazer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.afazer-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.afazer-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .afazer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .afazer-list-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .afazer-header {
+    align-items: stretch;
+  }
+
+  .afazer-header .btn {
+    width: 100%;
+  }
+
+  .afazer-summary,
+  .afazer-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tarefa-item {
+    grid-template-columns: 1fr;
+  }
+
+  .tarefa-status-panel {
+    min-height: auto;
+  }
+
+  .tarefa-actions,
+  .afazer-list-actions,
+  .afazer-modal-actions {
+    flex-direction: column;
+  }
+
+  .tarefa-actions {
+    justify-content: stretch;
+  }
+
+  .afazer-list-actions {
+    align-items: stretch;
+  }
+
+  .afazer-modal-backdrop {
+    padding: 14px;
+  }
+}

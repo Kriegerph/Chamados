@@ -1,22 +1,17 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
-  <header class="page-header">
-    <div>
-      <h2 class="page-title">Histórico de chamados finalizados</h2>
-      <p class="page-subtitle">Consulte períodos, refine resultados e revise atendimentos encerrados.</p>
-    </div>
-    <label class="field concluidos-limitador">
-      <span class="field-label">Exibir</span>
-      <select name="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
-      </select>
-    </label>
-  </header>
-
   <div class="skeleton" style="min-height: 120px;" *ngIf="vm.carregando"></div>
 
   <article class="card concluidos-list-anchor" #chamadosListTop *ngIf="!vm.carregando">
     <div class="concluidos-header">
-      <h3 class="card-title">Filtros</h3>
+      <div class="concluidos-title-row">
+        <h3 class="card-title">Filtros</h3>
+        <label class="field concluidos-limitador">
+          <span class="field-label">Exibir</span>
+          <select name="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </label>
+      </div>
       <form class="filters-toolbar" (ngSubmit)="aplicarFiltros()">
         <label class="filter-field filter-field--small filter-field--ano" for="filtroAno">
           <span class="field-label">Ano</span>

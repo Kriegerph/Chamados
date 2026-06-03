@@ -19,6 +19,11 @@ export const appRoutes: Routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       { path: "abertos", component: AbertosComponent },
       {
+        path: "afazer",
+        loadComponent: () =>
+          import("./pages/afazer/afazer.component").then((m) => m.AfazerComponent)
+      },
+      {
         path: "anotacoes",
         loadComponent: () =>
           import("./pages/anotacoes/anotacoes.component").then((m) => m.AnotacoesComponent)

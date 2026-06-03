@@ -1,24 +1,4 @@
 <section class="page-section abertos-page" *ngIf="vm$ | async as vm">
-  <div class="page-header">
-    <div>
-      <h2 class="page-title">Chamados em aberto e atendimentos ativos</h2>
-      <p class="page-subtitle">
-        Monitore a fila atual, registre novos chamados e avance os atendimentos em andamento.
-      </p>
-    </div>
-    <div class="abertos-header-actions">
-      <span class="status-chip warning">{{ vm.abertos.length }} em aberto</span>
-      <button
-        class="btn primary abertos-create-trigger"
-        type="button"
-        (click)="abrirModalCriacao()"
-      >
-        <span aria-hidden="true">+</span>
-        <span>Novo chamado</span>
-      </button>
-    </div>
-  </div>
-
   <article class="card abertos-list-card" *ngIf="vm.carregando">
     <div class="skeleton" style="min-height: 420px"></div>
   </article>
@@ -31,9 +11,15 @@
           Tabela em largura total com ações rápidas, tooltip no motivo e leitura mais estável.
         </p>
       </div>
-      <span class="status-chip neutral">
-        {{ vm.abertos.length }} ativo{{ vm.abertos.length === 1 ? '' : 's' }}
-      </span>
+      <div class="abertos-header-actions">
+        <span class="status-chip neutral">
+          {{ vm.abertos.length }} ativo{{ vm.abertos.length === 1 ? '' : 's' }}
+        </span>
+        <button class="btn primary abertos-create-trigger" type="button" (click)="abrirModalCriacao()">
+          <span aria-hidden="true">+</span>
+          <span>Novo chamado</span>
+        </button>
+      </div>
     </div>
 
     <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>

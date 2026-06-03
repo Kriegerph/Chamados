@@ -1,19 +1,4 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
-  <article class="card empresas-hero">
-    <div class="empresas-hero-copy">
-      <span class="empresas-kicker">Cadastros</span>
-      <h2 class="page-title empresas-title">Gestão de empresas e funcionários vinculados</h2>
-      <p class="page-subtitle empresas-subtitle">
-        Centralize cadastros, vínculos e acesso rápido aos responsáveis de cada cliente.
-      </p>
-    </div>
-
-    <div class="empresas-hero-actions">
-      <span class="status-chip">Total: {{ vm.empresas.length }}</span>
-      <button class="btn primary" type="button" (click)="abrirCadastroEmpresa()">Nova empresa</button>
-    </div>
-  </article>
-
   <div class="stack-md" *ngIf="vm.carregando && vm.empresas.length === 0">
     <div class="skeleton" style="min-height: 300px;"></div>
   </div>
@@ -24,6 +9,10 @@
         <div>
           <h3 class="card-title">Lista de empresas</h3>
           <p class="card-subtitle">Clique no card para abrir ou recolher os funcionários vinculados.</p>
+        </div>
+        <div class="empresas-hero-actions">
+          <span class="status-chip">Total: {{ vm.empresas.length }}</span>
+          <button class="btn primary" type="button" (click)="abrirCadastroEmpresa()">Nova empresa</button>
         </div>
       </div>
 

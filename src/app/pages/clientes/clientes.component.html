@@ -1,12 +1,4 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
-  <header class="page-header">
-    <div>
-      <h2 class="page-title">Clientes</h2>
-      <p class="page-subtitle">Gerencie cadastro de clientes vinculados aos chamados.</p>
-    </div>
-    <span class="status-chip">Total: {{ vm.clientes.length }}</span>
-  </header>
-
   <div class="grid-2" *ngIf="vm.carregando">
     <div class="skeleton" style="min-height: 310px;"></div>
     <div class="skeleton" style="min-height: 310px;"></div>
@@ -51,6 +43,7 @@
           <h3 class="card-title">Lista de clientes</h3>
           <p class="card-subtitle">Edite ou remova cadastros existentes.</p>
         </div>
+        <span class="status-chip">Total: {{ vm.clientes.length }}</span>
       </div>
 
       <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>

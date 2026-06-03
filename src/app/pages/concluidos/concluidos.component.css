@@ -19,14 +19,25 @@
   margin-bottom: 14px;
 }
 
+.concluidos-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .concluidos-list-anchor {
   scroll-margin-top: calc(var(--header-height) + 16px);
 }
 
 .filters-toolbar {
   display: grid;
-  grid-template-columns: minmax(150px, 0.85fr) minmax(115px, 0.65fr) minmax(150px, 0.85fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(210px, 1.2fr) auto;
-  gap: 10px 8px;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(130px, 0.7fr) minmax(170px, 1fr) minmax(210px, 1.15fr);
+  grid-template-areas:
+    "ano mes data empresa"
+    "cliente sistema texto actions";
+  gap: 10px;
   align-items: end;
 }
 
@@ -42,14 +53,37 @@
 }
 
 .filter-field--ano {
-  min-width: 170px;
+  grid-area: ano;
+  min-width: 0;
 }
 
 .filter-field--mes {
-  min-width: 120px;
+  grid-area: mes;
+  min-width: 0;
+}
+
+.filter-field--data {
+  grid-area: data;
+}
+
+.filter-field--empresa {
+  grid-area: empresa;
+}
+
+.filter-field--cliente {
+  grid-area: cliente;
+}
+
+.filter-field--sistema {
+  grid-area: sistema;
+}
+
+.filter-field--texto {
+  grid-area: texto;
 }
 
 .filter-actions {
+  grid-area: actions;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -396,6 +430,12 @@
 @media (max-width: 1180px) {
   .filters-toolbar {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
+    grid-template-areas:
+      "ano mes"
+      "data empresa"
+      "cliente sistema"
+      "texto texto"
+      "actions actions";
   }
 
   .filter-field--texto,
@@ -413,6 +453,15 @@
 
   .filters-toolbar {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "ano"
+      "mes"
+      "data"
+      "empresa"
+      "cliente"
+      "sistema"
+      "texto"
+      "actions";
   }
 
   .item-header {

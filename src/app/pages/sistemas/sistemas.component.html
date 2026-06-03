@@ -1,18 +1,4 @@
 <section class="page-section sistemas-page" *ngIf="vm$ | async as vm">
-  <article class="card sistemas-hero">
-    <div class="sistemas-hero-copy">
-      <span class="sistemas-kicker">Cadastros</span>
-      <h2 class="page-title sistemas-title">Cadastro e padronização de sistemas</h2>
-      <p class="page-subtitle sistemas-subtitle">
-        Mantenha a base usada em empresas e chamados com nomenclatura consistente.
-      </p>
-    </div>
-
-    <div class="sistemas-hero-actions">
-      <span class="status-chip">Total: {{ vm.total }}</span>
-    </div>
-  </article>
-
   <div class="grid-2" *ngIf="vm.carregando && vm.sistemas.length === 0">
     <div class="skeleton" style="min-height: 280px;"></div>
     <div class="skeleton" style="min-height: 280px;"></div>
@@ -62,7 +48,10 @@
           <h3 class="card-title">Lista de sistemas</h3>
           <p class="card-subtitle">A lista rola internamente sem empurrar o formulário.</p>
         </div>
-        <span class="status-chip neutral">IDs padronizados</span>
+        <div class="sistemas-hero-actions">
+          <span class="status-chip">Total: {{ vm.total }}</span>
+          <span class="status-chip neutral">IDs padronizados</span>
+        </div>
       </div>
 
       <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>

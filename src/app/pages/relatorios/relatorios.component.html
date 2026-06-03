@@ -1,14 +1,4 @@
 <section class="page-section" *ngIf="vm$ | async as vm">
-  <header class="page-header">
-    <div>
-      <h2 class="page-title relatorios-page-title">Exportação e análise de chamados</h2>
-      <p class="page-subtitle">
-        Aplique filtros, consolide dados e gere planilhas prontas para compartilhamento.
-      </p>
-    </div>
-    <span class="status-chip">Linhas: {{ vm.dataset.rows.length }}</span>
-  </header>
-
   <div class="relatorios-layout relatorios-layout-loading" *ngIf="vm.carregando">
     <div class="skeleton" style="min-height: 560px;"></div>
     <div class="relatorios-side-column">
@@ -24,6 +14,7 @@
           <h3 class="card-title">Filtros gerais</h3>
           <p class="card-subtitle">Selecione os dados que serão considerados na exportação.</p>
         </div>
+        <span class="status-chip">Linhas: {{ vm.dataset.rows.length }}</span>
       </div>
 
       <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>

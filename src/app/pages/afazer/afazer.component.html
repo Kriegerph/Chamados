@@ -1,0 +1,239 @@
+<section class="page-section afazer-page" *ngIf="vm$ | async as vm">
+  <div class="afazer-summary">
+    <article class="summary-card">
+      <span class="summary-label">Total</span>
+      <strong class="summary-value">{{ vm.total }}</strong>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Pendentes</span>
+      <strong class="summary-value">{{ vm.pendentes }}</strong>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Em andamento</span>
+      <strong class="summary-value">{{ vm.emAndamento }}</strong>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Concluídas</span>
+      <strong class="summary-value">{{ vm.concluidas }}</strong>
+    </article>
+  </div>
+
+  <div class="skeleton" style="min-height: 220px;" *ngIf="vm.carregando && vm.tarefas.length === 0"></div>
+
+  <article class="card afazer-list-card" *ngIf="!vm.carregando || vm.tarefas.length > 0">
+    <div class="card-title-row afazer-list-header">
+      <div>
+        <h3 class="card-title">{{ vm.tituloLista }}</h3>
+        <p class="card-subtitle">{{ vm.subtituloLista }}</p>
+      </div>
+      <div class="afazer-list-actions">
+        <button class="btn primary" type="button" (click)="abrirModalNovaTarefa()">
+          Nova tarefa
+        </button>
+        <button class="btn secondary" type="button" (click)="alternarTarefasConcluidas()">
+          {{ vm.mostrandoConcluidas ? "Ver tarefas a fazer" : "Ver concluídas" }}
+        </button>
+        <span class="status-chip neutral">
+          {{ vm.tarefas.length }} tarefa{{ vm.tarefas.length === 1 ? "" : "s" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+    <div class="afazer-list" *ngIf="!vm.erro">
+      <div class="empty-state" *ngIf="vm.tarefas.length === 0">
+        {{ vm.mensagemVazia }}
+      </div>
+
+      <article
+        class="tarefa-item"
+        *ngFor="let tarefa of vm.tarefas; trackBy: trackByTarefa"
+        [class.tarefa-concluida]="tarefa.status === 'concluida'"
+      >
+        <aside class="tarefa-status-panel">
+          <span class="tarefa-status-label">Status</span>
+          <strong class="tarefa-status-value" [class]="'status-text-' + tarefa.status">
+            {{ tarefa.statusLabel }}
+          </strong>
+          <span class="tarefa-prioridade-value" [class]="'prioridade-text-' + tarefa.prioridade">
+            Prioridade {{ tarefa.prioridadeLabel }}
+          </span>
+        </aside>
+
+        <div class="tarefa-main">
+          <div class="tarefa-title-row">
+            <h4>{{ tarefa.titulo }}</h4>
+          </div>
+
+          <p class="tarefa-descricao" *ngIf="!!tarefa.descricao">{{ tarefa.descricao }}</p>
+
+          <div class="tarefa-meta">
+            <span *ngIf="!!tarefa.nomeEmpresa">Empresa: {{ tarefa.nomeEmpresa }}</span>
+            <span *ngIf="!!tarefa.nomeCliente">Cliente: {{ tarefa.nomeCliente }}</span>
+            <span *ngIf="!!tarefa.nomeSistema">Sistema: {{ tarefa.nomeSistema }}</span>
+            <span *ngIf="!!tarefa.dataLabel">Atualizada em {{ tarefa.dataLabel }}</span>
+          </div>
+        </div>
+
+        <div class="tarefa-actions">
+          <button
+            class="btn primary btn-sm"
+            type="button"
+            *ngIf="tarefa.status !== 'concluida'"
+            (click)="concluirTarefa(tarefa)"
+            [disabled]="concluindoId === tarefa.id"
+          >
+            {{ getConcluirLabel(tarefa) }}
+          </button>
+          <button
+            class="btn primary btn-sm"
+            type="button"
+            *ngIf="tarefa.status === 'concluida'"
+            (click)="voltarParaPendente(tarefa)"
+            [disabled]="reabrindoId === tarefa.id"
+          >
+            {{ getVoltarPendenteLabel(tarefa) }}
+          </button>
+          <button class="btn secondary btn-sm" type="button" (click)="abrirModalEditarTarefa(tarefa)">
+            Editar
+          </button>
+          <button
+            class="btn danger btn-sm"
+            type="button"
+            (click)="excluirTarefa(tarefa)"
+            [disabled]="excluindoId === tarefa.id"
+          >
+            {{ getExcluirLabel(tarefa) }}
+          </button>
+        </div>
+      </article>
+    </div>
+  </article>
+
+  <div class="afazer-modal-backdrop" *ngIf="modalAberto" (click)="fecharModal()">
+    <section class="afazer-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="afazer-modal-header">
+        <div>
+          <h3>{{ getTituloModal() }}</h3>
+          <p>Defina os dados principais da tarefa.</p>
+        </div>
+        <button class="modal-close" type="button" (click)="fecharModal()" aria-label="Fechar">
+          ×
+        </button>
+      </header>
+
+      <form class="form afazer-form" (ngSubmit)="salvarTarefa()">
+        <label>
+          <span>Título</span>
+          <input
+            name="tituloTarefa"
+            type="text"
+            [(ngModel)]="form.titulo"
+            placeholder="Ex: Revisar chamados pendentes"
+            required
+          />
+        </label>
+
+        <div class="afazer-form-grid">
+          <label>
+            <span>Empresa</span>
+            <div class="helper-text" *ngIf="vm.vinculosErro">{{ vm.vinculosErro }}</div>
+            <select
+              name="empresaTarefa"
+              [(ngModel)]="form.empresaId"
+              (ngModelChange)="onEmpresaChange(vm.empresas)"
+              [disabled]="vm.vinculosCarregando"
+            >
+              <option value="">{{ vm.vinculosCarregando ? "Carregando empresas" : "Selecione a empresa" }}</option>
+              <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+                {{ empresa.nomeEmpresa }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Cliente</span>
+            <div class="helper-text" *ngIf="funcionariosErro">{{ funcionariosErro }}</div>
+            <select
+              name="clienteTarefa"
+              [(ngModel)]="form.clienteId"
+              (ngModelChange)="onClienteChange()"
+              [disabled]="!form.empresaId || funcionariosCarregando"
+            >
+              <option value="">
+                {{
+                  !form.empresaId
+                    ? "Selecione a empresa"
+                    : funcionariosCarregando
+                      ? "Carregando clientes"
+                      : funcionariosEmpresa.length === 0
+                        ? "Empresa sem clientes"
+                        : "Selecione o cliente"
+                }}
+              </option>
+              <option *ngFor="let funcionario of funcionariosEmpresa" [value]="funcionario.id">
+                {{ funcionario.nomeFuncionario }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Sistema</span>
+            <select
+              name="sistemaTarefa"
+              [(ngModel)]="form.sistemaId"
+              (ngModelChange)="onSistemaChange(vm.sistemas)"
+              [disabled]="!form.empresaId"
+            >
+              <option value="">
+                {{
+                  !form.empresaId
+                    ? "Selecione a empresa"
+                    : getSistemasEmpresaOptions(form.empresaId, vm.empresas, vm.sistemas).length === 0
+                      ? "Empresa sem sistemas"
+                      : "Selecione o sistema"
+                }}
+              </option>
+              <option
+                *ngFor="let sistema of getSistemasEmpresaOptions(form.empresaId, vm.empresas, vm.sistemas)"
+                [value]="sistema.id"
+              >
+                {{ sistema.nome }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Prioridade</span>
+            <select name="prioridadeTarefa" [(ngModel)]="form.prioridade">
+              <option *ngFor="let item of prioridadeOptions" [ngValue]="item.valor">
+                {{ item.label }}
+              </option>
+            </select>
+          </label>
+
+        </div>
+
+        <label>
+          <span>Descrição</span>
+          <textarea
+            name="descricaoTarefa"
+            rows="5"
+            [(ngModel)]="form.descricao"
+            placeholder="Detalhes, contexto ou próximos passos"
+          ></textarea>
+        </label>
+
+        <div class="afazer-modal-actions">
+          <button class="btn secondary" type="button" (click)="fecharModal()" [disabled]="salvando">
+            Cancelar
+          </button>
+          <button class="btn primary" type="submit" [disabled]="salvando">
+            {{ getSalvarLabel() }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>

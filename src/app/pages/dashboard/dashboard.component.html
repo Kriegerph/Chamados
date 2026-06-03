@@ -1,22 +1,15 @@
 <section class="page-section dashboard-layout" *ngIf="vm$ | async as vm">
-  <header class="page-header">
-    <div>
-      <h2 class="page-title">Visão executiva de indicadores e chamados</h2>
-      <p class="page-subtitle">Acompanhe volume, desempenho e distribuição por período, empresa e sistema.</p>
-    </div>
-
-    <div class="chart-controls">
-      <label>
-        Ano
-        <select [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
-          <option [ngValue]="ANO_TODOS">Todos</option>
-          <option *ngFor="let ano of vm.anosDisponiveis" [ngValue]="ano">
-            {{ ano }}
-          </option>
-        </select>
-      </label>
-    </div>
-  </header>
+  <div class="chart-controls">
+    <label>
+      Ano
+      <select [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
+        <option [ngValue]="ANO_TODOS">Todos</option>
+        <option *ngFor="let ano of vm.anosDisponiveis" [ngValue]="ano">
+          {{ ano }}
+        </option>
+      </select>
+    </label>
+  </div>
 
   <div class="dashboard-skeleton-grid" *ngIf="vm.carregando">
     <div class="grid-4">
