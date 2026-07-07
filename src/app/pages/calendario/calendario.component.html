@@ -1,0 +1,115 @@
+<section class="page-section calendario-page" *ngIf="vm$ | async as vm">
+  <article class="card calendario-card">
+    <div class="card-title-row calendario-header">
+      <div>
+        <h3 class="card-title">{{ vm.tituloMes }}</h3>
+        <p class="card-subtitle">Clique em um dia para registrar o que sera feito.</p>
+      </div>
+      <div class="calendario-header-actions">
+        <label class="field calendario-month-field" for="calendarioMes">
+          <span class="field-label">Mês</span>
+          <select
+            id="calendarioMes"
+            name="calendarioMes"
+            [(ngModel)]="mesSelecionado"
+            (ngModelChange)="onMesChange()"
+          >
+            <option *ngFor="let mes of mesesOptions" [value]="mes.valor">
+              {{ mes.label }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="skeleton" style="min-height: 360px;" *ngIf="vm.carregando && vm.dias.length === 0"></div>
+    <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+
+    <div class="calendario-grid" *ngIf="!vm.erro">
+      <div class="calendario-weekday" *ngFor="let diaSemana of diasSemana">
+        {{ diaSemana }}
+      </div>
+
+      <div
+        class="calendario-day"
+        *ngFor="let dia of vm.dias; trackBy: trackByDia"
+        [class.is-empty]="dia.foraDoMes"
+        [class.is-today]="dia.hoje"
+        [attr.role]="dia.foraDoMes ? null : 'button'"
+        [attr.tabindex]="dia.foraDoMes ? -1 : 0"
+        [attr.aria-disabled]="dia.foraDoMes"
+        (click)="abrirNovoItem(dia)"
+        (keydown.enter)="abrirNovoItem(dia)"
+        (keydown.space)="abrirNovoItem(dia); $event.preventDefault()"
+      >
+        <span class="calendario-day-number" *ngIf="dia.numero">{{ dia.numero }}</span>
+
+        <span class="calendario-day-items" *ngIf="dia.itens.length > 0">
+          <button
+            class="calendario-item"
+            type="button"
+            *ngFor="let item of dia.itens; trackBy: trackByItem"
+            (click)="abrirEdicao(item); $event.stopPropagation()"
+          >
+            {{ item.titulo }}
+          </button>
+        </span>
+      </div>
+    </div>
+  </article>
+
+  <div class="calendario-modal-backdrop" *ngIf="modalAberto" (click)="fecharModal()">
+    <section class="calendario-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="calendario-modal-header">
+        <div>
+          <h3>{{ getTituloModal() }}</h3>
+          <p>{{ getDataSelecionadaLabel() }}</p>
+        </div>
+        <button class="modal-close" type="button" (click)="fecharModal()" aria-label="Fechar">
+          ×
+        </button>
+      </header>
+
+      <form class="form calendario-form" (ngSubmit)="salvarItem()">
+        <label>
+          <span>O que sera feito</span>
+          <input
+            name="tituloCalendario"
+            type="text"
+            [(ngModel)]="form.titulo"
+            placeholder="Ex: Revisar pendencias do sistema"
+            required
+          />
+        </label>
+
+        <label>
+          <span>Detalhes</span>
+          <textarea
+            name="descricaoCalendario"
+            rows="5"
+            [(ngModel)]="form.descricao"
+            placeholder="Observacoes, contexto ou proximos passos"
+          ></textarea>
+        </label>
+
+        <div class="calendario-modal-actions">
+          <button
+            class="btn danger"
+            type="button"
+            *ngIf="!!itemEditandoId"
+            (click)="excluirItem()"
+            [disabled]="salvando || excluindo"
+          >
+            {{ getExcluirLabel() }}
+          </button>
+          <button class="btn secondary" type="button" (click)="fecharModal()" [disabled]="salvando || excluindo">
+            Cancelar
+          </button>
+          <button class="btn primary" type="submit" [disabled]="salvando || excluindo">
+            {{ getSalvarLabel() }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>

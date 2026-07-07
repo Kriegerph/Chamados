@@ -29,6 +29,7 @@ export class SidebarComponent {
     { label: "Dashboard", route: "/dashboard", icon: "dashboard" },
     { label: "Chamados Abertos", route: "/abertos", icon: "folder-open", exact: true },
     { label: "A fazer", route: "/afazer", icon: "todo" },
+    { label: "Calendário", route: "/calendario", icon: "calendar" },
     { label: "Chamados Concluídos", route: "/concluidos", icon: "check-square" },
     { label: "Anotações", route: "/anotacoes", icon: "notes" },
     { label: "Empresas", route: "/empresas", icon: "building" },
@@ -58,6 +59,8 @@ export class SidebarComponent {
         return "M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 13-4-4 1.4-1.4L11 13.2l4.6-4.6L17 10z";
       case "todo":
         return "M5 4h14a2 2 0 0 1 2 2v14H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m1 4v2h2V8zm4 0v2h7V8zm-4 5v2h2v-2zm4 0v2h7v-2z";
+      case "calendar":
+        return "M7 2h2v3h6V2h2v3h3a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3zm13 8H4v10h16zM6 12h3v3H6zm5 0h3v3h-3zm5 0h2v3h-2z";
       case "notes":
         return "M6 4h12a2 2 0 0 1 2 2v12l-4 4H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m1 5v2h10V9zm0 4v2h7v-2zm9 6.2 1.2-1.2H16z";
       case "users":
