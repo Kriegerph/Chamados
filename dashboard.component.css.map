@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/pages/dashboard/dashboard.component.css"],
+  "sourcesContent": [".stat-icon svg {\r\n  fill: currentColor;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC,UAAU;AACT,QAAM;AACR;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/pages/auth/login/login.component.css"],
+  "sourcesContent": [".auth-wrap {\r\n  min-height: 100vh;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  padding: 24px;\r\n}\r\n\r\n.auth-card {\r\n  width: 100%;\r\n  max-width: 380px;\r\n  display: grid;\r\n  gap: 12px;\r\n}\r\n\r\n.auth-error {\r\n  font-size: 13px;\r\n  color: #c13c3c;\r\n}\r\n\r\n.auth-links {\r\n  font-size: 13px;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC;AACC,cAAY;AACZ,WAAS;AACT,eAAa;AACb,mBAAiB;AACjB,WAAS;AACX;AAEA,CAAC;AACC,SAAO;AACP,aAAW;AACX,WAAS;AACT,OAAK;AACP;AAEA,CAAC;AACC,aAAW;AACX,SAAO;AACT;AAEA,CAAC;AACC,aAAW;AACb;",
+  "names": []
+}
