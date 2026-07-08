@@ -32,6 +32,11 @@
   width: 100%;
 }
 
+.calendario-person-button {
+  align-self: center;
+  white-space: nowrap;
+}
+
 .calendario-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -117,10 +122,10 @@
   min-width: 0;
   max-width: 100%;
   padding: 5px 7px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--cal-person-color, #bfdbfe);
   border-radius: 7px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--cal-person-color, #2563eb) 14%, #ffffff);
+  color: #0f172a;
   font-size: 11px;
   font-weight: 800;
   line-height: 1.25;
@@ -132,8 +137,21 @@
 }
 
 .calendario-item:hover {
-  border-color: #60a5fa;
-  background: #dbeafe;
+  filter: brightness(0.96);
+}
+
+.calendario-item-person {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 1px;
+  font-size: 9px;
+  font-weight: 900;
+  opacity: 0.78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .calendario-modal-backdrop {
@@ -212,6 +230,73 @@
   padding-top: 4px;
 }
 
+.calendario-pessoas-modal {
+  width: min(660px, 100%);
+}
+
+.calendario-person-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.calendario-color-field input[type="color"] {
+  min-height: 42px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.calendario-person-save {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.calendario-person-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 22px 22px;
+}
+
+.calendario-person-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.calendario-person-color {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 999px;
+}
+
+.calendario-person-name {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn.small {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.empty-state.compact {
+  padding: 12px;
+}
+
 @media (max-width: 900px) {
   .calendario-card {
     padding: 14px;
@@ -240,6 +325,15 @@
 
   .calendario-header-actions,
   .calendario-month-field {
+    width: 100%;
+  }
+
+  .calendario-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendario-person-button {
     width: 100%;
   }
 
@@ -274,5 +368,20 @@
 
   .calendario-modal-actions {
     flex-direction: column;
+  }
+
+  .calendario-person-form-row,
+  .calendario-person-row {
+    grid-template-columns: 1fr;
+  }
+
+  .calendario-person-save {
+    width: 100%;
+  }
+
+  .calendario-person-color {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
   }
 }

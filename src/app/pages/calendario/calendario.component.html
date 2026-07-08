@@ -7,7 +7,6 @@
       </div>
       <div class="calendario-header-actions">
         <label class="field calendario-month-field" for="calendarioMes">
-          <span class="field-label">Mês</span>
           <select
             id="calendarioMes"
             name="calendarioMes"
@@ -19,11 +18,15 @@
             </option>
           </select>
         </label>
+        <button class="btn secondary calendario-person-button" type="button" (click)="abrirModalPessoas()">
+          Cadastrar pessoa
+        </button>
       </div>
     </div>
 
     <div class="skeleton" style="min-height: 360px;" *ngIf="vm.carregando && vm.dias.length === 0"></div>
     <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
+    <div class="empty-state" *ngIf="!vm.erro && !!vm.erroPessoas">{{ vm.erroPessoas }}</div>
 
     <div class="calendario-grid" *ngIf="!vm.erro">
       <div class="calendario-weekday" *ngFor="let diaSemana of diasSemana">
@@ -49,8 +52,12 @@
             class="calendario-item"
             type="button"
             *ngFor="let item of dia.itens; trackBy: trackByItem"
+            [ngStyle]="getItemStyle(item, vm.pessoas)"
             (click)="abrirEdicao(item); $event.stopPropagation()"
           >
+            <span class="calendario-item-person" *ngIf="getPessoaNome(item, vm.pessoas)">
+              {{ getPessoaNome(item, vm.pessoas) }}
+            </span>
             {{ item.titulo }}
           </button>
         </span>
@@ -66,7 +73,7 @@
           <p>{{ getDataSelecionadaLabel() }}</p>
         </div>
         <button class="modal-close" type="button" (click)="fecharModal()" aria-label="Fechar">
-          ×
+          x
         </button>
       </header>
 
@@ -80,6 +87,16 @@
             placeholder="Ex: Revisar pendencias do sistema"
             required
           />
+        </label>
+
+        <label>
+          <span>Pessoa</span>
+          <select name="pessoaCalendario" [(ngModel)]="form.pessoaId">
+            <option [ngValue]="null">Sem pessoa</option>
+            <option *ngFor="let pessoa of vm.pessoas; trackBy: trackByPessoa" [ngValue]="pessoa.id">
+              {{ pessoa.nome }}
+            </option>
+          </select>
         </label>
 
         <label>
@@ -110,6 +127,78 @@
           </button>
         </div>
       </form>
+    </section>
+  </div>
+
+  <div class="calendario-modal-backdrop" *ngIf="pessoasModalAberto" (click)="fecharModalPessoas()">
+    <section class="calendario-modal calendario-pessoas-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="calendario-modal-header">
+        <div>
+          <h3>{{ getTituloModalPessoas() }}</h3>
+          <p>Cadastre as pessoas usadas nas anotacoes do calendario.</p>
+        </div>
+        <button class="modal-close" type="button" (click)="fecharModalPessoas()" aria-label="Fechar">
+          x
+        </button>
+      </header>
+
+      <form class="form calendario-form" (ngSubmit)="salvarPessoa()">
+        <div class="calendario-person-form-row">
+          <label>
+            <span>Nome</span>
+            <input
+              name="nomePessoaCalendario"
+              type="text"
+              [(ngModel)]="pessoaForm.nome"
+              placeholder="Ex: Fabiola"
+              required
+            />
+          </label>
+
+          <label class="calendario-color-field">
+            <span>Cor</span>
+            <input name="corPessoaCalendario" type="color" [(ngModel)]="pessoaForm.cor" />
+          </label>
+
+          <button class="btn primary calendario-person-save" type="submit" [disabled]="salvandoPessoa">
+            {{ getPessoaSalvarLabel() }}
+          </button>
+        </div>
+
+        <div class="calendario-modal-actions">
+          <button
+            class="btn secondary"
+            type="button"
+            *ngIf="!!pessoaEditandoId"
+            (click)="cancelarEdicaoPessoa()"
+            [disabled]="salvandoPessoa"
+          >
+            Cancelar edicao
+          </button>
+        </div>
+      </form>
+
+      <div class="calendario-person-list">
+        <div class="empty-state compact" *ngIf="vm.pessoas.length === 0">
+          Nenhuma pessoa cadastrada.
+        </div>
+
+        <div class="calendario-person-row" *ngFor="let pessoa of vm.pessoas; trackBy: trackByPessoa">
+          <span class="calendario-person-color" [style.background]="pessoa.cor"></span>
+          <span class="calendario-person-name">{{ pessoa.nome }}</span>
+          <button class="btn secondary small" type="button" (click)="editarPessoa(pessoa)">
+            Editar
+          </button>
+          <button
+            class="btn danger small"
+            type="button"
+            (click)="excluirPessoa(pessoa)"
+            [disabled]="excluindoPessoaId === pessoa.id"
+          >
+            {{ excluindoPessoaId === pessoa.id ? "Excluindo..." : "Excluir" }}
+          </button>
+        </div>
+      </div>
     </section>
   </div>
 </section>

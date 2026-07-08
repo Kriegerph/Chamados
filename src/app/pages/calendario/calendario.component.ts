@@ -2,10 +2,11 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
-import { CalendarioItem } from "../../models/calendario.model";
+import { CalendarioItem, CalendarioPessoa } from "../../models/calendario.model";
 import { DataState } from "../../models/data-state.model";
 import {
   CalendarioPayload,
+  CalendarioPessoaPayload,
   CalendarioService
 } from "../../services/calendario.service";
 import { ToastService } from "../../services/toast.service";
@@ -21,8 +22,10 @@ type CalendarioDia = {
 type CalendarioViewModel = {
   carregando: boolean;
   erro: string | null;
+  erroPessoas: string | null;
   tituloMes: string;
   dias: CalendarioDia[];
+  pessoas: CalendarioPessoa[];
 };
 
 type MesOption = {
@@ -46,11 +49,16 @@ export class CalendarioComponent {
   readonly mesesOptions: MesOption[];
 
   modalAberto = false;
+  pessoasModalAberto = false;
   salvando = false;
   excluindo = false;
+  salvandoPessoa = false;
+  excluindoPessoaId: string | null = null;
   itemEditandoId: string | null = null;
+  pessoaEditandoId: string | null = null;
   dataSelecionada = "";
   form: CalendarioPayload = this.getFormInicial("");
+  pessoaForm: CalendarioPessoaPayload = this.getPessoaFormInicial();
   mesSelecionado: string;
 
   private readonly hoje = new Date();
@@ -72,9 +80,12 @@ export class CalendarioComponent {
     this.mesesOptions = this.buildMesesOptions();
     this.vm$ = combineLatest([
       this.calendarioService.calendarioState$,
+      this.calendarioService.pessoasState$,
       this.mesSelecionadoSubject
     ]).pipe(
-      map(([state, mesSelecionado]) => this.buildViewModel(state, mesSelecionado)),
+      map(([state, pessoasState, mesSelecionado]) =>
+        this.buildViewModel(state, pessoasState, mesSelecionado)
+      ),
       tap(() => this.cdr.markForCheck())
     );
   }
@@ -85,6 +96,10 @@ export class CalendarioComponent {
 
   trackByItem(_: number, item: CalendarioItem): string {
     return item.id ?? `${item.data}-${item.titulo}`;
+  }
+
+  trackByPessoa(_: number, pessoa: CalendarioPessoa): string {
+    return pessoa.id ?? pessoa.nome;
   }
 
   onMesChange() {
@@ -108,7 +123,8 @@ export class CalendarioComponent {
     this.form = {
       data: item.data,
       titulo: item.titulo || "",
-      descricao: item.descricao || ""
+      descricao: item.descricao || "",
+      pessoaId: item.pessoaId || null
     };
     this.modalAberto = true;
     this.forcarAtualizacaoTela();
@@ -123,6 +139,39 @@ export class CalendarioComponent {
     this.itemEditandoId = null;
     this.dataSelecionada = "";
     this.form = this.getFormInicial("");
+    this.forcarAtualizacaoTela();
+  }
+
+  abrirModalPessoas() {
+    this.pessoasModalAberto = true;
+    this.pessoaEditandoId = null;
+    this.pessoaForm = this.getPessoaFormInicial();
+    this.forcarAtualizacaoTela();
+  }
+
+  fecharModalPessoas(forcar = false) {
+    if (this.salvandoPessoa && !forcar) return;
+
+    this.pessoasModalAberto = false;
+    this.salvandoPessoa = false;
+    this.excluindoPessoaId = null;
+    this.pessoaEditandoId = null;
+    this.pessoaForm = this.getPessoaFormInicial();
+    this.forcarAtualizacaoTela();
+  }
+
+  editarPessoa(pessoa: CalendarioPessoa) {
+    this.pessoaEditandoId = pessoa.id ?? null;
+    this.pessoaForm = {
+      nome: pessoa.nome || "",
+      cor: this.getSafeColor(pessoa.cor)
+    };
+    this.forcarAtualizacaoTela();
+  }
+
+  cancelarEdicaoPessoa() {
+    this.pessoaEditandoId = null;
+    this.pessoaForm = this.getPessoaFormInicial();
     this.forcarAtualizacaoTela();
   }
 
@@ -155,6 +204,35 @@ export class CalendarioComponent {
     }
   }
 
+  async salvarPessoa() {
+    if (this.salvandoPessoa) return;
+
+    const payload = this.getPessoaPayloadSanitizado();
+    if (!payload.nome) {
+      this.toast.show("Informe o nome da pessoa.", "error");
+      return;
+    }
+
+    this.salvandoPessoa = true;
+    this.forcarAtualizacaoTela();
+
+    try {
+      if (this.pessoaEditandoId) {
+        await this.calendarioService.updatePessoa(this.pessoaEditandoId, payload);
+        this.toast.show("Pessoa atualizada.", "success");
+      } else {
+        await this.calendarioService.createPessoa(payload);
+        this.toast.show("Pessoa cadastrada.", "success");
+      }
+      this.cancelarEdicaoPessoa();
+    } catch (err: any) {
+      this.toast.show(`Erro ao salvar pessoa: ${err?.message || err}`, "error");
+    } finally {
+      this.salvandoPessoa = false;
+      this.forcarAtualizacaoTela();
+    }
+  }
+
   async excluirItem() {
     if (!this.itemEditandoId || this.excluindo) return;
 
@@ -172,6 +250,35 @@ export class CalendarioComponent {
       this.toast.show(`Erro ao excluir anotacao: ${err?.message || err}`, "error");
     } finally {
       this.excluindo = false;
+      this.forcarAtualizacaoTela();
+    }
+  }
+
+  async excluirPessoa(pessoa: CalendarioPessoa) {
+    if (!pessoa.id || this.excluindoPessoaId) return;
+
+    const ok = window.confirm("Deseja excluir esta pessoa do calendario?");
+    if (!ok) return;
+
+    this.excluindoPessoaId = pessoa.id;
+    this.forcarAtualizacaoTela();
+
+    try {
+      await this.calendarioService.deletePessoa(pessoa.id);
+      if (this.pessoaEditandoId === pessoa.id) {
+        this.cancelarEdicaoPessoa();
+      }
+      if (this.form.pessoaId === pessoa.id) {
+        this.form = {
+          ...this.form,
+          pessoaId: null
+        };
+      }
+      this.toast.show("Pessoa excluida.", "success");
+    } catch (err: any) {
+      this.toast.show(`Erro ao excluir pessoa: ${err?.message || err}`, "error");
+    } finally {
+      this.excluindoPessoaId = null;
       this.forcarAtualizacaoTela();
     }
   }
@@ -198,17 +305,44 @@ export class CalendarioComponent {
     return this.excluindo ? "Excluindo..." : "Excluir";
   }
 
+  getPessoaSalvarLabel(): string {
+    return this.salvandoPessoa ? "Salvando..." : "Salvar";
+  }
+
+  getTituloModalPessoas(): string {
+    return this.pessoaEditandoId ? "Editar pessoa" : "Cadastrar pessoa";
+  }
+
+  getPessoaCor(item: CalendarioItem, pessoas: CalendarioPessoa[]): string {
+    const pessoa = this.getPessoaDoItem(item, pessoas);
+    return pessoa ? this.getSafeColor(pessoa.cor) : "#2563eb";
+  }
+
+  getPessoaNome(item: CalendarioItem, pessoas: CalendarioPessoa[]): string {
+    const pessoa = this.getPessoaDoItem(item, pessoas);
+    return pessoa?.nome || "";
+  }
+
+  getItemStyle(item: CalendarioItem, pessoas: CalendarioPessoa[]): Record<string, string> {
+    return {
+      "--cal-person-color": this.getPessoaCor(item, pessoas)
+    };
+  }
+
   private buildViewModel(
     state: DataState<CalendarioItem[]>,
+    pessoasState: DataState<CalendarioPessoa[]>,
     mesSelecionado: string
   ): CalendarioViewModel {
     const { year, monthIndex } = this.parseMonthKey(mesSelecionado);
 
     return {
-      carregando: state.status === "loading",
+      carregando: state.status === "loading" || pessoasState.status === "loading",
       erro: state.error,
+      erroPessoas: pessoasState.error,
       tituloMes: this.capitalize(this.tituloFormatter.format(new Date(year, monthIndex, 1))),
-      dias: this.buildDias(state.data, year, monthIndex)
+      dias: this.buildDias(state.data, year, monthIndex),
+      pessoas: pessoasState.data
     };
   }
 
@@ -295,7 +429,8 @@ export class CalendarioComponent {
     return {
       data: this.form.data,
       titulo: this.form.titulo.trim(),
-      descricao: this.form.descricao.trim()
+      descricao: this.form.descricao.trim(),
+      pessoaId: this.form.pessoaId || null
     };
   }
 
@@ -303,7 +438,22 @@ export class CalendarioComponent {
     return {
       data,
       titulo: "",
-      descricao: ""
+      descricao: "",
+      pessoaId: null
+    };
+  }
+
+  private getPessoaPayloadSanitizado(): CalendarioPessoaPayload {
+    return {
+      nome: this.pessoaForm.nome.trim(),
+      cor: this.getSafeColor(this.pessoaForm.cor)
+    };
+  }
+
+  private getPessoaFormInicial(): CalendarioPessoaPayload {
+    return {
+      nome: "",
+      cor: "#2563eb"
     };
   }
 
@@ -328,6 +478,15 @@ export class CalendarioComponent {
 
   private capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  private getPessoaDoItem(item: CalendarioItem, pessoas: CalendarioPessoa[]): CalendarioPessoa | null {
+    if (!item.pessoaId) return null;
+    return pessoas.find((pessoa) => pessoa.id === item.pessoaId) ?? null;
+  }
+
+  private getSafeColor(value: string): string {
+    return /^#[0-9a-fA-F]{6}$/.test(value || "") ? value : "#2563eb";
   }
 
   private forcarAtualizacaoTela() {
