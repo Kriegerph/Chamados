@@ -82,3 +82,21 @@
     max-height: 58vh;
   }
 }
+
+.clientes-col {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.clientes-list-scroll {
+  border-color: #e0e7f0;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+}
+
+.clientes-table tbody tr:hover td {
+  background: #f8fbff;
+}
+
+.clientes-form-actions .btn {
+  width: 100%;
+}

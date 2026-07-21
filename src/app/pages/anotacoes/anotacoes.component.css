@@ -556,3 +556,37 @@
     width: 100%;
   }
 }
+
+.anotacoes-list-card,
+.anotacoes-editor-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.anotacao-item {
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}
+
+.anotacao-item:hover {
+  transform: none;
+}
+
+.anotacao-item.selected {
+  background: #eef5ff;
+}
+
+.editor-shell,
+.anotacoes-editor-card .editor-host .ck.ck-toolbar,
+.anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
+  border-radius: var(--radius-md);
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-toolbar {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}

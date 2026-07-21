@@ -1,18 +1,18 @@
 .dashboard-layout {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 .dashboard-full-width {
@@ -21,7 +21,11 @@
 
 .chart-card {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.chart-card:hover {
+  transform: none;
 }
 
 .chart-card canvas {
@@ -31,7 +35,7 @@
 
 .chart-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-main);
 }
 
@@ -53,8 +57,8 @@
 .chart-controls select {
   width: auto;
   min-width: 90px;
-  height: 34px;
-  padding: 0 28px 0 10px;
+  min-height: 34px;
+  padding: 0 30px 0 10px;
   background: #ffffff;
 }
 
@@ -110,16 +114,16 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 13px 14px;
   border: 1px solid #dbe3ee;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: var(--radius-md);
+  background: #ffffff;
 }
 
 .systems-critical-rank {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -183,8 +187,8 @@
   gap: 12px;
   align-items: start;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #e7edf5;
+  border-radius: var(--radius-md);
   background: #ffffff;
 }
 

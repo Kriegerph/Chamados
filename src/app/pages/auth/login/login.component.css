@@ -4,13 +4,28 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(244, 246, 249, 0.88) 100%),
+    var(--surface-page);
 }
 
 .auth-card {
   width: 100%;
   max-width: 380px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  padding: 24px;
+}
+
+.auth-card h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.auth-card label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .auth-error {

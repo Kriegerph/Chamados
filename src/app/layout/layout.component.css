@@ -4,7 +4,9 @@
 
 .app-shell {
   min-height: 100vh;
-  background: var(--surface-page);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(244, 246, 249, 0.86) 100%),
+    var(--surface-page);
 }
 
 .app-main {
@@ -17,13 +19,13 @@
 
 .app-content {
   flex: 1;
-  padding: 28px;
+  padding: 22px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.12) 100%);
 }
 
 .page-enter {
-  min-height: calc(100vh - var(--header-height) - 56px);
+  min-height: calc(100vh - var(--header-height) - 44px);
   animation: page-fade-in var(--transition-slow);
 }
 

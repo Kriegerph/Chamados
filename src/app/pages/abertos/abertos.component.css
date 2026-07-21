@@ -2,3 +2,45 @@
 .abertos-tempo-field input{letter-spacing:0;font-variant-numeric:tabular-nums}.abertos-tempo-field input[readonly]{border-style:dashed;background:#f8fafc;color:var(--text-muted);cursor:not-allowed}
 .abertos-create-modal{width:min(1120px,calc(100vw - 32px));max-height:min(900px,calc(100dvh - 24px));padding:20px}.chamado-edit-modal{width:min(1120px,calc(100vw - 32px));max-height:min(900px,calc(100dvh - 24px))}.abertos-form-shell{grid-template-columns:minmax(0,1.32fr) minmax(280px,.82fr)}.abertos-form-grid{align-items:start}.abertos-tempo-field{max-width:100%}.chamado-edit-col-main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start;grid-auto-flow:row;overflow:auto;padding-right:2px}.chamado-edit-field{min-width:0}.chamado-edit-field-motivo,.chamado-edit-field-resolucao{grid-column:1/-1}.chamado-edit-col-main-sem-tempo .chamado-edit-field-data{grid-column:1/-1}
 @media (max-width:720px){.chamado-edit-col-main{grid-template-columns:1fr}.chamado-edit-field,.chamado-edit-field-motivo,.chamado-edit-field-resolucao,.chamado-edit-col-main-sem-tempo .chamado-edit-field-data{grid-column:1}.abertos-create-modal,.chamado-edit-modal{width:min(100%,calc(100vw - 16px));max-height:calc(100dvh - 16px)}}
+
+.abertos-list-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.abertos-table-wrap {
+  border-color: #e0e7f0;
+  border-radius: var(--radius-lg);
+}
+
+.abertos-table thead th {
+  background: #f4f7fb;
+}
+
+.abertos-table tbody tr:hover td {
+  background: #f8fbff;
+}
+
+.chamado-principal {
+  color: #1f2a3d;
+}
+
+.action-buttons .btn {
+  box-shadow: none;
+}
+
+.abertos-create-modal,
+.chamado-edit-modal {
+  border: 1px solid #dbe3ee;
+  border-radius: var(--radius-lg);
+}
+
+.abertos-form-block,
+.abertos-form-side,
+.abertos-sistema-checkbox {
+  border-radius: var(--radius-md);
+}
+
+.abertos-form-block-highlight,
+.abertos-form-side {
+  background: #f8fbff;
+}

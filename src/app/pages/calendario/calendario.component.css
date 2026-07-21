@@ -385,3 +385,51 @@
     border-radius: 999px;
   }
 }
+
+.calendario-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.calendario-header {
+  margin-bottom: 16px;
+}
+
+.calendario-day {
+  border-color: #dce5f1;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.calendario-day:hover:not(.is-empty) {
+  border-color: #93c5fd;
+  background: #f8fbff;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
+}
+
+.calendario-day.is-empty {
+  background: #f3f6fa;
+}
+
+.calendario-weekday {
+  color: #53627a;
+}
+
+.calendario-item {
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08);
+}
+
+.calendario-modal {
+  border: 1px solid #dbe3ee;
+  border-radius: var(--radius-lg);
+}
+
+.calendario-person-row {
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}

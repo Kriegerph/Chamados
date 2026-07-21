@@ -292,3 +292,35 @@
     grid-template-rows: auto;
   }
 }
+
+.relatorios-card,
+.page-section > article.card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.empresas-selector-list,
+.tipo-card,
+.stat-mini,
+.export-summary {
+  border-radius: var(--radius-md);
+}
+
+.tipo-card {
+  background: #ffffff;
+}
+
+.tipo-card:hover {
+  transform: none;
+}
+
+.tipo-card.active {
+  background: #eef5ff;
+}
+
+.stat-mini {
+  background: #ffffff;
+}
+
+.relatorios-table tbody tr:hover td {
+  background: #f8fbff;
+}

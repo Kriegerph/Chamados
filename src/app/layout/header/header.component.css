@@ -4,10 +4,10 @@
 
 .topbar {
   height: var(--header-height);
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.84);
-  backdrop-filter: blur(8px);
+  padding: 12px 22px;
+  border-bottom: 1px solid rgba(214, 222, 234, 0.78);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -15,7 +15,7 @@
   position: sticky;
   top: 0;
   z-index: 15;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.05);
 }
 
 .header-left {
@@ -27,28 +27,28 @@
 
 .header-left h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.1;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .header-user {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px 6px 8px;
+  padding: 5px 10px 5px 6px;
   border: 1px solid #dbe3ee;
-  border-radius: 12px;
+  border-radius: 999px;
   background: #ffffff;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.05);
 }
 
 .user-avatar {
   width: 30px;
   height: 30px;
-  border-radius: 9px;
-  background: linear-gradient(160deg, var(--primary-500) 0%, var(--primary-700) 100%);
+  border-radius: 999px;
+  background: linear-gradient(160deg, var(--primary-500) 0%, #14b8a6 100%);
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
