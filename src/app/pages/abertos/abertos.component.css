@@ -44,3 +44,130 @@
 .abertos-form-side {
   background: #f8fbff;
 }
+
+@media (max-width: 720px) {
+  .abertos-page {
+    display: grid;
+    gap: 12px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .abertos-list-card {
+    overflow: visible;
+    padding: 14px;
+  }
+
+  .abertos-list-header {
+    align-items: stretch;
+  }
+
+  .abertos-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .abertos-table,
+  .abertos-table tbody,
+  .abertos-table tr,
+  .abertos-table td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .abertos-table {
+    table-layout: auto;
+  }
+
+  .abertos-table colgroup,
+  .abertos-table thead {
+    display: none;
+  }
+
+  .abertos-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .abertos-table tbody tr {
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(17, 24, 39, 0.05);
+    overflow: hidden;
+  }
+
+  .abertos-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf2f7;
+    background: transparent;
+    text-align: left;
+  }
+
+  .abertos-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .abertos-table td::before {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-soft);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .abertos-table td:nth-child(1)::before {
+    content: "Data";
+  }
+
+  .abertos-table td:nth-child(2)::before {
+    content: "Empresa / funcionario";
+  }
+
+  .abertos-table td:nth-child(3)::before {
+    content: "Motivo";
+  }
+
+  .abertos-table td:nth-child(4)::before {
+    content: "Acoes";
+  }
+
+  .chamado-principal,
+  .chamado-secundario,
+  .motivo-texto {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .abertos-action-btn {
+    min-width: 0;
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .abertos-create-modal,
+  .chamado-edit-modal {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+  }
+
+  .abertos-create-body {
+    padding-right: 0;
+  }
+
+  .abertos-form-side,
+  .abertos-form-side-scroll,
+  .chamado-edit-col-sistemas .abertos-sistemas-list {
+    max-height: none;
+  }
+}

@@ -296,3 +296,51 @@
 .sistemas-list-scroll {
   padding-right: 6px;
 }
+
+@media (max-width: 720px) {
+  .sistemas-page {
+    gap: 12px;
+  }
+
+  .sistemas-layout {
+    gap: 12px;
+  }
+
+  .sistemas-form-card,
+  .sistemas-list-card {
+    padding: 14px;
+  }
+
+  .sistemas-hero-actions,
+  .sistemas-list-header .sistemas-hero-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sistemas-hero-actions .status-chip {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .sistemas-list-scroll {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .sistema-item {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sistema-item-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sistema-item-id {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

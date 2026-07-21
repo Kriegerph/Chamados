@@ -590,3 +590,55 @@
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+
+@media (max-width: 720px) {
+  .anotacoes-layout {
+    gap: 12px;
+  }
+
+  .anotacoes-list-card,
+  .anotacoes-editor-card {
+    padding: 14px;
+  }
+
+  .anotacoes-hero-actions,
+  .anotacoes-editor-header-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .anotacoes-hero-actions .btn,
+  .anotacoes-hero-actions .status-chip,
+  .anotacoes-editor-header-actions .btn,
+  .anotacoes-editor-header-actions .status-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .anotacoes-list {
+    max-height: none;
+  }
+
+  .editor-shell {
+    min-height: min(56dvh, 430px);
+    padding-inline: 6px;
+  }
+
+  .anotacoes-editor-card .editor-host .ck.ck-toolbar {
+    overflow-x: auto;
+  }
+
+  .anotacoes-editor-card .editor-host .ck.ck-editor__editable_inline {
+    padding-inline: 12px;
+  }
+
+  .anotacoes-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .anotacoes-actions .btn {
+    width: 100%;
+  }
+}

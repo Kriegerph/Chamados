@@ -378,3 +378,87 @@
 .afazer-modal-header {
   border-radius: var(--radius-lg);
 }
+
+@media (max-width: 640px) {
+  .afazer-page {
+    gap: 12px;
+  }
+
+  .afazer-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .summary-card {
+    padding: 12px 8px 12px 10px;
+  }
+
+  .summary-label {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .summary-value {
+    font-size: 22px;
+  }
+
+  .afazer-list-card {
+    padding: 14px;
+  }
+
+  .afazer-list-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .afazer-list-actions .btn,
+  .afazer-list-actions .status-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tarefa-item {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .tarefa-status-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .tarefa-status-label {
+    grid-column: 1 / -1;
+  }
+
+  .tarefa-prioridade-value {
+    justify-self: end;
+  }
+
+  .tarefa-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .tarefa-actions .btn {
+    width: 100%;
+  }
+
+  .afazer-modal-backdrop {
+    align-items: end;
+    place-items: end center;
+    padding: 10px;
+  }
+
+  .afazer-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+  }
+
+  .afazer-modal-header,
+  .afazer-form {
+    padding-inline: 16px;
+  }
+}

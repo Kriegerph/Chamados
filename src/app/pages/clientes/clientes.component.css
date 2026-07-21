@@ -100,3 +100,85 @@
 .clientes-form-actions .btn {
   width: 100%;
 }
+
+@media (max-width: 640px) {
+  .clientes-layout {
+    gap: 12px;
+  }
+
+  .clientes-col {
+    padding: 14px;
+  }
+
+  .clientes-list-scroll {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .clientes-table,
+  .clientes-table tbody,
+  .clientes-table tr,
+  .clientes-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .clientes-table thead {
+    display: none;
+  }
+
+  .clientes-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .clientes-table tbody tr {
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  .clientes-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .clientes-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .clientes-table td::before {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-soft);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .clientes-table td:nth-child(1)::before {
+    content: "Nome";
+  }
+
+  .clientes-table td:nth-child(2)::before {
+    content: "Contato";
+  }
+
+  .clientes-table td:nth-child(3)::before {
+    content: "Acoes";
+  }
+
+  .clientes-table .btn-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clientes-table .btn {
+    width: 100%;
+  }
+}

@@ -433,3 +433,66 @@
   border-radius: var(--radius-md);
   background: #ffffff;
 }
+
+@media (max-width: 640px) {
+  .calendario-card {
+    padding: 12px;
+  }
+
+  .calendario-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .calendario-grid {
+    gap: 3px;
+  }
+
+  .calendario-weekday {
+    font-size: 9px;
+  }
+
+  .calendario-day {
+    min-height: clamp(76px, 16vw, 96px);
+    padding: 4px;
+  }
+
+  .calendario-day-number {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .calendario-day-items {
+    gap: 3px;
+  }
+
+  .calendario-item {
+    min-height: 22px;
+    padding: 3px 4px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .calendario-item-person {
+    display: none;
+  }
+
+  .calendario-modal-backdrop {
+    align-items: end;
+    place-items: end center;
+    padding: 10px;
+  }
+
+  .calendario-modal,
+  .calendario-pessoas-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+  }
+
+  .calendario-modal-header,
+  .calendario-form,
+  .calendario-person-list {
+    padding-inline: 16px;
+  }
+}

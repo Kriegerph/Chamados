@@ -324,3 +324,48 @@
 .relatorios-table tbody tr:hover td {
   background: #f8fbff;
 }
+
+@media (max-width: 780px) {
+  .relatorios-layout {
+    gap: 12px;
+  }
+
+  .relatorios-card,
+  .page-section > article.card {
+    padding: 14px;
+  }
+
+  .empresas-selector-actions,
+  .relatorios-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .empresas-selector-actions .btn,
+  .relatorios-actions .btn,
+  .export-btn {
+    width: 100%;
+  }
+
+  .relatorios-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .relatorios-table {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 460px) {
+  .empresas-selector-actions,
+  .relatorios-actions,
+  .relatorios-stats {
+    grid-template-columns: 1fr;
+  }
+}

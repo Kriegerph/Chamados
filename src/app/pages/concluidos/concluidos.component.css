@@ -563,3 +563,74 @@
 .meta-badge {
   background: #ffffff;
 }
+
+@media (max-width: 700px) {
+  .concluidos-list-anchor {
+    padding: 14px;
+  }
+
+  .concluidos-header {
+    padding: 12px;
+  }
+
+  .concluidos-title-row {
+    align-items: stretch;
+  }
+
+  .concluidos-limitador {
+    max-width: none;
+  }
+
+  .filter-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-actions .btn {
+    width: 100%;
+  }
+
+  .concluido-group {
+    padding: 10px;
+  }
+
+  .item-header,
+  .item-body,
+  .item-resolucao,
+  .item-footer {
+    padding: 10px;
+  }
+
+  .cliente-nome {
+    font-size: 14px;
+  }
+
+  .item-footer {
+    align-items: stretch;
+  }
+
+  .concluido-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .concluido-actions .btn {
+    width: 100%;
+  }
+
+  .concluidos-pagination {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pagination-btn,
+  .pagination-btn-number {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pagination-ellipsis {
+    display: none;
+  }
+}

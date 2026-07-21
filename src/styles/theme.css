@@ -348,3 +348,100 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 960px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .page-section {
+    gap: 12px;
+  }
+
+  .page-header,
+  .card-title-row {
+    align-items: stretch;
+  }
+
+  .page-actions,
+  .btn-group {
+    width: 100%;
+  }
+
+  .modal {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-top: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, #ffffff 38%);
+  }
+
+  .table-wrap {
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 14px;
+  }
+
+  .card-title-row {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+  }
+
+  .btn {
+    min-height: 42px;
+    padding-inline: 12px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  .status-chip {
+    min-height: 26px;
+    font-size: 11px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .toast {
+    right: 10px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    left: 10px;
+    text-align: center;
+  }
+}
