@@ -27541,7 +27541,7 @@ var DashboardComponent = class _DashboardComponent {
       if (anoSelecionado !== ANO_TODOS && ano !== anoSelecionado)
         return;
       totalAnoSelecionado += 1;
-      if (mes === mesAtual && dia === diaAtual) {
+      if (ano === anoAtual && mes === mesAtual && dia === diaAtual) {
         totalHojeAnoSelecionado += 1;
         if (item.status === "aberto")
           abertosHojeAnoSelecionado += 1;
