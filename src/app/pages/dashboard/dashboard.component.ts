@@ -345,7 +345,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (anoSelecionado !== ANO_TODOS && ano !== anoSelecionado) return;
 
       totalAnoSelecionado += 1;
-      if (mes === mesAtual && dia === diaAtual) {
+      if (ano === anoAtual && mes === mesAtual && dia === diaAtual) {
         totalHojeAnoSelecionado += 1;
         if (item.status === "aberto") abertosHojeAnoSelecionado += 1;
         if (item.status === "concluido") concluidosHojeAnoSelecionado += 1;
