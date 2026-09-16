@@ -1,4 +1,5 @@
 ﻿export const environment = {
+  whatsappApiUrl: "http://localhost:3000",
   firebaseConfig: {
     apiKey: "AIzaSyD7TD-gIuF51DuEaicplObcbysuDreufUo",
     authDomain: "chamados-983ce.firebaseapp.com",

@@ -96,6 +96,11 @@ export class AuthService {
     return this.authStateSubject.value.user?.uid ?? this.auth.currentUser?.uid ?? null;
   }
 
+  async getIdToken(forceRefresh = false): Promise<string | null> {
+    const user = this.authStateSubject.value.user ?? this.auth.currentUser;
+    return user ? user.getIdToken(forceRefresh) : null;
+  }
+
   private toErrorMessage(error: unknown): string {
     if (error instanceof Error && error.message) {
       return error.message;

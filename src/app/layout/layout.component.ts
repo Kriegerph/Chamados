@@ -40,6 +40,7 @@ export class LayoutComponent {
     abertos: "Chamados",
     afazer: "A fazer",
     calendario: "Calendário",
+    conexao: "Conexão",
     anotacoes: "Anotações",
     concluidos: "Chamados",
     empresas: "Empresas",

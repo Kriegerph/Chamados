@@ -3,7 +3,6 @@ import { AuthGuard } from "./guards/auth.guard";
 import { AbertosComponent } from "./pages/abertos/abertos.component";
 import { CadastroComponent } from "./pages/auth/cadastro/cadastro.component";
 import { ConcluidosComponent } from "./pages/concluidos/concluidos.component";
-import { DashboardComponent } from "./pages/dashboard/dashboard.component";
 import { LayoutComponent } from "./layout/layout.component";
 import { LoginComponent } from "./pages/auth/login/login.component";
 
@@ -29,13 +28,22 @@ export const appRoutes: Routes = [
           import("./pages/calendario/calendario.component").then((m) => m.CalendarioComponent)
       },
       {
+        path: "conexao",
+        loadComponent: () =>
+          import("./pages/conexao/conexao.component").then((m) => m.ConexaoComponent)
+      },
+      {
         path: "anotacoes",
         loadComponent: () =>
           import("./pages/anotacoes/anotacoes.component").then((m) => m.AnotacoesComponent)
       },
       { path: "clientes", redirectTo: "empresas", pathMatch: "full" },
       { path: "concluidos", component: ConcluidosComponent },
-      { path: "dashboard", component: DashboardComponent },
+      {
+        path: "dashboard",
+        loadComponent: () =>
+          import("./pages/dashboard/dashboard.component").then((m) => m.DashboardComponent)
+      },
       {
         path: "empresas",
         loadComponent: () =>
