@@ -828,7 +828,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { precision: 0, color: palette.textMuted },
+            ticks: { stepSize: 50, maxTicksLimit: 1000, color: palette.textMuted },
             grid: { color: palette.grid }
           },
           y: {
@@ -867,7 +867,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { precision: 0, color: palette.textMuted },
+            ticks: { stepSize: 2, maxTicksLimit: 1000, color: palette.textMuted },
             grid: { color: palette.grid }
           },
           x: {
