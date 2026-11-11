@@ -15,6 +15,7 @@ import { DataState } from "../../models/data-state.model";
 import { Sistema } from "../../models/sistema.model";
 import { ChamadosService } from "../../services/chamados.service";
 import { SistemasService } from "../../services/sistemas.service";
+import { DashboardFilterService } from "../../services/dashboard-filter.service";
 
 type TopEmpresasPeriodo = "todos" | "ultimoMes" | "ultimos7Dias" | "hoje";
 type AnoFiltro = number | "__all__";
@@ -120,7 +121,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   @ViewChild("systemsDistributionChart") systemsDistributionChartRef?: ElementRef<HTMLCanvasElement>;
 
   readonly meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  readonly ANO_TODOS = ANO_TODOS;
   readonly periodosTopEmpresas: Array<{ value: TopEmpresasPeriodo; label: string }> = [
     { value: "todos", label: "Todos" },
     { value: "hoje", label: "Hoje" },
@@ -128,7 +128,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     { value: "ultimoMes", label: "Último mês" }
   ];
 
-  anoSelecionado: AnoFiltro = ANO_TODOS;
   anoMensalSelecionado = this.getCurrentYear();
   topEmpresasPeriodo: TopEmpresasPeriodo = "todos";
   anoDiarioSelecionado = this.getCurrentYear();
@@ -136,7 +135,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   readonly vm$: Observable<DashboardViewModel>;
 
-  private readonly anoSelecionadoSubject = new BehaviorSubject<AnoFiltro>(this.anoSelecionado);
   private readonly anoMensalSelecionadoSubject = new BehaviorSubject<number>(this.anoMensalSelecionado);
   private readonly topEmpresasPeriodoSubject = new BehaviorSubject<TopEmpresasPeriodo>(this.topEmpresasPeriodo);
   private readonly graficoDiarioFiltroSubject = new BehaviorSubject<{ ano: number; mes: number }>({
@@ -155,12 +153,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private readonly chamadosService: ChamadosService,
-    private readonly sistemasService: SistemasService
+    private readonly sistemasService: SistemasService,
+    private readonly dashboardFilter: DashboardFilterService
   ) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.sistemasService.sistemasState$,
-      this.anoSelecionadoSubject,
+      this.dashboardFilter.anoSelecionado$,
       this.anoMensalSelecionadoSubject,
       this.topEmpresasPeriodoSubject,
       this.graficoDiarioFiltroSubject
@@ -199,10 +198,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.destroyCharts();
-  }
-
-  onAnoChange() {
-    this.anoSelecionadoSubject.next(this.anoSelecionado);
   }
 
   onTopEmpresasPeriodoChange() {
@@ -715,10 +710,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   private syncControles(vm: DashboardViewModel) {
-    if (this.anoSelecionado !== vm.anoSelecionado) {
-      this.anoSelecionado = vm.anoSelecionado;
-    }
-
     if (this.anoMensalSelecionado !== vm.anoMensalSelecionado) {
       this.anoMensalSelecionado = vm.anoMensalSelecionado;
     }
@@ -828,7 +819,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { stepSize: 50, maxTicksLimit: 1000, color: palette.textMuted },
+            ticks: { precision: 0, color: palette.textMuted },
             grid: { color: palette.grid }
           },
           y: {
@@ -867,7 +858,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 2, maxTicksLimit: 1000, color: palette.textMuted },
+            ticks: { precision: 0, color: palette.textMuted },
             grid: { color: palette.grid }
           },
           x: {

@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { from, Observable, switchMap } from "rxjs";
+import { catchError, exhaustMap, from, map, Observable, of, shareReplay, startWith, switchMap, timeout, timer } from "rxjs";
 import { environment } from "../../environments/environment";
 import { AuthService } from "./auth.service";
 
@@ -22,6 +22,16 @@ export interface WhatsappConnectionStatus {
 })
 export class WhatsappConnectionService {
   private readonly baseUrl = environment.whatsappApiUrl.replace(/\/$/, "");
+
+  readonly apiAvailable$ = timer(0, 10000).pipe(
+    exhaustMap(() => this.getStatus().pipe(
+      timeout(5000),
+      map(() => true),
+      catchError(() => of(false))
+    )),
+    startWith(false),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   constructor(
     private readonly http: HttpClient,

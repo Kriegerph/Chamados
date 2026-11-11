@@ -1,16 +1,4 @@
 <section class="page-section dashboard-layout" *ngIf="vm$ | async as vm">
-  <div class="chart-controls">
-    <label>
-      Ano
-      <select [(ngModel)]="anoSelecionado" (change)="onAnoChange()">
-        <option [ngValue]="ANO_TODOS">Todos</option>
-        <option *ngFor="let ano of vm.anosDisponiveis" [ngValue]="ano">
-          {{ ano }}
-        </option>
-      </select>
-    </label>
-  </div>
-
   <div class="dashboard-skeleton-grid" *ngIf="vm.carregando">
     <div class="grid-4">
       <div class="skeleton"></div>

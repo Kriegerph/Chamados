@@ -35,6 +35,7 @@ type EmpresasViewModel = {
   carregando: boolean;
   erro: string | null;
   empresas: EmpresaItemView[];
+  empresasFiltradas: EmpresaItemView[];
   empresaSelecionada: EmpresaItemView | null;
   sistemas: SistemaOptionView[];
   sistemasErro: string | null;
@@ -77,6 +78,8 @@ export class EmpresasComponent {
   editFuncionarioEmpresaId: string | null = null;
   editFuncionario: FuncionarioFormModel = this.createEmptyFuncionarioForm();
 
+  filtroEmpresa = "";
+  private readonly filtroEmpresaSubject = new BehaviorSubject<string>("");
   private readonly empresaSelecionadaIdSubject = new BehaviorSubject<string | null>(null);
   private readonly funcionariosStateSubject = new BehaviorSubject<DataState<Funcionario[]>>({
     status: "ready",
@@ -98,18 +101,29 @@ export class EmpresasComponent {
       this.empresasService.empresasState$,
       this.sistemasService.sistemasState$,
       this.empresaSelecionadaIdSubject,
-      this.funcionariosStateSubject
+      this.funcionariosStateSubject,
+      this.filtroEmpresaSubject
     ]).pipe(
-      map(([chamadosState, empresasState, sistemasState, empresaSelecionadaId, funcionariosState]) =>
+      map(([chamadosState, empresasState, sistemasState, empresaSelecionadaId, funcionariosState, filtroEmpresa]) =>
         this.buildViewModel(
           chamadosState,
           empresasState,
           sistemasState,
           empresaSelecionadaId,
-          funcionariosState
+          funcionariosState,
+          filtroEmpresa
         )
       )
     );
+  }
+
+  atualizarFiltroEmpresa(texto: string) {
+    this.filtroEmpresa = texto;
+    this.filtroEmpresaSubject.next(texto);
+  }
+
+  private normalizarBusca(texto: string): string {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
 
   trackByEmpresa(_: number, item: EmpresaItemView): string {
@@ -432,7 +446,8 @@ export class EmpresasComponent {
     empresasState: DataState<Empresa[]>,
     sistemasState: DataState<Sistema[]>,
     empresaSelecionadaId: string | null,
-    funcionariosState: DataState<Funcionario[]>
+    funcionariosState: DataState<Funcionario[]>,
+    filtroEmpresa: string
   ): EmpresasViewModel {
     const chamadosPorEmpresa = this.countChamadosPorEmpresa(chamadosState.data);
     const sistemas = this.sortSistemas(sistemasState.data)
@@ -472,6 +487,9 @@ export class EmpresasComponent {
         (!!empresaSelecionadaId && funcionariosState.status === "loading"),
       erro: empresasState.error || chamadosState.error,
       empresas,
+      empresasFiltradas: empresas.filter((item) =>
+        this.normalizarBusca(item.nomeEmpresa || "").includes(this.normalizarBusca(filtroEmpresa))
+      ),
       empresaSelecionada,
       sistemas,
       sistemasErro: sistemasState.error,

@@ -54,6 +54,24 @@
   flex-wrap: wrap;
 }
 
+.sistemas-search-total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sistemas-search-total .status-chip {
+  flex-shrink: 0;
+}
+
+.sistemas-search {
+  width: 220px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+}
+
 .sistemas-layout {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
@@ -315,6 +333,16 @@
   .sistemas-list-header .sistemas-hero-actions {
     width: 100%;
     justify-content: stretch;
+  }
+
+  .sistemas-search-total {
+    flex: 1;
+    gap: 8px;
+  }
+
+  .sistemas-search {
+    flex: 1;
+    width: 0;
   }
 
   .sistemas-hero-actions .status-chip {

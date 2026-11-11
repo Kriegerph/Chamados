@@ -1,14 +1,18 @@
 .concluidos-limitador {
-  width: 152px;
-  min-width: 152px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
 }
 
 .concluidos-limitador select {
-  width: 100%;
+  width: 84px;
   min-width: 84px;
-  height: 36px;
+  height: 32px;
+  min-height: 32px;
   padding: 0 32px 0 12px;
-  line-height: 34px;
+  line-height: 30px;
   vertical-align: middle;
   box-sizing: border-box;
 }
@@ -33,23 +37,40 @@
 
 .filters-toolbar {
   display: grid;
-  grid-template-columns: minmax(130px, 0.7fr) minmax(130px, 0.7fr) minmax(170px, 1fr) minmax(210px, 1.15fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   grid-template-areas:
-    "ano mes data empresa"
-    "cliente sistema texto actions";
+    "ano mes data empresa cliente"
+    "sistema secundario texto texto actions";
   gap: 10px;
   align-items: end;
 }
 
 .filter-field {
   min-width: 0;
+  display: grid;
+  grid-template-rows: 18px 40px;
+  gap: 6px;
+}
+
+.filter-field .field-label {
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-field select,
+.filter-field input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  box-sizing: border-box;
 }
 
 .filter-field select {
-  width: 100%;
-  min-width: 0;
   padding-right: 36px;
-  box-sizing: border-box;
 }
 
 .filter-field--ano {
@@ -82,12 +103,24 @@
   grid-area: texto;
 }
 
+.filter-field--sistema-secundario {
+  grid-area: secundario;
+}
+
 .filter-actions {
   grid-area: actions;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
   gap: 8px;
+}
+
+.filter-actions .btn {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 
 .concluidos-list {
@@ -428,25 +461,15 @@
 }
 
 @media (max-width: 1180px) {
-  .filters-toolbar {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-    grid-template-areas:
-      "ano mes"
-      "data empresa"
-      "cliente sistema"
-      "texto texto"
-      "actions actions";
-  }
-
-  .filter-field--texto,
-  .filter-actions {
-    grid-column: 1 / -1;
+  .filter-actions .btn {
+    padding-inline: 10px;
+    min-width: 0;
   }
 }
 
 @media (max-width: 700px) {
   .concluidos-limitador {
-    width: 100%;
+    width: auto;
     min-width: 0;
     max-width: 180px;
   }
@@ -460,6 +483,7 @@
       "empresa"
       "cliente"
       "sistema"
+      "secundario"
       "texto"
       "actions";
   }
@@ -516,17 +540,16 @@
 }
 
 .concluidos-header {
-  gap: 14px;
+  gap: 8px;
   margin-bottom: 16px;
-  padding: 14px;
+  padding: 8px 14px 14px;
   border: 1px solid #e5ebf3;
   border-radius: var(--radius-lg);
   background: #f8fbff;
 }
 
 .filters-toolbar input,
-.filters-toolbar select,
-.concluidos-limitador select {
+.filters-toolbar select {
   min-height: 38px;
 }
 
@@ -570,11 +593,11 @@
   }
 
   .concluidos-header {
-    padding: 12px;
+    padding: 8px 12px 12px;
   }
 
   .concluidos-title-row {
-    align-items: stretch;
+    align-items: center;
   }
 
   .concluidos-limitador {

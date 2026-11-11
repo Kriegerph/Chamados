@@ -23,11 +23,6 @@ export const appRoutes: Routes = [
           import("./pages/afazer/afazer.component").then((m) => m.AfazerComponent)
       },
       {
-        path: "calendario",
-        loadComponent: () =>
-          import("./pages/calendario/calendario.component").then((m) => m.CalendarioComponent)
-      },
-      {
         path: "conexao",
         loadComponent: () =>
           import("./pages/conexao/conexao.component").then((m) => m.ConexaoComponent)

@@ -39,7 +39,6 @@ export class LayoutComponent {
     dashboard: "Dashboard",
     abertos: "Chamados",
     afazer: "A fazer",
-    calendario: "Calendário",
     conexao: "Conexão",
     anotacoes: "Anotações",
     concluidos: "Chamados",

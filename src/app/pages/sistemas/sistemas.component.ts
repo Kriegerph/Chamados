@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { map, Observable } from "rxjs";
+import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
 import { Sistema } from "../../models/sistema.model";
 import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
@@ -25,6 +25,8 @@ export class SistemasComponent {
   nome = "";
   salvando = false;
   excluindoId: string | null = null;
+  filtroSistema = "";
+  private readonly filtroSistemaSubject = new BehaviorSubject<string>("");
 
   readonly vm$: Observable<SistemasViewModel>;
 
@@ -32,14 +34,18 @@ export class SistemasComponent {
     private readonly sistemasService: SistemasService,
     private readonly toast: ToastService
   ) {
-    this.vm$ = this.sistemasService.sistemasState$.pipe(
-      map((state): SistemasViewModel => {
+    this.vm$ = combineLatest([
+      this.sistemasService.sistemasState$,
+      this.filtroSistemaSubject
+    ]).pipe(
+      map(([state, filtro]): SistemasViewModel => {
         const sistemas = this.sortSistemas(state.data);
+        const busca = this.normalizarBusca(filtro);
 
         return {
           carregando: state.status === "loading",
           erro: state.error,
-          sistemas,
+          sistemas: sistemas.filter((item) => this.normalizarBusca(item.nome || "").includes(busca)),
           total: sistemas.length
         };
       })
@@ -48,6 +54,15 @@ export class SistemasComponent {
 
   trackBySistema(_: number, item: Sistema): string {
     return item.id ?? item.nome;
+  }
+
+  atualizarFiltroSistema(texto: string) {
+    this.filtroSistema = texto;
+    this.filtroSistemaSubject.next(texto);
+  }
+
+  private normalizarBusca(texto: string): string {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
 
   getSistemaIdPreview(): string {

@@ -3,6 +3,19 @@
     <div>
       <h1>{{ title }}</h1>
     </div>
+    <label class="dashboard-year" *ngIf="title === 'Dashboard'">
+      <span>Ano</span>
+      <select
+        aria-label="Ano principal do Dashboard"
+        [ngModel]="dashboardFilter.anoSelecionado$ | async"
+        (ngModelChange)="dashboardFilter.selecionarAno($event)"
+      >
+        <option [ngValue]="'__all__'">Todos</option>
+        <option *ngFor="let ano of dashboardFilter.anosDisponiveis$ | async" [ngValue]="ano">
+          {{ ano }}
+        </option>
+      </select>
+    </label>
   </div>
 
   <div class="header-user">

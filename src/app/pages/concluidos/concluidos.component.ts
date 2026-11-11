@@ -40,6 +40,7 @@ type ConcluidosFiltros = {
   empresaId: string;
   clienteId: string;
   sistemaId: string;
+  sistemaSecundarioId: string;
   texto: string;
 };
 
@@ -101,6 +102,7 @@ const FILTROS_INICIAIS: ConcluidosFiltros = {
   empresaId: "",
   clienteId: "",
   sistemaId: "",
+  sistemaSecundarioId: "",
   texto: ""
 };
 
@@ -631,6 +633,13 @@ export class ConcluidosComponent {
       }
 
       if (filtros.sistemaId && item.contextoSistemaId?.trim() !== filtros.sistemaId) {
+        return false;
+      }
+
+      if (filtros.sistemaSecundarioId && (
+        item.contextoSistemaId?.trim() === filtros.sistemaSecundarioId ||
+        !item.sistemasRelacionados?.some((id) => id.trim() === filtros.sistemaSecundarioId)
+      )) {
         return false;
       }
 

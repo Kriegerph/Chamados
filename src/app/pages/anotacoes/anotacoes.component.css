@@ -87,6 +87,17 @@
   overflow: hidden;
 }
 
+.anotacoes-list-header {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.anotacoes-list-header .status-chip {
+  flex-shrink: 0;
+}
+
 .anotacoes-editor-card {
   position: relative;
   overflow: hidden;
@@ -112,7 +123,7 @@
 
 .anotacoes-search-field {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .anotacoes-search-field input {
@@ -201,7 +212,7 @@
   min-height: 0;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 28px;
+  padding-bottom: 8px;
 }
 
 .anotacoes-form-body > label {
@@ -451,10 +462,9 @@
   flex-wrap: nowrap;
   margin-top: 0;
   margin-bottom: 0;
-  padding-top: 10px;
-  border-top: 1px solid #e2e8f0;
+  padding-top: 0;
   flex: 0 0 auto;
-  min-height: 50px;
+  min-height: 40px;
 }
 
 @media (min-width: 1025px) {

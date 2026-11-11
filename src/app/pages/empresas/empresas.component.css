@@ -2,3 +2,38 @@
 .empresas-list-card.empresas-list-card{background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);}.empresa-card.empresa-card{border-radius:var(--radius-lg);background:#ffffff;}.empresa-card.empresa-card:hover{transform:none;}.empresa-card.empresa-card.is-open{border-color:#9ec5fe;background:#fbfdff;}.empresa-expand-panel.empresa-expand-panel,.empresas-checkbox.empresas-checkbox{border-radius:var(--radius-md);}.empresa-system-badge.empresa-system-badge,.empresa-funcionarios-badge.empresa-funcionarios-badge{border-radius:999px;background:#ffffff;}.empresa-funcionario-row.empresa-funcionario-row:hover{background:#f8fbff;}
 
 @media (max-width:720px){.empresas-list-card.empresas-list-card{padding:14px;}.empresas-list{gap:10px;}.empresa-card-header{gap:12px;padding:14px;}.empresa-card-side,.empresa-funcionario-actions{gap:8px;}.empresa-funcionarios-badge,.empresa-card-side .btn,.empresa-funcionario-actions .btn{width:100%;justify-content:center;}.empresas-row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;}.empresas-row-actions .btn{width:100%;}.empresa-expand-panel.empresa-expand-panel{margin:0 8px 8px;padding:14px 14px 10px 20px;}.empresa-funcionario-row{gap:10px;padding:12px 0;}.empresas-modal-panel{width:100%;max-height:calc(100dvh - 20px);padding:16px;}.empresas-sistemas-list{max-height:none;}}
+
+.empresas-list-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.empresas-search-total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.empresas-search-total .status-chip {
+  flex-shrink: 0;
+}
+
+.empresas-search {
+  width: 240px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+}
+
+@media (max-width: 720px) {
+  .empresas-search-total {
+    flex: 1;
+    gap: 8px;
+  }
+
+  .empresas-search {
+    flex: 1;
+    width: 0;
+  }
+}

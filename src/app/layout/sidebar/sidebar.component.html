@@ -27,15 +27,15 @@
   </div>
 
   <nav class="sidebar-nav">
-    <ng-container *ngFor="let item of menuItems">
-      <button class="nav-item nav-item-disabled" *ngIf="item.disabled" type="button" [disabled]="true">
+    <ng-container *ngFor="let item of menuItems$ | async">
+      <button class="nav-item nav-item-disabled" *ngIf="item.disabled" type="button" [disabled]="true" title="API indisponível">
         <span class="nav-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path [attr.d]="getIconPath(item.icon)"></path>
           </svg>
         </span>
         <span class="nav-label" *ngIf="open">{{ item.label }}</span>
-        <span class="nav-badge" *ngIf="open">Em breve</span>
+        <span class="nav-badge" *ngIf="open">Indisponível</span>
       </button>
 
       <a

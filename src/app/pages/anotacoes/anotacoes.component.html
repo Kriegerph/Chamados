@@ -1,15 +1,9 @@
 <section class="page-section anotacoes-page" *ngIf="vm$ | async as vm">
   <div class="anotacoes-layout">
     <article class="card anotacoes-list-card">
-      <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Lista de anotações</h3>
-          <p class="card-subtitle">Selecione uma anotação para continuar a edição.</p>
-        </div>
-        <div class="anotacoes-hero-actions">
-          <span class="status-chip">Total: {{ vm.total }}</span>
-          <button class="btn primary" type="button" (click)="abrirNovaAnotacao()">Nova anotação</button>
-        </div>
+      <div class="card-title-row anotacoes-list-header">
+        <h3 class="card-title">Lista de anotações</h3>
+        <span class="status-chip">Total: {{ vm.total }}</span>
       </div>
 
       <label class="anotacoes-search-field">

@@ -6,12 +6,23 @@
   <div class="stack-md" *ngIf="!vm.carregando || vm.empresas.length > 0">
     <article class="card empresas-list-card">
       <div class="card-title-row">
-        <div>
+        <div class="empresas-list-heading">
           <h3 class="card-title">Lista de empresas</h3>
           <p class="card-subtitle">Clique no card para abrir ou recolher os funcionários vinculados.</p>
         </div>
         <div class="empresas-hero-actions">
-          <span class="status-chip">Total: {{ vm.empresas.length }}</span>
+          <div class="empresas-search-total">
+            <input
+              class="empresas-search"
+              name="buscarEmpresa"
+              type="search"
+              aria-label="Pesquisar empresa"
+              placeholder="Pesquisar empresa..."
+              [ngModel]="filtroEmpresa"
+              (ngModelChange)="atualizarFiltroEmpresa($event)"
+            />
+            <span class="status-chip">Total: {{ vm.empresas.length }}</span>
+          </div>
           <button class="btn primary" type="button" (click)="abrirCadastroEmpresa()">Nova empresa</button>
         </div>
       </div>
@@ -23,9 +34,12 @@
       </div>
 
       <div class="empresas-list" *ngIf="!vm.erro && vm.empresas.length > 0">
+        <div class="empty-state" *ngIf="vm.empresasFiltradas.length === 0">
+          Nenhuma empresa encontrada.
+        </div>
         <article
           class="empresa-card"
-          *ngFor="let item of vm.empresas; trackBy: trackByEmpresa"
+          *ngFor="let item of vm.empresasFiltradas; trackBy: trackByEmpresa"
           [class.is-open]="item.id === vm.empresaSelecionada?.id"
         >
           <div

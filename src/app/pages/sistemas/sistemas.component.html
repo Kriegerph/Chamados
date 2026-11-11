@@ -1,10 +1,10 @@
 <section class="page-section sistemas-page" *ngIf="vm$ | async as vm">
-  <div class="grid-2" *ngIf="vm.carregando && vm.sistemas.length === 0">
+  <div class="grid-2" *ngIf="vm.carregando && vm.total === 0">
     <div class="skeleton" style="min-height: 280px;"></div>
     <div class="skeleton" style="min-height: 280px;"></div>
   </div>
 
-  <div class="sistemas-layout" *ngIf="!vm.carregando || vm.sistemas.length > 0">
+  <div class="sistemas-layout" *ngIf="!vm.carregando || vm.total > 0">
     <article class="card sistemas-col sistemas-form-card">
       <div class="card-title-row">
         <div>
@@ -49,7 +49,18 @@
           <p class="card-subtitle">A lista rola internamente sem empurrar o formulário.</p>
         </div>
         <div class="sistemas-hero-actions">
-          <span class="status-chip">Total: {{ vm.total }}</span>
+          <div class="sistemas-search-total">
+            <input
+              class="sistemas-search"
+              name="buscarSistema"
+              type="search"
+              aria-label="Pesquisar sistema"
+              placeholder="Pesquisar sistema..."
+              [ngModel]="filtroSistema"
+              (ngModelChange)="atualizarFiltroSistema($event)"
+            />
+            <span class="status-chip">Total: {{ vm.total }}</span>
+          </div>
           <span class="status-chip neutral">IDs padronizados</span>
         </div>
       </div>
@@ -57,8 +68,11 @@
       <div class="empty-state" *ngIf="!!vm.erro">{{ vm.erro }}</div>
 
       <div class="sistemas-list-scroll" *ngIf="!vm.erro">
-        <div class="empty-state" *ngIf="vm.sistemas.length === 0">
+        <div class="empty-state" *ngIf="vm.total === 0">
           Nenhum sistema cadastrado.
+        </div>
+        <div class="empty-state" *ngIf="vm.total > 0 && vm.sistemas.length === 0">
+          Nenhum sistema encontrado.
         </div>
 
         <div class="sistema-item" *ngFor="let item of vm.sistemas; trackBy: trackBySistema">

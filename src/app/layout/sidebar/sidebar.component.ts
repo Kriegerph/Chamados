@@ -2,6 +2,9 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { RouterLink, RouterLinkActive } from "@angular/router";
 
+import { map } from "rxjs";
+import { WhatsappConnectionService } from "../../services/whatsapp-connection.service";
+
 type NavItem = {
   label: string;
   route: string;
@@ -29,7 +32,6 @@ export class SidebarComponent {
     { label: "Dashboard", route: "/dashboard", icon: "dashboard" },
     { label: "Chamados Abertos", route: "/abertos", icon: "folder-open", exact: true },
     { label: "A fazer", route: "/afazer", icon: "todo" },
-    { label: "Calendário", route: "/calendario", icon: "calendar" },
     { label: "Conexão", route: "/conexao", icon: "connection" },
     { label: "Chamados Concluídos", route: "/concluidos", icon: "check-square" },
     { label: "Anotações", route: "/anotacoes", icon: "notes" },
@@ -37,6 +39,16 @@ export class SidebarComponent {
     { label: "Sistemas", route: "/sistemas", icon: "layers" },
     { label: "Relatórios", route: "/relatorios", icon: "bar-chart" }
   ];
+
+  readonly menuItems$;
+
+  constructor(whatsappConnection: WhatsappConnectionService) {
+    this.menuItems$ = whatsappConnection.apiAvailable$.pipe(
+      map((available) => this.menuItems.map((item) =>
+        item.route === "/conexao" ? { ...item, disabled: !available } : item
+      ))
+    );
+  }
 
   onNavigate() {
     this.routeSelected.emit();
@@ -60,8 +72,6 @@ export class SidebarComponent {
         return "M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 13-4-4 1.4-1.4L11 13.2l4.6-4.6L17 10z";
       case "todo":
         return "M5 4h14a2 2 0 0 1 2 2v14H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m1 4v2h2V8zm4 0v2h7V8zm-4 5v2h2v-2zm4 0v2h7v-2z";
-      case "calendar":
-        return "M7 2h2v3h6V2h2v3h3a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3zm13 8H4v10h16zM6 12h3v3H6zm5 0h3v3h-3zm5 0h2v3h-2z";
       case "connection":
         return "M7 7a5 5 0 0 1 7.1 0l1.4-1.4a7 7 0 0 0-9.9 0zm2.8 2.8a1 1 0 0 1 1.4 0l1.4-1.4a3 3 0 0 0-4.2 0zM12 20a2 2 0 0 0 2-2h5a3 3 0 0 0 3-3V8h-2v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8H2v7a3 3 0 0 0 3 3h5a2 2 0 0 0 2 2";
       case "notes":
