@@ -60,13 +60,20 @@
         <article class="card stat-card success">
           <div class="stat-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m4.59 7.58-5.66 5.66a1 1 0 0 1-1.41 0l-2.12-2.12 1.41-1.41 1.42 1.42 4.95-4.95z" />
+              <path d="M16 6h6v6h-2V9.4l-6 6-4-4-6.6 6.6L2 16.6l8-8 4 4L18.6 8H16z" />
             </svg>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Abertos atualmente</span>
-            <strong class="stat-value">{{ vm.cards.abertosValor }}</strong>
-            <span class="stat-note">{{ vm.cards.abertosNota }}</span>
+            <span class="stat-label">Maior crescimento em 7 dias</span>
+            <ng-container *ngIf="vm.cards.maiorCrescimento as crescimento; else semCrescimento">
+              <strong class="stat-value">{{ formatarCrescimento(crescimento.percentual) }}</strong>
+              <span class="stat-note stat-growth-company" [title]="crescimento.nome">{{ crescimento.nome }}</span>
+              <span class="stat-note">{{ crescimento.anterior }} → {{ crescimento.atual }} chamados no total</span>
+            </ng-container>
+            <ng-template #semCrescimento>
+              <strong class="stat-value">—</strong>
+              <span class="stat-note">Sem crescimento comparável</span>
+            </ng-template>
           </div>
         </article>
       </div>

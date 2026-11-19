@@ -25,6 +25,13 @@ type EmpresaResumo = {
   total: number;
 };
 
+type CrescimentoEmpresa = {
+  nome: string;
+  anterior: number;
+  atual: number;
+  percentual: number;
+};
+
 type DashboardCards = {
   principalLabel: string;
   principalValor: number;
@@ -35,8 +42,7 @@ type DashboardCards = {
   totalAnoLabel: string;
   totalAnoValor: number;
   totalAnoNota: string;
-  abertosValor: number;
-  abertosNota: string;
+  maiorCrescimento: CrescimentoEmpresa | null;
 };
 
 type GraficoDiario = {
@@ -103,6 +109,11 @@ type DashboardViewModel = {
 };
 
 const ANO_TODOS: AnoFiltro = "__all__";
+const FORMATO_CRESCIMENTO = new Intl.NumberFormat("pt-BR", {
+  style: "percent",
+  signDisplay: "always",
+  maximumFractionDigits: 2
+});
 
 @Component({
   selector: "app-dashboard",
@@ -326,13 +337,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     let totalHojeAnoSelecionado = 0;
     let abertosHojeAnoSelecionado = 0;
     let concluidosHojeAnoSelecionado = 0;
-    let abertosAtuais = 0;
-    let concluidosAtuais = 0;
 
     items.forEach((item) => {
-      if (item.status === "aberto") abertosAtuais += 1;
-      if (item.status === "concluido") concluidosAtuais += 1;
-
       const data = item.data || "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
 
@@ -370,9 +376,47 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       totalAnoValor: totalAnoSelecionado,
       totalAnoNota:
         anoSelecionado === ANO_TODOS ? "Acumulado de todos os anos" : `Acumulado de ${anoSelecionado}`,
-      abertosValor: abertosAtuais,
-      abertosNota: `Concluídos atualmente: ${concluidosAtuais}`
+      maiorCrescimento: this.buildMaiorCrescimento(items, today)
     };
+  }
+
+  formatarCrescimento(percentual: number): string {
+    return FORMATO_CRESCIMENTO.format(percentual);
+  }
+
+  private buildMaiorCrescimento(items: Chamado[], hoje: string): CrescimentoEmpresa | null {
+    const dataComparacao = this.shiftDate(hoje, -7);
+    const totais = new Map<string, Omit<CrescimentoEmpresa, "percentual">>();
+
+    for (const item of items) {
+      const data = item.data || "";
+      const nome = item.empresa?.trim();
+      if (!nome || !/^\d{4}-\d{2}-\d{2}$/.test(data) || data > hoje) {
+        continue;
+      }
+
+      const chave = this.normalizarTexto(nome);
+      const empresa = totais.get(chave) ?? { nome, anterior: 0, atual: 0 };
+      empresa.atual += 1;
+      if (data <= dataComparacao) {
+        empresa.anterior += 1;
+      }
+      totais.set(chave, empresa);
+    }
+
+    let maior: CrescimentoEmpresa | null = null;
+    for (const empresa of totais.values()) {
+      if (empresa.anterior === 0 || empresa.atual <= empresa.anterior) continue;
+      const percentual = (empresa.atual - empresa.anterior) / empresa.atual;
+      if (
+        !maior ||
+        percentual > maior.percentual ||
+        (percentual === maior.percentual && empresa.atual > maior.atual)
+      ) {
+        maior = { ...empresa, percentual };
+      }
+    }
+    return maior;
   }
 
   private buildMonthlyTotalsByYear(items: Chamado[], anoSelecionado: AnoFiltro): {
