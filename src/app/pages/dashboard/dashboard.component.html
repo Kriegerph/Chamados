@@ -203,18 +203,10 @@
         </div>
       </article>
 
-      <section class="dashboard-systems-section">
+      <section class="dashboard-systems-section" aria-labelledby="dashboard-atendimento-title">
         <div class="card-title-row card-title-row-wrap dashboard-section-header">
           <div>
-            <h3 class="chart-title">Análise por Sistemas</h3>
-            <p class="card-subtitle">
-              {{ vm.analiseSistemas.filtroLabel }}. Todos os gráficos consideram apenas o sistema principal do chamado.
-            </p>
-          </div>
-
-          <div class="dashboard-section-chips">
-            <span class="status-chip neutral">Concluídos: {{ vm.analiseSistemas.totalConcluidos }}</span>
-            <span class="status-chip neutral">Com sistema principal: {{ vm.analiseSistemas.totalChamadosComSistema }}</span>
+            <h3 class="chart-title" id="dashboard-atendimento-title">Acompanhamento do atendimento</h3>
           </div>
         </div>
 
@@ -223,101 +215,48 @@
             <div class="card-title-row">
               <div>
                 <h3 class="chart-title">Top sistemas por volume</h3>
-                <p class="card-subtitle">Ranking por quantidade de chamados usando apenas o contexto principal.</p>
+                <p class="card-subtitle">{{ vm.analiseSistemas.filtroLabel }} · {{ vm.analiseSistemas.totalChamadosComSistema }} com sistema principal</p>
               </div>
             </div>
-
             <canvas #topSystemsChart></canvas>
             <div class="empty-state" *ngIf="vm.analiseSistemas.topSistemas.length === 0">
               Nenhum sistema encontrado para o período selecionado.
             </div>
           </article>
 
-          <article class="card chart-card">
-            <div class="card-title-row">
-              <div>
-                <h3 class="chart-title">Tempo médio por sistema</h3>
-                <p class="card-subtitle">Calculado apenas com o sistema principal e chamados com tempo registrado.</p>
+          <article class="card dashboard-insight-card">
+            <h3 class="chart-title">Demanda por dia da semana</h3>
+            <p class="card-subtitle">Chamados concluídos com data nos últimos 28 dias completos.</p>
+            <dl class="dashboard-weekdays" *ngIf="vm.demandaRecente.total; else semDemanda">
+              <div class="dashboard-weekday" *ngFor="let dia of vm.demandaRecente.porDiaDaSemana">
+                <dt>{{ dia.nome }}</dt>
+                <dd class="dashboard-weekday-track" aria-hidden="true">
+                  <span [style.width.%]="dia.largura"></span>
+                </dd>
+                <dd>{{ dia.total }}</dd>
               </div>
-            </div>
-
-            <canvas #avgSystemsChart></canvas>
-            <div class="empty-state" *ngIf="vm.analiseSistemas.tempoMedioSistemas.length === 0">
-              Nenhum chamado concluído com tempo de atendimento disponível.
-            </div>
-          </article>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="card chart-card">
-            <div class="card-title-row">
-              <div>
-                <h3 class="chart-title">Distribuição por sistema</h3>
-                <p class="card-subtitle">Participação percentual considerando somente o sistema principal.</p>
-              </div>
-            </div>
-
-            <div class="systems-distribution-layout" *ngIf="!vm.analiseSistemas.distribuicao.semDados; else semDistribuicao">
-              <div class="systems-distribution-chart-wrap">
-                <canvas #systemsDistributionChart></canvas>
-              </div>
-
-              <div class="systems-distribution-legend">
-                <div
-                  class="systems-distribution-legend-item"
-                  *ngFor="let item of getDistribuicaoLegenda(vm.analiseSistemas.distribuicao)"
-                >
-                  <span class="systems-distribution-color" [style.background]="item.cor"></span>
-                  <div class="systems-distribution-legend-main">
-                    <span class="systems-distribution-legend-name">{{ item.nome }}</span>
-                    <span class="systems-distribution-legend-value">{{ item.percentual }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #semDistribuicao>
-              <div class="systems-distribution-chart-wrap">
-                <canvas #systemsDistributionChart></canvas>
-              </div>
-            </ng-template>
-
-            <div class="empty-state" *ngIf="vm.analiseSistemas.distribuicao.semDados">
-              Nenhum sistema encontrado para montar a distribuição.
-            </div>
-          </article>
-
-          <article class="card chart-card systems-critical-card">
-            <div class="card-title-row">
-              <div>
-                <h3 class="chart-title">Sistemas críticos</h3>
-                <p class="card-subtitle">Ordenação por volume + tempo médio do sistema principal.</p>
-              </div>
-            </div>
-
-            <div class="systems-critical-list" *ngIf="vm.analiseSistemas.sistemasCriticos.length > 0; else semCriticos">
-              <div
-                class="systems-critical-item"
-                *ngFor="let item of vm.analiseSistemas.sistemasCriticos; let i = index"
-              >
-                <div class="systems-critical-rank">#{{ i + 1 }}</div>
-                <div class="systems-critical-main">
-                  <div class="systems-critical-name">{{ item.nome }}</div>
-                  <div class="systems-critical-meta">
-                    {{ item.totalChamados }} chamados &bull; {{ formatTempoMedio(item.tempoMedioMinutos) }}
-                  </div>
-                </div>
-                <div class="systems-critical-side">
-                  <span class="status-chip neutral">{{ formatPercentual(item.percentual) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #semCriticos>
-              <div class="empty-state">Nenhum sistema crítico calculado para o período.</div>
+            </dl>
+            <ng-template #semDemanda>
+              <div class="empty-state">Nenhum chamado concluído no período.</div>
             </ng-template>
           </article>
         </div>
+
+        <article class="card dashboard-insight-card">
+          <h3 class="chart-title">Motivos recorrentes</h3>
+          <p class="card-subtitle">Top 5 motivos que se repetiram nos chamados concluídos dos últimos 28 dias completos.</p>
+          <ol class="dashboard-insight-list" *ngIf="vm.demandaRecente.motivosRecorrentes.length; else semMotivosRecorrentes">
+            <li *ngFor="let motivo of vm.demandaRecente.motivosRecorrentes">
+              <span class="dashboard-insight-row">
+                <strong>{{ motivo.nome }}</strong>
+                <span class="status-chip neutral">{{ motivo.total }} chamados</span>
+              </span>
+            </li>
+          </ol>
+          <ng-template #semMotivosRecorrentes>
+            <div class="empty-state">Nenhum motivo se repetiu no período.</div>
+          </ng-template>
+        </article>
       </section>
     </ng-container>
   </ng-container>
