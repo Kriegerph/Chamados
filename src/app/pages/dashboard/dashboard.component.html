@@ -39,7 +39,17 @@
           </div>
           <div class="stat-content">
             <span class="stat-label">{{ vm.cards.mesLabel }}</span>
-            <strong class="stat-value">{{ vm.cards.mesValor }}</strong>
+            <div class="stat-month-result">
+              <strong class="stat-value">{{ vm.cards.mesValor }}</strong>
+              <ng-container *ngIf="vm.cards.mesVariacao !== null">
+                <span
+                  class="stat-month-change"
+                  [class.stat-month-down]="vm.cards.mesVariacao < 0"
+                  [class.stat-month-up]="vm.cards.mesVariacao > 0"
+                  aria-label="Variação em relação ao mesmo período do mês anterior"
+                >{{ vm.cards.mesVariacao === 0 ? '0%' : formatarCrescimento(vm.cards.mesVariacao) }}</span>
+              </ng-container>
+            </div>
             <span class="stat-note">{{ vm.cards.mesNota }}</span>
           </div>
         </article>
@@ -57,25 +67,59 @@
           </div>
         </article>
 
-        <article class="card stat-card success">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16 6h6v6h-2V9.4l-6 6-4-4-6.6 6.6L2 16.6l8-8 4 4L18.6 8H16z" />
+        <div class="growth-card" #growthCard>
+          <button
+            #growthTrigger
+            class="card stat-card success growth-trigger"
+            type="button"
+            [attr.aria-expanded]="rankingCrescimentoAberto"
+            [attr.aria-controls]="rankingCrescimentoAberto ? 'dashboard-growth-ranking' : null"
+            (click)="rankingCrescimentoAberto = !rankingCrescimentoAberto"
+          >
+            <span class="stat-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 6h6v6h-2V9.4l-6 6-4-4-6.6 6.6L2 16.6l8-8 4 4L18.6 8H16z" />
+              </svg>
+            </span>
+            <span class="stat-content">
+              <span class="stat-label">Maior crescimento em 7 dias</span>
+              <ng-container *ngIf="vm.cards.rankingCrescimento[0] as crescimento; else semCrescimento">
+                <strong class="stat-value">{{ formatarCrescimento(crescimento.percentual) }}</strong>
+                <span class="stat-note stat-growth-company" [title]="crescimento.nome">{{ crescimento.nome }}</span>
+                <span class="stat-note">{{ crescimento.anterior }} → {{ crescimento.atual }} chamados no total</span>
+              </ng-container>
+              <ng-template #semCrescimento>
+                <strong class="stat-value">—</strong>
+                <span class="stat-note">Sem crescimento comparável</span>
+              </ng-template>
+            </span>
+            <svg class="growth-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-          </div>
-          <div class="stat-content">
-            <span class="stat-label">Maior crescimento em 7 dias</span>
-            <ng-container *ngIf="vm.cards.maiorCrescimento as crescimento; else semCrescimento">
-              <strong class="stat-value">{{ formatarCrescimento(crescimento.percentual) }}</strong>
-              <span class="stat-note stat-growth-company" [title]="crescimento.nome">{{ crescimento.nome }}</span>
-              <span class="stat-note">{{ crescimento.anterior }} → {{ crescimento.atual }} chamados no total</span>
-            </ng-container>
-            <ng-template #semCrescimento>
-              <strong class="stat-value">—</strong>
-              <span class="stat-note">Sem crescimento comparável</span>
+          </button>
+          <section
+            *ngIf="rankingCrescimentoAberto"
+            id="dashboard-growth-ranking"
+            class="growth-ranking"
+            aria-labelledby="dashboard-growth-title"
+          >
+            <h3 id="dashboard-growth-title">Top 5 em 7 dias</h3>
+            <ol *ngIf="vm.cards.rankingCrescimento.length; else rankingVazio">
+              <li *ngFor="let empresa of vm.cards.rankingCrescimento">
+                <div class="growth-entry">
+                  <span>
+                    <strong class="growth-entry-name">{{ empresa.nome }}</strong>
+                    <small>{{ empresa.anterior }} → {{ empresa.atual }} chamados</small>
+                  </span>
+                  <strong class="growth-percent">{{ formatarCrescimento(empresa.percentual) }}</strong>
+                </div>
+              </li>
+            </ol>
+            <ng-template #rankingVazio>
+              <p>Nenhuma empresa com crescimento no período.</p>
             </ng-template>
-          </div>
-        </article>
+          </section>
+        </div>
       </div>
 
       <div class="dashboard-grid">

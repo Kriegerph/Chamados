@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   ViewChild
 } from "@angular/core";
@@ -38,11 +39,12 @@ type DashboardCards = {
   principalNota: string;
   mesLabel: string;
   mesValor: number;
+  mesVariacao: number | null;
   mesNota: string;
   totalAnoLabel: string;
   totalAnoValor: number;
   totalAnoNota: string;
-  maiorCrescimento: CrescimentoEmpresa | null;
+  rankingCrescimento: CrescimentoEmpresa[];
 };
 
 type GraficoDiario = {
@@ -124,6 +126,8 @@ const FORMATO_CRESCIMENTO = new Intl.NumberFormat("pt-BR", {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
+  @ViewChild("growthCard") private growthCard?: ElementRef<HTMLElement>;
+  @ViewChild("growthTrigger") private growthTrigger?: ElementRef<HTMLButtonElement>;
   @ViewChild("monthlyChart") monthlyChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild("clientsChart") clientsChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild("dailyChart") dailyChartRef?: ElementRef<HTMLCanvasElement>;
@@ -143,6 +147,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   topEmpresasPeriodo: TopEmpresasPeriodo = "todos";
   anoDiarioSelecionado = this.getCurrentYear();
   mesDiarioSelecionado = this.getCurrentMonth();
+  rankingCrescimentoAberto = false;
 
   readonly vm$: Observable<DashboardViewModel>;
 
@@ -325,13 +330,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const today = this.getToday();
     const [anoAtual, mesAtual, diaAtual] = today.split("-").map(Number);
     const mesAtualLabel = this.meses[mesAtual - 1];
-    const anoBaseCardMes = anoSelecionado === ANO_TODOS ? anoAtual : anoSelecionado;
-    const chamadosMesReferencia = items.filter((item) => {
-      const data = item.data || "";
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return false;
-      const [ano, mes] = data.split("-").map(Number);
-      return ano === anoBaseCardMes && mes === mesAtual;
-    });
+    const anoBaseCardMes = typeof anoSelecionado === "number" ? anoSelecionado : anoAtual;
+    const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
+    const anoMesAnterior = mesAtual === 1 ? anoBaseCardMes - 1 : anoBaseCardMes;
+    const diaLimiteAtual = Math.min(diaAtual, this.getDaysInMonth(anoBaseCardMes, mesAtual));
+    const diaLimiteAnterior = Math.min(diaAtual, this.getDaysInMonth(anoMesAnterior, mesAnterior));
+    const periodoAtual = `${diaLimiteAtual}/${mesAtualLabel}`;
+    const periodoAnterior = `${diaLimiteAnterior}/${this.meses[mesAnterior - 1]}`;
+    const anoReferenciaLabel = anoBaseCardMes === anoAtual ? "" : ` · ${anoBaseCardMes}`;
+    let totalMesReferencia = 0;
+    let totalMesAnterior = 0;
 
     let totalAnoSelecionado = 0;
     let totalHojeAnoSelecionado = 0;
@@ -343,6 +351,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
 
       const [ano, mes, dia] = data.split("-").map(Number);
+      if (dia < 1) return;
+      if (ano === anoBaseCardMes && mes === mesAtual && dia <= diaLimiteAtual) {
+        totalMesReferencia += 1;
+      }
+      if (ano === anoMesAnterior && mes === mesAnterior && dia <= diaLimiteAnterior) {
+        totalMesAnterior += 1;
+      }
       if (anoSelecionado !== ANO_TODOS && ano !== anoSelecionado) return;
 
       totalAnoSelecionado += 1;
@@ -367,16 +382,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       principalValor,
       principalNota,
       mesLabel: `Chamados em ${mesAtualLabel}`,
-      mesValor: chamadosMesReferencia.length,
-      mesNota:
-        anoSelecionado === ANO_TODOS
-          ? "Mês de referência no ano atual"
-          : "Mês de referência no ano selecionado",
+      mesValor: totalMesReferencia,
+      mesVariacao: totalMesAnterior > 0 ? (totalMesReferencia - totalMesAnterior) / totalMesAnterior : null,
+      mesNota: `Até ${periodoAtual} · ${totalMesAnterior} até ${periodoAnterior}${anoReferenciaLabel}`,
       totalAnoLabel: anoSelecionado === ANO_TODOS ? "Total geral" : "Total do ano selecionado",
       totalAnoValor: totalAnoSelecionado,
       totalAnoNota:
         anoSelecionado === ANO_TODOS ? "Acumulado de todos os anos" : `Acumulado de ${anoSelecionado}`,
-      maiorCrescimento: this.buildMaiorCrescimento(items, today)
+      rankingCrescimento: this.buildRankingCrescimento(items, today)
     };
   }
 
@@ -384,7 +397,25 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     return FORMATO_CRESCIMENTO.format(percentual);
   }
 
-  private buildMaiorCrescimento(items: Chamado[], hoje: string): CrescimentoEmpresa | null {
+  @HostListener("document:click", ["$event"])
+  fecharRankingAoClicarFora(event: MouseEvent) {
+    if (
+      this.rankingCrescimentoAberto &&
+      event.target instanceof Node &&
+      !this.growthCard?.nativeElement.contains(event.target)
+    ) {
+      this.rankingCrescimentoAberto = false;
+    }
+  }
+
+  @HostListener("document:keydown.escape")
+  fecharRankingComEscape() {
+    if (!this.rankingCrescimentoAberto) return;
+    this.rankingCrescimentoAberto = false;
+    this.growthTrigger?.nativeElement.focus();
+  }
+
+  private buildRankingCrescimento(items: Chamado[], hoje: string): CrescimentoEmpresa[] {
     const dataComparacao = this.shiftDate(hoje, -7);
     const totais = new Map<string, Omit<CrescimentoEmpresa, "percentual">>();
 
@@ -404,19 +435,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       totais.set(chave, empresa);
     }
 
-    let maior: CrescimentoEmpresa | null = null;
+    const ranking: CrescimentoEmpresa[] = [];
     for (const empresa of totais.values()) {
       if (empresa.anterior === 0 || empresa.atual <= empresa.anterior) continue;
       const percentual = (empresa.atual - empresa.anterior) / empresa.atual;
-      if (
-        !maior ||
-        percentual > maior.percentual ||
-        (percentual === maior.percentual && empresa.atual > maior.atual)
-      ) {
-        maior = { ...empresa, percentual };
-      }
+      ranking.push({ ...empresa, percentual });
     }
-    return maior;
+    return ranking
+      .sort((a, b) => b.percentual - a.percentual || b.atual - a.atual)
+      .slice(0, 5);
   }
 
   private buildMonthlyTotalsByYear(items: Chamado[], anoSelecionado: AnoFiltro): {
