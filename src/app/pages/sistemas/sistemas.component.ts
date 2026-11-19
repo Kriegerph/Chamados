@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
 import { Sistema } from "../../models/sistema.model";
@@ -22,6 +22,7 @@ type SistemasViewModel = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SistemasComponent {
+  cadastrandoSistema = false;
   nome = "";
   salvando = false;
   excluindoId: string | null = null;
@@ -32,7 +33,8 @@ export class SistemasComponent {
 
   constructor(
     private readonly sistemasService: SistemasService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.vm$ = combineLatest([
       this.sistemasService.sistemasState$,
@@ -69,6 +71,15 @@ export class SistemasComponent {
     return this.sistemasService.buildSistemaId(this.nome);
   }
 
+  abrirCadastroSistema() {
+    this.cadastrandoSistema = true;
+  }
+
+  cancelarCadastroSistema() {
+    this.cadastrandoSistema = false;
+    this.nome = "";
+  }
+
   async adicionarSistema() {
     if (this.salvando) {
       return;
@@ -85,11 +96,12 @@ export class SistemasComponent {
     try {
       await this.sistemasService.createSistema(nome);
       this.toast.show("Sistema cadastrado com sucesso.", "success");
-      this.nome = "";
+      this.cancelarCadastroSistema();
     } catch (err: any) {
       this.toast.show(`Erro ao cadastrar sistema: ${err?.message || err}`, "error");
     } finally {
       this.salvando = false;
+      this.cdr.markForCheck();
     }
   }
 

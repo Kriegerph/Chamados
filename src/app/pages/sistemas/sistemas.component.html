@@ -1,52 +1,9 @@
 <section class="page-section sistemas-page" *ngIf="vm$ | async as vm">
-  <div class="grid-2" *ngIf="vm.carregando && vm.total === 0">
-    <div class="skeleton" style="min-height: 280px;"></div>
-    <div class="skeleton" style="min-height: 280px;"></div>
-  </div>
-
   <div class="sistemas-layout" *ngIf="!vm.carregando || vm.total > 0">
-    <article class="card sistemas-col sistemas-form-card">
-      <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Novo sistema</h3>
-          <p class="card-subtitle">Preencha o nome e mantenha o cadastro sempre visível.</p>
-        </div>
-      </div>
-
-      <form class="form sistemas-form" (ngSubmit)="adicionarSistema()">
-        <label>
-          <span>Nome do sistema</span>
-          <input
-            name="nomeSistema"
-            type="text"
-            [(ngModel)]="nome"
-            placeholder="Ex: SG8, Transmissor SG8, Office"
-            required
-          />
-        </label>
-
-        <div class="sistemas-id-preview">
-          <span class="sistemas-id-preview-label">ID gerado automaticamente</span>
-          <code class="sistemas-id-preview-value">{{ getSistemaIdPreview() || "-" }}</code>
-        </div>
-
-        <div class="helper-text">
-          O ID é criado a partir do nome e será usado como referência interna.
-        </div>
-
-        <div class="sistemas-form-actions">
-          <button class="btn primary sistemas-submit-btn" type="submit" [disabled]="salvando">
-            {{ salvando ? "Adicionando..." : "Adicionar sistema" }}
-          </button>
-        </div>
-      </form>
-    </article>
-
     <article class="card sistemas-col sistemas-list-card">
       <div class="card-title-row sistemas-list-header">
         <div>
           <h3 class="card-title">Lista de sistemas</h3>
-          <p class="card-subtitle">A lista rola internamente sem empurrar o formulário.</p>
         </div>
         <div class="sistemas-hero-actions">
           <div class="sistemas-search-total">
@@ -61,7 +18,7 @@
             />
             <span class="status-chip">Total: {{ vm.total }}</span>
           </div>
-          <span class="status-chip neutral">IDs padronizados</span>
+          <button class="btn primary" type="button" (click)="abrirCadastroSistema()">Novo sistema</button>
         </div>
       </div>
 
@@ -95,5 +52,40 @@
         </div>
       </div>
     </article>
+  </div>
+
+  <div class="skeleton" style="min-height: 280px;" *ngIf="vm.carregando && vm.total === 0"></div>
+
+  <div class="modal" *ngIf="cadastrandoSistema">
+    <div class="modal-content sistemas-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cadastroSistemaTitulo">
+      <h3 id="cadastroSistemaTitulo">Novo sistema</h3>
+      <form class="form" (ngSubmit)="adicionarSistema()">
+        <label>
+          <span>Nome do sistema</span>
+          <input
+            name="nomeSistema"
+            type="text"
+            [(ngModel)]="nome"
+            placeholder="Ex: SG8, Transmissor SG8, Office"
+            [readOnly]="salvando"
+            required
+          />
+        </label>
+
+        <div class="sistemas-id-preview" *ngIf="getSistemaIdPreview() as id">
+          <span class="sistemas-id-preview-label">ID gerado automaticamente</span>
+          <code class="sistemas-id-preview-value">{{ id }}</code>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" (click)="cancelarCadastroSistema()" [disabled]="salvando">
+            Cancelar
+          </button>
+          <button class="btn primary" type="submit" [disabled]="salvando">
+            {{ salvando ? "Salvando..." : "Salvar" }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </section>

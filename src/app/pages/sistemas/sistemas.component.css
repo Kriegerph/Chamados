@@ -5,47 +5,6 @@
   margin: 0;
 }
 
-.sistemas-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 28px;
-  background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 32%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-}
-
-.sistemas-hero-copy {
-  min-width: 0;
-}
-
-.sistemas-kicker {
-  display: inline-flex;
-  margin-bottom: 8px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sistemas-title {
-  font-size: 28px;
-  line-height: 1.1;
-}
-
-.sistemas-subtitle {
-  margin-top: 8px;
-  max-width: 620px;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
 .sistemas-hero-actions {
   display: flex;
   align-items: center;
@@ -74,10 +33,7 @@
 
 .sistemas-layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 18px;
-  align-items: stretch;
-  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .sistemas-col {
@@ -87,21 +43,16 @@
   overflow: hidden;
 }
 
-.sistemas-form-card,
 .sistemas-list-card {
   height: 100%;
 }
 
-.sistemas-form-card:hover,
 .sistemas-list-card:hover {
   transform: none;
 }
 
-.sistemas-form {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+.sistemas-modal-panel {
+  width: min(460px, 100%);
 }
 
 .sistemas-id-preview {
@@ -135,16 +86,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sistemas-form-actions {
-  margin-top: auto;
-  padding-top: 14px;
-}
-
-.sistemas-submit-btn {
-  width: 100%;
-  min-height: 44px;
 }
 
 .sistemas-list-header {
@@ -258,11 +199,6 @@
 }
 
 @media (max-width: 1024px) {
-  .sistemas-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .sistemas-form-card,
   .sistemas-list-card {
     height: auto;
   }
@@ -273,16 +209,10 @@
 }
 
 @media (max-width: 720px) {
-  .sistemas-hero {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .sistemas-hero-actions {
     justify-content: space-between;
   }
 
-  .sistemas-list-header,
   .sistema-item {
     grid-template-columns: 1fr;
   }
@@ -296,7 +226,6 @@
   }
 }
 
-.sistemas-form-card,
 .sistemas-list-card {
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
@@ -320,19 +249,13 @@
     gap: 12px;
   }
 
-  .sistemas-layout {
-    gap: 12px;
-  }
-
-  .sistemas-form-card,
   .sistemas-list-card {
     padding: 14px;
   }
 
-  .sistemas-hero-actions,
   .sistemas-list-header .sistemas-hero-actions {
     width: 100%;
-    justify-content: stretch;
+    gap: 8px;
   }
 
   .sistemas-search-total {
