@@ -11,6 +11,7 @@ import { ChamadosService } from "../../services/chamados.service";
 import { EmpresasService } from "../../services/empresas.service";
 import { SistemasService } from "../../services/sistemas.service";
 import { ToastService } from "../../services/toast.service";
+import { getSistemasSecundarios } from "../../utils/sistemas-secundarios.util";
 
 type StatusFiltroRelatorio = StatusChamado | "ambos";
 type TempoFiltroRelatorio = "todos" | "com-tempo";
@@ -25,6 +26,8 @@ type RelatoriosFiltros = {
   dataFinal: string;
   status: StatusFiltroRelatorio;
   tempo: TempoFiltroRelatorio;
+  sistemaPrincipalId: string;
+  sistemaSecundarioId: string;
 };
 
 type RelatorioColumn = {
@@ -52,6 +55,7 @@ type RelatoriosViewModel = {
   carregando: boolean;
   erro: string | null;
   empresas: Empresa[];
+  sistemas: { id: string; nome: string }[];
   dataset: RelatorioDataset;
   totalChamadosFiltrados: number;
   totalEmpresasFiltradas: number;
@@ -65,7 +69,9 @@ const FILTROS_INICIAIS: RelatoriosFiltros = {
   dataInicial: "",
   dataFinal: "",
   status: "ambos",
-  tempo: "todos"
+  tempo: "todos",
+  sistemaPrincipalId: "",
+  sistemaSecundarioId: ""
 };
 
 @Component({
@@ -83,7 +89,7 @@ export class RelatoriosComponent {
     {
       valor: "detalhado-chamados",
       titulo: "Relat\u00f3rio detalhado de chamados",
-      descricao: "Exporta um chamado por linha com in\u00edcio, fim, empresa, sistema principal, motivo, descri\u00e7\u00e3o e tempo."
+      descricao: "Exporta um chamado por linha com empresa, sistemas, motivo, resolu\u00e7\u00e3o e tempo de atendimento."
     },
     {
       valor: "tempo-por-empresa",
@@ -260,6 +266,12 @@ export class RelatoriosComponent {
     );
     const empresaIdsDisponiveis = this.getEmpresaIds(empresas);
     const chamados = this.sortByDataDesc(chamadosState.data);
+    for (const chamado of chamados) {
+      const sistemasChamado = [chamado.contextoSistemaId?.trim(), ...getSistemasSecundarios(chamado)];
+      for (const id of sistemasChamado) {
+        if (id && !sistemasMap.has(id)) sistemasMap.set(id, id);
+      }
+    }
     const mensagemResultado = this.getMensagemResultado(filtrosEfetivos);
     const filtrados = mensagemResultado
       ? []
@@ -279,6 +291,8 @@ export class RelatoriosComponent {
         sistemasState.status === "loading",
       erro: chamadosState.error || empresasState.error || sistemasState.error,
       empresas,
+      sistemas: Array.from(sistemasMap, ([id, nome]) => ({ id, nome }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
       dataset,
       totalChamadosFiltrados: filtrados.length,
       totalEmpresasFiltradas: empresasNosResultados.size,
@@ -328,6 +342,14 @@ export class RelatoriosComponent {
         return false;
       }
 
+      if (filtros.sistemaPrincipalId && item.contextoSistemaId?.trim() !== filtros.sistemaPrincipalId) {
+        return false;
+      }
+
+      if (filtros.sistemaSecundarioId && !getSistemasSecundarios(item).includes(filtros.sistemaSecundarioId)) {
+        return false;
+      }
+
       if (item.empresaId) {
         return filtros.empresaIds.includes(item.empresaId);
       }
@@ -368,6 +390,7 @@ export class RelatoriosComponent {
         { key: "empresa", label: "Empresa" },
         { key: "funcionario", label: "Funcion\u00e1rio" },
         { key: "sistemaPrincipal", label: "Sistema principal" },
+        { key: "sistemasSecundarios", label: "Sistemas secundários" },
         { key: "motivo", label: "Motivo" },
         { key: "resolucao", label: "Descri\u00e7\u00e3o / resolu\u00e7\u00e3o" },
         { key: "tempoAtendimento", label: "Tempo total" },
@@ -380,6 +403,9 @@ export class RelatoriosComponent {
         empresa: this.getEmpresaLabel(item, empresasMap),
         funcionario: item.funcionario || "",
         sistemaPrincipal: this.getSistemaNome(item.contextoSistemaId, sistemasMap),
+        sistemasSecundarios: getSistemasSecundarios(item)
+          .map((id) => this.getSistemaNome(id, sistemasMap))
+          .join(", "),
         motivo: item.motivo || "",
         resolucao: item.resolucao || "",
         tempoAtendimento: this.formatTempoMinutos(

@@ -1,9 +1,10 @@
-<section class="page-section abertos-page" *ngIf="vm$ | async as vm">
-  <article class="card abertos-list-card" *ngIf="vm.carregando">
+<ng-container *ngIf="!somenteCadastroConcluido || criandoChamado">
+<section [class.page-section]="!somenteCadastroConcluido" [class.abertos-page]="!somenteCadastroConcluido" *ngIf="vm$ | async as vm">
+  <article class="card abertos-list-card" *ngIf="!somenteCadastroConcluido && vm.carregando">
     <div class="skeleton" style="min-height: 420px"></div>
   </article>
 
-  <article class="card abertos-list-card" *ngIf="!vm.carregando">
+  <article class="card abertos-list-card" *ngIf="!somenteCadastroConcluido && !vm.carregando">
     <div class="card-title-row abertos-list-header">
       <div>
         <h3 class="card-title">Chamados em aberto</h3>
@@ -100,13 +101,9 @@
     <div class="modal-content abertos-create-modal" (click)="$event.stopPropagation()">
       <div class="abertos-create-header">
         <div>
-          <h3 class="card-title">Registrar chamado</h3>
-          <p class="card-subtitle">
-            Modal de criação com layout controlado, botão sempre visível e scroll interno apenas
-            quando necessário.
-          </p>
+          <h3 class="card-title">{{ somenteCadastroConcluido ? 'Registrar concluído' : 'Registrar chamado' }}</h3>
         </div>
-        <button class="btn abertos-modal-close" type="button" (click)="fecharModalCriacao()">
+        <button class="btn abertos-modal-close" type="button" (click)="fecharModalCriacao()" [disabled]="salvandoCadastro" aria-label="Fechar">
           <span aria-hidden="true">X</span>
         </button>
       </div>
@@ -122,7 +119,7 @@
                 </div>
 
                 <div class="abertos-form-grid">
-                  <label>
+                  <label *ngIf="!somenteCadastroConcluido">
                     <span>Tipo de cadastro</span>
                     <select
                       name="modoCadastro"
@@ -348,10 +345,10 @@
         </div>
 
         <div class="abertos-form-actions abertos-create-actions">
-          <button class="btn" type="button" (click)="fecharModalCriacao()">Cancelar</button>
-          <button class="btn primary abertos-submit-btn" type="submit">
+          <button class="btn" type="button" (click)="fecharModalCriacao()" [disabled]="salvandoCadastro">Cancelar</button>
+          <button class="btn primary abertos-submit-btn" type="submit" [disabled]="salvandoCadastro">
             <span class="abertos-submit-icon" aria-hidden="true">+</span>
-            <span>Salvar chamado</span>
+            <span>{{ salvandoCadastro ? 'Salvando...' : 'Salvar chamado' }}</span>
           </button>
         </div>
       </form>
@@ -708,3 +705,4 @@
     </div>
   </div>
 </section>
+</ng-container>

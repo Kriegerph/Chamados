@@ -14,7 +14,9 @@ import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
 import { DataState } from "../../models/data-state.model";
 import { Sistema } from "../../models/sistema.model";
+import { Empresa } from "../../models/empresa.model";
 import { ChamadosService } from "../../services/chamados.service";
+import { EmpresasService } from "../../services/empresas.service";
 import { SistemasService } from "../../services/sistemas.service";
 import { DashboardFilterService } from "../../services/dashboard-filter.service";
 
@@ -24,6 +26,11 @@ type AnoFiltro = number | "__all__";
 type EmpresaResumo = {
   nome: string;
   total: number;
+};
+
+type IdentidadeEmpresas = {
+  nomesPorId: Map<string, string>;
+  idsPorNome: Map<string, string | null>;
 };
 
 type CrescimentoEmpresa = {
@@ -148,11 +155,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   constructor(
     private readonly chamadosService: ChamadosService,
     private readonly sistemasService: SistemasService,
+    empresasService: EmpresasService,
     private readonly dashboardFilter: DashboardFilterService
   ) {
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.sistemasService.sistemasState$,
+      empresasService.empresasState$,
       this.dashboardFilter.anoSelecionado$,
       this.anoMensalSelecionadoSubject,
       this.topEmpresasPeriodoSubject,
@@ -162,6 +171,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         ([
           chamadosState,
           sistemasState,
+          empresasState,
           anoSelecionado,
           anoMensalSelecionado,
           topEmpresasPeriodo,
@@ -170,6 +180,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           this.buildViewModel(
             chamadosState,
             sistemasState,
+            empresasState.data,
             anoSelecionado,
             anoMensalSelecionado,
             topEmpresasPeriodo,
@@ -212,6 +223,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private buildViewModel(
     chamadosState: DataState<Chamado[]>,
     sistemasState: DataState<Sistema[]>,
+    empresas: Empresa[],
     anoSelecionado: AnoFiltro,
     anoMensalSelecionado: number,
     topEmpresasPeriodo: TopEmpresasPeriodo,
@@ -224,12 +236,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const anoMensalResolvido = this.resolveAnoMensalSelecionado(anoMensalSelecionado, anosDisponiveis);
     const graficoDiarioResolvido = this.resolveGraficoDiarioFiltro(graficoDiarioFiltro, anosDisponiveis);
 
-    const cards = this.buildCards(chamados, anoPrincipalResolvido);
+    const identidadeEmpresas = this.buildIdentidadeEmpresas(chamados, empresas);
+    const cards = this.buildCards(chamados, anoPrincipalResolvido, identidadeEmpresas);
     const totaisAnoMensal = this.buildMonthlyTotalsByYear(chamados, anoMensalResolvido);
     const topEmpresas = this.buildTopEmpresas(
       chamados,
       anoPrincipalResolvido,
-      topEmpresasPeriodo
+      topEmpresasPeriodo,
+      identidadeEmpresas
     );
     const analiseSistemas = this.buildAnaliseSistemas(
       chamados,
@@ -262,7 +276,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private buildCards(items: Chamado[], anoSelecionado: AnoFiltro): DashboardCards {
+  private buildCards(items: Chamado[], anoSelecionado: AnoFiltro, empresas: IdentidadeEmpresas): DashboardCards {
     const today = this.getToday();
     const [anoAtual, mesAtual, diaAtual] = today.split("-").map(Number);
     const mesAtualLabel = this.meses[mesAtual - 1];
@@ -325,7 +339,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       totalAnoValor: totalAnoSelecionado,
       totalAnoNota:
         anoSelecionado === ANO_TODOS ? "Acumulado de todos os anos" : `Acumulado de ${anoSelecionado}`,
-      rankingCrescimento: this.buildRankingCrescimento(items, today)
+      rankingCrescimento: this.buildRankingCrescimento(items, today, empresas)
     };
   }
 
@@ -351,18 +365,53 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.growthTrigger?.nativeElement.focus();
   }
 
-  private buildRankingCrescimento(items: Chamado[], hoje: string): CrescimentoEmpresa[] {
+  private buildIdentidadeEmpresas(items: Chamado[], empresas: Empresa[]): IdentidadeEmpresas {
+    const nomesPorId = new Map<string, string>();
+    const idsPorNome = new Map<string, string | null>();
+    const registrarNome = (id: string, nome: string) => {
+      const chave = this.normalizarTexto(nome);
+      const anterior = idsPorNome.get(chave);
+      idsPorNome.set(chave, anterior === undefined || anterior === id ? id : null);
+    };
+
+    for (const empresa of empresas) {
+      const id = empresa.id?.trim();
+      const nome = empresa.nomeEmpresa?.trim();
+      if (!id || !nome) continue;
+      nomesPorId.set(id, nome);
+      registrarNome(id, nome);
+    }
+    for (const item of items) {
+      const id = item.empresaId?.trim();
+      const nome = item.empresa?.trim();
+      if (!id || !nome) continue;
+      registrarNome(id, nome);
+      if (!nomesPorId.has(id)) nomesPorId.set(id, nome);
+    }
+    return { nomesPorId, idsPorNome };
+  }
+
+  private identificarEmpresa(item: Chamado, empresas: IdentidadeEmpresas) {
+    const nome = item.empresa?.trim() || "";
+    const nomeNormalizado = this.normalizarTexto(nome);
+    const id = item.empresaId?.trim() || empresas.idsPorNome.get(nomeNormalizado);
+    const nomeExibido = (id && empresas.nomesPorId.get(id)) || nome;
+    return nomeExibido ? { chave: id ? `id:${id}` : `nome:${nomeNormalizado}`, nome: nomeExibido } : null;
+  }
+
+  private buildRankingCrescimento(items: Chamado[], hoje: string, empresas: IdentidadeEmpresas): CrescimentoEmpresa[] {
     const dataComparacao = this.shiftDate(hoje, -7);
     const totais = new Map<string, Omit<CrescimentoEmpresa, "percentual">>();
 
     for (const item of items) {
       const data = item.data || "";
-      const nome = item.empresa?.trim();
-      if (!nome || !/^\d{4}-\d{2}-\d{2}$/.test(data) || data > hoje) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || data > hoje) {
         continue;
       }
 
-      const chave = this.normalizarTexto(nome);
+      const identidade = this.identificarEmpresa(item, empresas);
+      if (!identidade) continue;
+      const { chave, nome } = identidade;
       const empresa = totais.get(chave) ?? { nome, anterior: 0, atual: 0 };
       empresa.atual += 1;
       if (data <= dataComparacao) {
@@ -406,7 +455,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private buildTopEmpresas(
     items: Chamado[],
     anoSelecionado: AnoFiltro,
-    periodo: TopEmpresasPeriodo
+    periodo: TopEmpresasPeriodo,
+    empresas: IdentidadeEmpresas
   ): EmpresaResumo[] {
     const today = this.getToday();
     const inicioUltimos7Dias = this.shiftDate(today, -6);
@@ -419,13 +469,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (periodo !== "hoje" && anoSelecionado !== ANO_TODOS && !data.startsWith(`${anoSelecionado}-`)) return;
       if (!this.matchPeriodo(data, periodo, today, inicioUltimos7Dias, inicioUltimoMes)) return;
 
-      if (!item.empresa?.trim()) return;
-
-      const nomeEmpresa = item.empresa.trim();
-      const key = this.normalizarTexto(nomeEmpresa);
-      const atual = rankingMap.get(key) || { nome: nomeEmpresa, total: 0 };
+      const identidade = this.identificarEmpresa(item, empresas);
+      if (!identidade) return;
+      const { chave, nome } = identidade;
+      const atual = rankingMap.get(chave) ?? { nome, total: 0 };
       atual.total += 1;
-      rankingMap.set(key, atual);
+      rankingMap.set(chave, atual);
     });
 
     return Array.from(rankingMap.values())

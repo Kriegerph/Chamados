@@ -8,6 +8,10 @@ import {
   ViewChild
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { getSistemasSecundarios } from "../../utils/sistemas-secundarios.util";
+import { AbertosComponent } from "../abertos/abertos.component";
 import { Timestamp } from "firebase/firestore";
 import { BehaviorSubject, combineLatest, map, Observable, tap } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
@@ -124,7 +128,7 @@ const MESES_ABREV = [
 @Component({
   selector: "app-concluidos",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AbertosComponent],
   templateUrl: "./concluidos.component.html",
   styleUrl: "./concluidos.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -172,8 +176,18 @@ export class ConcluidosComponent {
     private readonly sistemasService: SistemasService,
     private readonly toast: ToastService,
     private readonly zone: NgZone,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    route: ActivatedRoute
   ) {
+    route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const idEmpresa = params.get("empresaId");
+      const empresaId = idEmpresa ? `id:${idEmpresa}` : "";
+      this.filtrosDraft = { ...this.filtrosDraft, empresaId, clienteId: "" };
+      this.filtrosAplicados = { ...this.filtrosAplicados, empresaId, clienteId: "" };
+      this.currentPageSubject.next(1);
+      this.filtrosAplicadosSubject.next(this.filtrosAplicados);
+      this.cdr.markForCheck();
+    });
     this.vm$ = combineLatest([
       this.chamadosService.todosState$,
       this.clientesService.clientesState$,
@@ -586,11 +600,13 @@ export class ConcluidosComponent {
         if (filtros.mes && data.slice(5, 7) !== filtros.mes) return false;
       }
 
-      if (filtros.empresaId && empresaFiltroSelecionada) {
+      if (filtros.empresaId) {
+        if (!empresaFiltroSelecionada) return false;
         if (empresaFiltroSelecionada.empresaId) {
           if (item.empresaId === empresaFiltroSelecionada.empresaId) {
             // Match direto por empresaId.
           } else {
+            if (item.empresaId) return false;
             const nomeItem = this.normalizarTexto(item.clienteLabel || item.empresa || item.cliente || "");
             if (!empresaFiltroNomeNormalizado || nomeItem !== empresaFiltroNomeNormalizado) return false;
           }
@@ -636,10 +652,7 @@ export class ConcluidosComponent {
         return false;
       }
 
-      if (filtros.sistemaSecundarioId && (
-        item.contextoSistemaId?.trim() === filtros.sistemaSecundarioId ||
-        !item.sistemasRelacionados?.some((id) => id.trim() === filtros.sistemaSecundarioId)
-      )) {
+      if (filtros.sistemaSecundarioId && !getSistemasSecundarios(item).includes(filtros.sistemaSecundarioId)) {
         return false;
       }
 
@@ -659,6 +672,10 @@ export class ConcluidosComponent {
     empresasMap: Map<string, Empresa>
   ): EmpresaFiltroOption[] {
     const opcoesPorChave = new Map<string, EmpresaFiltroOption>();
+    for (const [empresaId, empresa] of empresasMap) {
+      const valor = `id:${empresaId}`;
+      opcoesPorChave.set(valor, { valor, nome: empresa.nomeEmpresa, empresaId });
+    }
 
     items.forEach((item) => {
       const empresaId = item.empresaId || "";

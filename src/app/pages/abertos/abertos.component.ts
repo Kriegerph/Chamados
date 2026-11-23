@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Timestamp } from "firebase/firestore";
@@ -44,7 +44,9 @@ type SistemaOptionView = Sistema & {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AbertosComponent {
+  @Input() somenteCadastroConcluido = false;
   criandoChamado = false;
+  salvandoCadastro = false;
   modoCadastro: "novo" | "antigo" = "novo";
   motivo = "";
   empresaId = "";
@@ -119,9 +121,11 @@ export class AbertosComponent {
   abrirModalCriacao() {
     this.resetFormularioCadastro();
     this.criandoChamado = true;
+    this.cdr.markForCheck();
   }
 
   fecharModalCriacao() {
+    if (this.salvandoCadastro) return;
     this.criandoChamado = false;
   }
 
@@ -159,6 +163,7 @@ export class AbertosComponent {
   }
 
   async salvar() {
+    if (this.salvandoCadastro) return;
     const motivo = this.motivo.trim();
     const empresaId = this.empresaId;
     const empresa = this.getEmpresaNomeById(empresaId);
@@ -195,6 +200,7 @@ export class AbertosComponent {
       return;
     }
 
+    this.salvandoCadastro = true;
     try {
       if (this.modoCadastro === "novo") {
         await this.chamadosService.addChamadoNovo({
@@ -223,10 +229,13 @@ export class AbertosComponent {
       this.runInZone(() => {
         this.toast.show("Chamado salvo com sucesso.", "success");
         this.resetFormularioCadastro();
-        this.fecharModalCriacao();
+        this.criandoChamado = false;
       });
     } catch (err: any) {
       this.toast.show(`Erro ao salvar: ${err.message}`, "error");
+    } finally {
+      this.salvandoCadastro = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -652,7 +661,7 @@ export class AbertosComponent {
   }
 
   private resetFormularioCadastro() {
-    this.modoCadastro = "novo";
+    this.modoCadastro = this.somenteCadastroConcluido ? "antigo" : "novo";
     this.motivo = "";
     this.empresaId = "";
     this.funcionarioId = "";

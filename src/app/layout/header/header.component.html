@@ -18,11 +18,30 @@
     </label>
   </div>
 
-  <div class="header-user">
-    <div class="user-avatar">{{ userInitial }}</div>
-    <div class="user-meta">
-      <span>Usuário ativo</span>
-      <strong>{{ userEmail }}</strong>
+  <div class="header-right">
+    <button
+      *ngIf="title === 'Dashboard'"
+      class="btn primary dashboard-register"
+      type="button"
+      aria-label="Registrar concluído"
+      title="Registrar concluído"
+      (click)="abrirCadastroConcluido()"
+    >
+      <span class="dashboard-register-icon" aria-hidden="true">+</span>
+      <span class="dashboard-register-label">Registrar concluído</span>
+    </button>
+    <div class="header-user">
+      <div class="user-avatar">{{ userInitial }}</div>
+      <div class="user-meta">
+        <span>Usuário ativo</span>
+        <strong>{{ userEmail }}</strong>
+      </div>
     </div>
   </div>
 </header>
+
+<app-abertos
+  *ngIf="title === 'Dashboard'"
+  #cadastroConcluido
+  [somenteCadastroConcluido]="true"
+></app-abertos>

@@ -111,6 +111,20 @@
               <option value="com-tempo">Apenas chamados com tempo registrado</option>
             </select>
           </label>
+          <label>
+            <span>Sistema principal</span>
+            <select name="sistemaPrincipalId" [(ngModel)]="filtros.sistemaPrincipalId" (ngModelChange)="onFiltroChange()">
+              <option value="">Todos os sistemas</option>
+              <option *ngFor="let sistema of vm.sistemas" [value]="sistema.id">{{ sistema.nome }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Sistema secundário</span>
+            <select name="sistemaSecundarioId" [(ngModel)]="filtros.sistemaSecundarioId" (ngModelChange)="onFiltroChange()">
+              <option value="">Todos os sistemas</option>
+              <option *ngFor="let sistema of vm.sistemas" [value]="sistema.id">{{ sistema.nome }}</option>
+            </select>
+          </label>
         </div>
 
         <div class="relatorios-actions">

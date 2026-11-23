@@ -47,6 +47,22 @@
   padding: 0 30px 0 10px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-register {
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.dashboard-register-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
 .header-user {
   display: flex;
   align-items: center;
@@ -116,7 +132,30 @@
     padding: 5px 7px;
   }
 
+  .header-right {
+    gap: 8px;
+  }
+
   .user-meta {
     display: none;
+  }
+}
+
+@media (max-width: 440px) {
+  .dashboard-register-label {
+    display: none;
+  }
+
+  .dashboard-register {
+    width: 36px;
+    padding-inline: 0;
+  }
+
+  .dashboard-year {
+    margin-left: 0;
+  }
+
+  .dashboard-year select {
+    width: 82px;
   }
 }

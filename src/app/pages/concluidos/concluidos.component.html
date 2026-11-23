@@ -5,12 +5,15 @@
     <div class="concluidos-header">
       <div class="concluidos-title-row">
         <h3 class="card-title">Filtros</h3>
-        <label class="field concluidos-limitador">
-          <span class="field-label">Exibir</span>
-          <select name="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
-          </select>
-        </label>
+        <div class="concluidos-header-actions">
+          <label class="field concluidos-limitador">
+            <span class="field-label">Exibir</span>
+            <select name="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+            </select>
+          </label>
+          <button class="btn primary" type="button" (click)="cadastroConcluido.abrirModalCriacao()">Registrar concluído</button>
+        </div>
       </div>
       <form class="filters-toolbar" (ngSubmit)="aplicarFiltros()">
         <label class="filter-field filter-field--small filter-field--ano" for="filtroAno">
@@ -269,6 +272,8 @@
       </nav>
     </div>
   </article>
+
+  <app-abertos #cadastroConcluido [somenteCadastroConcluido]="true"></app-abertos>
 
   <div class="modal" *ngIf="editando">
     <div class="modal-content chamado-edit-modal">

@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import { BehaviorSubject, combineLatest, map, Observable } from "rxjs";
 import { Chamado } from "../../models/chamado.model";
 import { DataState } from "../../models/data-state.model";
@@ -53,7 +54,7 @@ type FuncionarioFormModel = {
 @Component({
   selector: "app-empresas",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: "./empresas.component.html",
   styleUrl: "./empresas.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
