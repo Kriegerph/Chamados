@@ -356,160 +356,187 @@
   </div>
 
   <div class="modal" *ngIf="modalAberto">
-    <div class="modal-content">
-      <h3>Finalizar chamado</h3>
-      <p class="helper-text">
-        {{
-          finalizarOrigem === 'whatsapp'
-            ? 'Preencha motivo e resolução. Você pode vincular empresa e funcionário agora ou concluir como número desconhecido.'
-            : 'Informe como foi resolvido e ajuste o vínculo da empresa se necessário.'
-        }}
-      </p>
-      <div class="form">
-        <label *ngIf="finalizarOrigem === 'whatsapp'">
-          <span>Motivo</span>
-          <input
-            type="text"
-            [(ngModel)]="motivoFinalizar"
-            name="motivoFinalizar"
-            placeholder="Descreva o motivo do chamado"
-          />
-        </label>
-        <label>
-          <span>Empresa</span>
-          <div class="helper-text">
-            Atual: {{ finalizarEmpresaNomeOriginal || 'Número desconhecido' }}
-          </div>
-          <select
-            name="finalizarEmpresaId"
-            [(ngModel)]="finalizarEmpresaId"
-            (ngModelChange)="onFinalizarEmpresaChange($event)"
-          >
-            <option value="">Manter como número desconhecido</option>
-            <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
-              {{ empresa.nomeEmpresa }}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>Funcionário</span>
-          <div class="helper-text">
-            Atual: {{ finalizarFuncionarioNomeOriginal || 'Sem funcionário vinculado' }}
-          </div>
-          <select
-            name="finalizarFuncionarioId"
-            [(ngModel)]="finalizarFuncionarioId"
-            [disabled]="!finalizarEmpresaId || finalizarCarregandoFuncionarios"
-          >
-            <option value="">
-              {{
-                !finalizarEmpresaId
-                  ? 'Mantenha sem vínculo ou selecione uma empresa'
-                  : finalizarCarregandoFuncionarios
-                    ? 'Carregando funcionários...'
-                    : 'Selecione um funcionário'
-              }}
-            </option>
-            <option
-              *ngFor="let funcionario of finalizarFuncionarios"
-              [value]="funcionario.id"
-            >
-              {{ getFuncionarioOptionLabel(funcionario) }}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>Resolução</span>
-          <textarea
-            rows="4"
-            [(ngModel)]="resolucaoFinalizar"
-            name="resolucaoFinalizar"
-            placeholder="Descreva a resolução"
-          ></textarea>
-        </label>
+    <div class="modal-content abertos-create-modal abertos-finalize-modal" role="dialog" aria-modal="true" aria-labelledby="finalizar-chamado-title">
+      <div class="abertos-create-header">
+        <div>
+          <h3 class="card-title" id="finalizar-chamado-title">Finalizar chamado</h3>
+          <p class="helper-text">
+            {{
+              finalizarOrigem === 'whatsapp'
+                ? 'Preencha motivo e resolução. Você pode vincular empresa e funcionário agora ou concluir como número desconhecido.'
+                : 'Informe como foi resolvido e ajuste o vínculo da empresa se necessário.'
+            }}
+          </p>
+        </div>
+        <button class="btn abertos-modal-close" type="button" (click)="cancelarModal()" aria-label="Fechar">
+          <span aria-hidden="true">X</span>
+        </button>
+      </div>
 
-        <label>
-          <span>Sistema do problema</span>
-          <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
-          <select
-            name="finalizarContextoSistemaId"
-            [(ngModel)]="finalizarContextoSistemaId"
-            (ngModelChange)="onContextoSistemaChange()"
-            [disabled]="!finalizarEmpresaId"
-          >
-            <option value="">
-              {{
-                !finalizarEmpresaId
-                  ? 'Finalize como número desconhecido ou selecione uma empresa'
-                  : getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
-                  ? 'Empresa sem sistemas vinculados'
-                  : 'Selecione o sistema principal'
-              }}
-            </option>
-            <option
-              *ngFor="let sistema of getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas)"
-              [value]="sistema.id"
-            >
-              {{ sistema.nome }}
-            </option>
-          </select>
-        </label>
+      <div class="form abertos-create-form abertos-finalize-form">
+        <div class="abertos-create-body">
+          <div class="abertos-form-shell">
+            <div class="abertos-form-main">
+              <section class="abertos-form-block">
+                <div class="abertos-form-block-head">
+                  <span class="abertos-form-block-kicker">Dados básicos</span>
+                  <h4>Vínculo do chamado</h4>
+                </div>
 
-        <div class="field">
-          <span class="field-label">Sistemas envolvidos</span>
-          <div class="helper-text">
-            Opcional. Disponível apenas quando houver empresa vinculada ao chamado.
-          </div>
-          <div
-            class="abertos-sistemas-list"
-            *ngIf="
-              getSistemasRelacionadosOptions(
-                finalizarEmpresaId,
-                vm.sistemas,
-                finalizarContextoSistemaId
-              ).length > 0;
-              else semSistemasFinalizar
-            "
-          >
-            <label
-              class="abertos-sistema-checkbox"
-              *ngFor="
-                let sistema of getSistemasRelacionadosOptions(
-                  finalizarEmpresaId,
-                  vm.sistemas,
-                  finalizarContextoSistemaId
-                )
-              "
-            >
-              <input
-                type="checkbox"
-                [checked]="isSistemaRelacionadoSelecionado(sistema.id)"
-                (change)="
-                  alternarSistemaRelacionado(
-                    sistema.id,
-                    $any($event.target).checked,
-                    finalizarEmpresaId
-                  )
-                "
-              />
-              <span>{{ sistema.nome }}</span>
-            </label>
-          </div>
-          <ng-template #semSistemasFinalizar>
-            <div class="helper-text">
-              {{
-                !finalizarEmpresaId
-                  ? 'Sem empresa vinculada, não há sistemas para selecionar.'
-                  : 'Nenhum sistema disponível para esta empresa.'
-              }}
+                <div class="abertos-form-grid">
+                  <label>
+                    <span>Empresa</span>
+                    <div class="helper-text">Atual: {{ finalizarEmpresaNomeOriginal || 'Número desconhecido' }}</div>
+                    <select
+                      name="finalizarEmpresaId"
+                      [(ngModel)]="finalizarEmpresaId"
+                      (ngModelChange)="onFinalizarEmpresaChange($event)"
+                    >
+                      <option value="">Manter como número desconhecido</option>
+                      <option *ngFor="let empresa of vm.empresas" [value]="empresa.id">
+                        {{ empresa.nomeEmpresa }}
+                      </option>
+                    </select>
+                  </label>
+
+                  <label class="abertos-dependent-field" [class.is-disabled]="!finalizarEmpresaId">
+                    <span>Funcionário</span>
+                    <div class="helper-text">Atual: {{ finalizarFuncionarioNomeOriginal || 'Sem funcionário vinculado' }}</div>
+                    <select
+                      name="finalizarFuncionarioId"
+                      [(ngModel)]="finalizarFuncionarioId"
+                      [disabled]="!finalizarEmpresaId || finalizarCarregandoFuncionarios"
+                    >
+                      <option value="">
+                        {{
+                          !finalizarEmpresaId
+                            ? 'Mantenha sem vínculo ou selecione uma empresa'
+                            : finalizarCarregandoFuncionarios
+                              ? 'Carregando funcionários...'
+                              : 'Selecione um funcionário'
+                        }}
+                      </option>
+                      <option *ngFor="let funcionario of finalizarFuncionarios" [value]="funcionario.id">
+                        {{ getFuncionarioOptionLabel(funcionario) }}
+                      </option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              <section class="abertos-form-block abertos-form-block-highlight">
+                <div class="abertos-form-block-head">
+                  <span class="abertos-form-block-kicker">Finalização</span>
+                  <h4>Atendimento</h4>
+                </div>
+
+                <div class="abertos-form-grid">
+                  <label class="abertos-field-wide" *ngIf="finalizarOrigem === 'whatsapp'">
+                    <span>Motivo</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="motivoFinalizar"
+                      name="motivoFinalizar"
+                      placeholder="Descreva o motivo do chamado"
+                    />
+                  </label>
+                  <label class="abertos-field-wide">
+                    <span>Resolução</span>
+                    <textarea
+                      rows="4"
+                      [(ngModel)]="resolucaoFinalizar"
+                      name="resolucaoFinalizar"
+                      placeholder="Descreva a resolução"
+                    ></textarea>
+                  </label>
+                </div>
+              </section>
             </div>
-          </ng-template>
+
+            <aside class="abertos-form-side abertos-finalize-side">
+              <div class="abertos-form-side-head">
+                <span class="abertos-form-block-kicker">Painel lateral</span>
+                <h4>Sistemas do chamado</h4>
+                <p>Selecione o sistema principal e, se houver, os complementares.</p>
+              </div>
+
+              <label class="abertos-dependent-field" [class.is-disabled]="!finalizarEmpresaId">
+                <span>Sistema do problema</span>
+                <div class="helper-text" *ngIf="vm.sistemasErro">{{ vm.sistemasErro }}</div>
+                <select
+                  name="finalizarContextoSistemaId"
+                  [(ngModel)]="finalizarContextoSistemaId"
+                  (ngModelChange)="onContextoSistemaChange()"
+                  [disabled]="!finalizarEmpresaId"
+                >
+                  <option value="">
+                    {{
+                      !finalizarEmpresaId
+                        ? 'Finalize como número desconhecido ou selecione uma empresa'
+                        : getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas).length === 0
+                          ? 'Empresa sem sistemas vinculados'
+                          : 'Selecione o sistema principal'
+                    }}
+                  </option>
+                  <option *ngFor="let sistema of getSistemasEmpresaOptions(finalizarEmpresaId, vm.sistemas)" [value]="sistema.id">
+                    {{ sistema.nome }}
+                  </option>
+                </select>
+              </label>
+
+              <div
+                class="abertos-form-side-scroll"
+                *ngIf="
+                  getSistemasRelacionadosOptions(
+                    finalizarEmpresaId,
+                    vm.sistemas,
+                    finalizarContextoSistemaId
+                  ).length > 0;
+                  else semSistemasFinalizar
+                "
+              >
+                <label
+                  class="abertos-sistema-checkbox"
+                  *ngFor="
+                    let sistema of getSistemasRelacionadosOptions(
+                      finalizarEmpresaId,
+                      vm.sistemas,
+                      finalizarContextoSistemaId
+                    )
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="isSistemaRelacionadoSelecionado(sistema.id)"
+                    (change)="
+                      alternarSistemaRelacionado(
+                        sistema.id,
+                        $any($event.target).checked,
+                        finalizarEmpresaId
+                      )
+                    "
+                  />
+                  <span>{{ sistema.nome }}</span>
+                </label>
+              </div>
+              <ng-template #semSistemasFinalizar>
+                <div class="empty-state abertos-form-side-empty">
+                  {{
+                    !finalizarEmpresaId
+                      ? 'Sem empresa vinculada, não há sistemas para selecionar.'
+                      : 'Nenhum sistema disponível para esta empresa.'
+                  }}
+                </div>
+              </ng-template>
+            </aside>
+          </div>
         </div>
       </div>
-      <div class="modal-actions">
+
+      <div class="modal-actions abertos-create-actions">
         <button class="btn" type="button" (click)="cancelarModal()">Cancelar</button>
-        <button class="btn primary" type="button" (click)="confirmarFinalizacao()">
-          Confirmar
+        <button class="btn primary abertos-submit-btn" type="button" (click)="confirmarFinalizacao()">
+          Finalizar chamado
         </button>
       </div>
     </div>

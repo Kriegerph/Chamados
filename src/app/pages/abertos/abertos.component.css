@@ -171,3 +171,37 @@
     max-height: none;
   }
 }
+
+.abertos-finalize-modal {
+  max-height: calc(100dvh - 32px);
+}
+
+.abertos-finalize-modal .abertos-create-header .helper-text {
+  margin: 4px 0 0;
+  max-width: 680px;
+}
+
+.abertos-finalize-modal .abertos-form-side {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.abertos-finalize-modal .abertos-form-side-scroll {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 960px) {
+  .abertos-finalize-modal .abertos-form-side {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .abertos-finalize-modal .abertos-form-side-scroll {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 720px) {
+  .abertos-finalize-modal {
+    max-height: calc(100dvh - 20px);
+  }
+}
