@@ -17,7 +17,7 @@ import {
 })
 export class ConexaoComponent implements OnInit, OnDestroy {
   private readonly permissionDeniedMessage =
-    "O Chrome bloqueou o acesso à API local. Clique no ícone à esquerda do endereço do site, abra Configurações do site, mude Acesso à rede local para Permitir e recarregue a página.";
+    "O Chrome bloqueou o acesso a apps e serviços neste dispositivo. Clique no ícone à esquerda do endereço do site, abra Configurações do site, mude Apps no dispositivo (rede de loopback) para Permitir e recarregue a página.";
 
   status: WhatsappConnectionStatus | null = null;
   carregando = true;
