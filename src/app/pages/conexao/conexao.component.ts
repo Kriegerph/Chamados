@@ -16,6 +16,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConexaoComponent implements OnInit, OnDestroy {
+  private readonly permissionDeniedMessage =
+    "O Chrome bloqueou o acesso à API local. Clique no ícone à esquerda do endereço do site, abra Configurações do site, mude Acesso à rede local para Permitir e recarregue a página.";
+
   status: WhatsappConnectionStatus | null = null;
   carregando = true;
   conectando = false;
@@ -39,7 +42,7 @@ export class ConexaoComponent implements OnInit, OnDestroy {
     } else {
       this.carregando = false;
       this.erro = permission === "denied"
-        ? "O navegador bloqueou o acesso à API local. Libere o acesso à rede local nas permissões deste site e clique em Atualizar."
+        ? this.permissionDeniedMessage
         : "Clique em Atualizar para permitir que este site acesse a API local deste computador.";
       this.cdr.markForCheck();
     }
@@ -78,12 +81,7 @@ export class ConexaoComponent implements OnInit, OnDestroy {
         this.carregando = false;
         this.cdr.markForCheck();
       },
-      error: (error) => {
-        if (requestId !== this.statusRequestId) return;
-        this.erro = this.toErrorMessage(error);
-        this.carregando = false;
-        this.cdr.markForCheck();
-      }
+      error: (error) => this.mostrarErroStatus(error, requestId)
     });
   }
 
@@ -181,5 +179,13 @@ export class ConexaoComponent implements OnInit, OnDestroy {
     }
 
     return "Falha ao consultar conexao.";
+  }
+
+  private async mostrarErroStatus(error: unknown, requestId: number) {
+    const permission = await this.whatsappConnection.getLocalNetworkPermission();
+    if (requestId !== this.statusRequestId) return;
+    this.erro = permission === "denied" ? this.permissionDeniedMessage : this.toErrorMessage(error);
+    this.carregando = false;
+    this.cdr.markForCheck();
   }
 }
