@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
-import { HttpErrorResponse } from "@angular/common/http";
+import { switchMap } from "rxjs";
 import {
   WhatsappConnectionService,
   WhatsappConnectionStatus,
@@ -21,6 +21,7 @@ export class ConexaoComponent implements OnInit, OnDestroy {
   conectando = false;
   desconectando = false;
   private statusRequestId = 0;
+  private localAccessAllowed = false;
   erro: string | null = null;
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -30,9 +31,21 @@ export class ConexaoComponent implements OnInit, OnDestroy {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
-    this.carregarStatus();
-    this.refreshTimer = setInterval(() => this.carregarStatus(false), 5000);
+  async ngOnInit() {
+    const permission = await this.whatsappConnection.getLocalNetworkPermission();
+    if (permission === "granted") {
+      this.localAccessAllowed = true;
+      this.carregarStatus();
+    } else {
+      this.carregando = false;
+      this.erro = permission === "denied"
+        ? "O navegador bloqueou o acesso à API local. Libere o acesso à rede local nas permissões deste site e clique em Atualizar."
+        : "Clique em Atualizar para permitir que este site acesse a API local deste computador.";
+      this.cdr.markForCheck();
+    }
+    this.refreshTimer = setInterval(() => {
+      if (this.localAccessAllowed) this.carregarStatus(false);
+    }, 5000);
   }
 
   ngOnDestroy() {
@@ -44,11 +57,20 @@ export class ConexaoComponent implements OnInit, OnDestroy {
   carregarStatus(mostrarCarregando = true) {
     if (this.desconectando) return;
     const requestId = ++this.statusRequestId;
+    this.erro = null;
     if (mostrarCarregando) {
       this.carregando = true;
     }
 
-    this.whatsappConnection.getStatus().subscribe({
+    this.whatsappConnection.checkAvailability().pipe(
+      switchMap((available) => {
+        if (!available) {
+          throw new Error("A API não respondeu em http://localhost:3000. Confira se o processo no PM2 está online e escutando na porta 3000.");
+        }
+        this.localAccessAllowed = true;
+        return this.whatsappConnection.getStatus();
+      })
+    ).subscribe({
       next: (status) => {
         if (requestId !== this.statusRequestId) return;
         this.status = status;
@@ -150,8 +172,8 @@ export class ConexaoComponent implements OnInit, OnDestroy {
   }
 
   private toErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      return error.error?.error || error.message || "Falha ao consultar conexao.";
+    if (error instanceof TypeError) {
+      return "Não foi possível acessar a API local. Confira o PM2, a porta 3000 e a permissão de acesso à rede local no navegador.";
     }
 
     if (error instanceof Error && error.message) {

@@ -28,23 +28,13 @@
 
   <nav class="sidebar-nav">
     <ng-container *ngFor="let item of menuItems$ | async">
-      <button class="nav-item nav-item-disabled" *ngIf="item.disabled" type="button" [disabled]="true" title="API indisponível">
-        <span class="nav-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path [attr.d]="getIconPath(item.icon)"></path>
-          </svg>
-        </span>
-        <span class="nav-label" *ngIf="open">{{ item.label }}</span>
-        <span class="nav-badge" *ngIf="open">Indisponível</span>
-      </button>
-
       <a
         class="nav-item"
-        *ngIf="!item.disabled"
+        [class.nav-item-unavailable]="item.unavailable"
         [routerLink]="item.route"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-        [title]="!open ? item.label : ''"
+        [title]="item.unavailable ? 'Abrir para verificar a API local' : (!open ? item.label : '')"
         (click)="onNavigate()"
       >
         <span class="nav-icon" aria-hidden="true">
@@ -53,6 +43,7 @@
           </svg>
         </span>
         <span class="nav-label" *ngIf="open">{{ item.label }}</span>
+        <span class="nav-badge" *ngIf="open && item.unavailable">Verificar API</span>
       </a>
     </ng-container>
   </nav>

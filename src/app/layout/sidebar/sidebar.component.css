@@ -171,14 +171,12 @@
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.nav-item-disabled {
+.nav-item-unavailable {
   opacity: 0.72;
-  cursor: default;
 }
 
-.nav-item-disabled:hover {
-  transform: none;
-  background: rgba(148, 163, 184, 0.08);
+.nav-item-unavailable:hover {
+  opacity: 1;
 }
 
 .sidebar.closed .nav-item {

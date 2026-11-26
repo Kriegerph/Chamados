@@ -10,7 +10,7 @@ type NavItem = {
   route: string;
   icon: string;
   exact?: boolean;
-  disabled?: boolean;
+  unavailable?: boolean;
 };
 
 @Component({
@@ -45,7 +45,7 @@ export class SidebarComponent {
   constructor(whatsappConnection: WhatsappConnectionService) {
     this.menuItems$ = whatsappConnection.apiAvailable$.pipe(
       map((available) => this.menuItems.map((item) =>
-        item.route === "/conexao" ? { ...item, disabled: !available } : item
+        item.route === "/conexao" ? { ...item, unavailable: !available } : item
       ))
     );
   }

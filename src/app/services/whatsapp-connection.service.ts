@@ -1,6 +1,5 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { catchError, exhaustMap, from, map, Observable, of, shareReplay, startWith, switchMap, timeout, timer } from "rxjs";
+import { catchError, exhaustMap, from, Observable, of, shareReplay, startWith, switchMap, tap, timeout, timer } from "rxjs";
 import { environment } from "../../environments/environment";
 import { AuthService } from "./auth.service";
 
@@ -22,60 +21,76 @@ export interface WhatsappConnectionStatus {
 })
 export class WhatsappConnectionService {
   private readonly baseUrl = environment.whatsappApiUrl.replace(/\/$/, "");
+  private readonly loopback = ["localhost", "127.0.0.1", "[::1]"].includes(new URL(this.baseUrl).hostname);
+  private localAccessApproved = false;
 
   readonly apiAvailable$ = timer(0, 10000).pipe(
-    exhaustMap(() => this.getStatus().pipe(
+    exhaustMap(() => from(this.getLocalNetworkPermission()).pipe(
+      switchMap((permission) => permission === "granted" ? this.checkAvailability() : of(false)),
       timeout(5000),
-      map(() => true),
       catchError(() => of(false))
     )),
     startWith(false),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly auth: AuthService
-  ) {}
+  constructor(private readonly auth: AuthService) {}
+
+  async getLocalNetworkPermission(): Promise<PermissionState> {
+    if (!this.loopback || location.protocol !== "https:" || this.localAccessApproved) return "granted";
+
+    try {
+      const permission = await navigator.permissions.query({ name: "loopback-network" as PermissionName });
+      return permission.state;
+    } catch {
+      return "prompt";
+    }
+  }
+
+  checkAvailability(): Observable<boolean> {
+    return from(this.fetchApi("/", { method: "GET" }).then((response) => response.ok)).pipe(
+      tap((available) => { if (available) this.localAccessApproved = true; })
+    );
+  }
 
   getStatus(): Observable<WhatsappConnectionStatus> {
-    return from(this.getRequestOptions()).pipe(
-      switchMap((options) =>
-        this.http.get<WhatsappConnectionStatus>(`${this.baseUrl}/api/whatsapp/status`, options)
-      )
-    );
+    return from(this.requestStatus("/api/whatsapp/status", "GET"));
   }
 
   connect(): Observable<WhatsappConnectionStatus> {
-    return from(this.getRequestOptions()).pipe(
-      switchMap((options) =>
-        this.http.post<WhatsappConnectionStatus>(
-          `${this.baseUrl}/api/whatsapp/connect`,
-          {},
-          options
-        )
-      )
-    );
+    return from(this.requestStatus("/api/whatsapp/connect", "POST"));
   }
 
   disconnect(): Observable<WhatsappConnectionStatus> {
-    return from(this.getRequestOptions()).pipe(
-      switchMap((options) =>
-        this.http.post<WhatsappConnectionStatus>(`${this.baseUrl}/api/whatsapp/disconnect`, {}, options)
-      )
-    );
+    return from(this.requestStatus("/api/whatsapp/disconnect", "POST"));
   }
 
-  private async getRequestOptions() {
+  private async requestStatus(path: string, method: "GET" | "POST"): Promise<WhatsappConnectionStatus> {
     const token = await this.auth.getIdToken();
     if (!token) {
       throw new Error("Usuario nao autenticado.");
     }
 
-    return {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+    const response = await this.fetchApi(path, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+      ...(method === "POST" ? { body: "{}" } : {})
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || `Erro HTTP ${response.status} ao consultar a API.`);
+    }
+    return data as WhatsappConnectionStatus;
+  }
+
+  private fetchApi(path: string, options: RequestInit): Promise<Response> {
+    const requestOptions: RequestInit & { targetAddressSpace?: "loopback" } = {
+      ...options,
+      mode: "cors"
     };
+    if (this.loopback && location.protocol === "https:") {
+      requestOptions.targetAddressSpace = "loopback";
+    }
+    return fetch(`${this.baseUrl}${path}`, requestOptions);
   }
 }
